@@ -1,0 +1,58 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title text-center">Inscription</h3>
+
+          <form (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Nom d'utilisateur"
+                [(ngModel)]="username"
+                name="username"
+                required
+                minlength="3"
+              />
+            </div>
+
+            <div class="mb-3">
+              <input
+                type="password"
+                class="form-control"
+                placeholder="Mot de passe"
+                [(ngModel)]="password"
+                name="password"
+                required
+                minlength="6"
+              />
+            </div>
+
+            <div class="mb-3">
+              <input
+                type="password"
+                class="form-control"
+                placeholder="Confirmer le mot de passe"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">S'inscrire</button>
+          </form>
+
+          <!-- Messages -->
+          <p class="text-center mt-3 text-danger" *ngIf="error">{{ error }}</p>
+          <p class="text-center mt-3 text-success" *ngIf="success">{{ success }}</p>
+
+          <p class="text-center mt-3">
+            Déjà un compte ? <a routerLink="/login">Se connecter</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
