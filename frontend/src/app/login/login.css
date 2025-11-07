@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+#vanta-bg {
+  background-color: #133fbf;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  animation: float 6s ease-in-out infinite, move 10s infinite linear;
+  pointer-events: none;
+}
+
+.btn-hover-effect {
+  transition: all 0.3s ease;
+  transform: translateY(0);
+}
+
+.btn-hover-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px -5px rgba(8, 68, 244, 0.4);
+}
+
+.input-focus-effect:focus {
+  box-shadow: 0 0 0 3px rgba(8, 68, 244, 0.3);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes move {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(20px, 20px); }
+  100% { transform: translate(0, 0); }
+}

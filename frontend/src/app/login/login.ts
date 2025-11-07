@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth';
 import { CommonModule } from '@angular/common';
 
+declare const feather: any;
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -23,5 +25,11 @@ export class LoginComponent {
       next: () => this.router.navigate(['/home']),
       error: () => this.error = 'Login failed'
     });
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof feather !== 'undefined') {
+      feather.replace();
+    }
   }
 }
