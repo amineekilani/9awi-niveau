@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -19,6 +19,10 @@ export class AuthService {
         localStorage.setItem(this.tokenKey, res.token);
         localStorage.setItem(this.usernameKey, res.username);
         this.loggedIn.next(true);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        // S'assurer que l'erreur contient le message du backend
+        return throwError(() => error);
       })
     );
   }

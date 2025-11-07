@@ -21,17 +21,21 @@ export class LoginComponent {
   constructor(private authService: AuthService, private router: Router) {}
 
   onSubmit() {
+    this.error = ''; // Réinitialiser l'erreur
     this.authService.login({ username: this.username, password: this.password }).subscribe({
       next: () => this.router.navigate(['/home']),
       error: (err) => {
-        if (typeof err.error === 'string') {
-          this.error = err.error;
-        } else if (err.error?.message) {
+        console.log('Erreur complète:', err); // Pour déboguer
+        
+        // Vérifier d'abord si le backend a renvoyé un message
+        if (err.error?.message) {
           this.error = err.error.message;
-        } else if (err.message) {
-          this.error = err.message;
+        } else if (err.status === 401) {
+          this.error = 'Nom d\'utilisateur ou mot de passe incorrect. Veuillez réessayer.';
+        } else if (err.status === 0) {
+          this.error = 'Impossible de se connecter au serveur.';
         } else {
-          this.error = 'Échec de la connexion';
+          this.error = 'Une erreur est survenue lors de la connexion. Veuillez réessayer.';
         }
       }
     });

@@ -72,11 +72,14 @@
         <a class="text-sm font-medium text-primary-500 cursor-not-allowed opacity-50">Mot de passe oublié ?</a>
       </div>
 
+      <div *ngIf="error" class="p-4 mb-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+        <i data-feather="alert-circle" class="text-red-500 mr-3 flex-shrink-0" width="20" height="20"></i>
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+
       <button type="submit" class="btn-hover-effect w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
         Se connecter
       </button>
-
-      <p class="text-center text-red-500 font-medium">{{ error }}</p>
     </form>
 
     <div class="mt-8 text-center text-sm text-gray-600">
