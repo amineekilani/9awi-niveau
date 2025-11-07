@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 })
 export class RegisterComponent {
   username = '';
+  email = '';
   password = '';
   confirmPassword = '';
   error = '';
@@ -26,7 +27,7 @@ export class RegisterComponent {
       return;
     }
 
-    this.authService.register({ username: this.username, password: this.password }).subscribe({
+    this.authService.register({ username: this.username, email: this.email, password: this.password }).subscribe({
       next: () => {
         this.success = 'Inscription réussie ! Redirection...';
         setTimeout(() => this.router.navigate(['/login']), 1500);
