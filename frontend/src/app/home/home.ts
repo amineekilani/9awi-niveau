@@ -3,6 +3,8 @@ import { AuthService } from '../auth';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
+declare const feather: any;
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -21,5 +23,11 @@ export class HomeComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof feather !== 'undefined') {
+      feather.replace();
+    }
   }
 }

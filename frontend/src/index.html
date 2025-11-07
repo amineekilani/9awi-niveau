@@ -5,62 +5,62 @@
         <meta charset="UTF-8">
         <base href="/">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link rel="shortcut icon" href="/logo.png" type="image/x-icon">
         <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#f0f5ff',
-                            100: '#e0ebff',
-                            200: '#c7d9ff',
-                            300: '#a5c1ff',
-                            400: '#7e9fff',
-                            500: '#0844f4',
-                            600: '#0033d1',
-                            700: '#0028a8',
-                            800: '#002085',
-                            900: '#001a6e',
+        <script src="https://unpkg.com/feather-icons"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: {
+                                50: '#f0f5ff',
+                                100: '#e0ebff',
+                                200: '#c7d9ff',
+                                300: '#a5c1ff',
+                                400: '#7e9fff',
+                                500: '#0844f4',
+                                600: '#0033d1',
+                                700: '#0028a8',
+                                800: '#002085',
+                                900: '#001a6e',
+                            },
+                            secondary: {
+                                50: '#fff9f0',
+                                100: '#fff2e0',
+                                200: '#ffe4c1',
+                                300: '#ffd092',
+                                400: '#ffb553',
+                                500: '#ff9500',
+                                600: '#e67e00',
+                                700: '#bf6700',
+                                800: '#995100',
+                                900: '#804200',
+                            },
+                            accent: '#22c55e',
+                            dark: '#1a1b26',
+                            light: '#f8fafc',
                         },
-                        secondary: {
-                            50: '#fff9f0',
-                            100: '#fff2e0',
-                            200: '#ffe4c1',
-                            300: '#ffd092',
-                            400: '#ffb553',
-                            500: '#ff9500',
-                            600: '#e67e00',
-                            700: '#bf6700',
-                            800: '#995100',
-                            900: '#804200',
+                        animation: {
+                            'float': 'float 6s ease-in-out infinite',
+                            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                            'move': 'move 10s infinite linear',
                         },
-                        accent: '#22c55e',
-                        dark: '#1a1b26',
-                        light: '#f8fafc',
-                    },
-                    animation: {
-                        'float': 'float 6s ease-in-out infinite',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'move': 'move 10s infinite linear',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        },
-                        move: {
-                            '0%': { transform: 'translate(0, 0)' },
-                            '50%': { transform: 'translate(20px, 20px)' },
-                            '100%': { transform: 'translate(0, 0)' },
+                        keyframes: {
+                            float: {
+                                '0%, 100%': { transform: 'translateY(0)' },
+                                '50%': { transform: 'translateY(-10px)' },
+                            },
+                            move: {
+                                '0%': { transform: 'translate(0, 0)' },
+                                '50%': { transform: 'translate(20px, 20px)' },
+                                '100%': { transform: 'translate(0, 0)' },
+                            }
                         }
                     }
                 }
             }
-        }
-    </script>
+        </script>
     </head>
     <body>
         <app-root></app-root>

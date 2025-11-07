@@ -23,7 +23,17 @@ export class LoginComponent {
   onSubmit() {
     this.authService.login({ username: this.username, password: this.password }).subscribe({
       next: () => this.router.navigate(['/home']),
-      error: () => this.error = 'Login failed'
+      error: (err) => {
+        if (typeof err.error === 'string') {
+          this.error = err.error;
+        } else if (err.error?.message) {
+          this.error = err.error.message;
+        } else if (err.message) {
+          this.error = err.message;
+        } else {
+          this.error = 'Échec de la connexion';
+        }
+      }
     });
   }
 

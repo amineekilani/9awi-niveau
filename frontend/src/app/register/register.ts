@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth';
 import { CommonModule } from '@angular/common';
 
+declare const feather: any;
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -27,14 +29,32 @@ export class RegisterComponent {
       return;
     }
 
+    this.error = '';
+    this.success = '';
+
     this.authService.register({ username: this.username, email: this.email, password: this.password }).subscribe({
       next: () => {
-        this.success = 'Inscription réussie ! Redirection...';
-        setTimeout(() => this.router.navigate(['/login']), 1500);
+        // Auto-login after successful registration
+        this.authService.login({ username: this.username, password: this.password }).subscribe({
+          next: () => {
+            this.router.navigate(['/home']);
+          },
+          error: () => {
+            this.error = 'Inscription réussie mais erreur de connexion.';
+            setTimeout(() => this.router.navigate(['/login']), 2000);
+          }
+        });
       },
       error: (err) => {
-        this.error = err.error || 'Erreur lors de l\'inscription';
+        console.error('Registration error:', err);
+        this.error = 'Erreur lors de l\'inscription. Veuillez réessayer.';
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof feather !== 'undefined') {
+      feather.replace();
+    }
   }
 }

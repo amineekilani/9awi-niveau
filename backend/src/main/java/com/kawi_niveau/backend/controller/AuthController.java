@@ -2,6 +2,7 @@ package com.kawi_niveau.backend.controller;
 
 import com.kawi_niveau.backend.dto.JwtResponse;
 import com.kawi_niveau.backend.dto.LoginRequest;
+import com.kawi_niveau.backend.dto.MessageResponse;
 import com.kawi_niveau.backend.dto.RegisterRequest;
 import com.kawi_niveau.backend.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
         if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username already exists");
+            return ResponseEntity.badRequest().body(new MessageResponse("Username already exists"));
         }
 
         com.kawi_niveau.backend.entity.User user = new com.kawi_niveau.backend.entity.User();
@@ -53,7 +54,7 @@ public class AuthController {
         user.setPassword(encoder.encode(registerRequest.getPassword()));
 
         userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully");
+        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
 
     @GetMapping("/test")
