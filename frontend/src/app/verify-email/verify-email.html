@@ -1,0 +1,23 @@
+<div class="verify-container">
+  <div class="verify-card">
+    <div *ngIf="isLoading" class="loading">
+      <div class="spinner"></div>
+      <p>Vérification de votre email en cours...</p>
+    </div>
+
+    <div *ngIf="!isLoading && isSuccess" class="success">
+      <div class="icon-success">✓</div>
+      <h2>Email vérifié !</h2>
+      <p>{{ message }}</p>
+      <p class="redirect-info">Redirection vers la page de connexion...</p>
+      <button (click)="goToLogin()" class="btn-primary">Se connecter maintenant</button>
+    </div>
+
+    <div *ngIf="!isLoading && !isSuccess" class="error">
+      <div class="icon-error">✗</div>
+      <h2>Erreur de vérification</h2>
+      <p>{{ message }}</p>
+      <button (click)="goToLogin()" class="btn-secondary">Retour à la connexion</button>
+    </div>
+  </div>
+</div>

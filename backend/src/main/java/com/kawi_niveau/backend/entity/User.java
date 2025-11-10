@@ -27,4 +27,16 @@ public class User {
 
     @Column(name = "provider_id")
     private String providerId; // ID Google de l'utilisateur
+
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private Long resetTokenExpiry;
 }

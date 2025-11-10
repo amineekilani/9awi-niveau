@@ -66,4 +66,16 @@ export class AuthService {
   private hasToken(): boolean {
     return !!localStorage.getItem(this.tokenKey);
   }
+
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/verify-email?token=${token}`);
+  }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, { token, newPassword });
+  }
 }

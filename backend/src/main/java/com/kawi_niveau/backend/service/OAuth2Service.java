@@ -40,6 +40,7 @@ public class OAuth2Service {
             if (user.getProvider() == null || !user.getProvider().equals("google")) {
                 user.setProvider("google");
                 user.setProviderId(googleId);
+                user.setEmailVerified(true); // Les utilisateurs Google ont leur email déjà vérifié
                 userRepository.save(user);
             }
             return user;
@@ -51,6 +52,7 @@ public class OAuth2Service {
             newUser.setProvider("google");
             newUser.setProviderId(googleId);
             newUser.setRole("USER");
+            newUser.setEmailVerified(true); // Les utilisateurs Google ont leur email déjà vérifié
             return userRepository.save(newUser);
         }
     }

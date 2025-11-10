@@ -33,6 +33,20 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        // Vérifier si l'utilisateur existe
+        com.kawi_niveau.backend.entity.User user = userRepository.findByUsername(loginRequest.getUsername())
+                .orElse(null);
+
+        // Vérifier si l'utilisateur est un utilisateur local (pas Google OAuth)
+        if (user != null && "local".equals(user.getProvider())) {
+            // Vérifier si l'email est vérifié
+            if (!user.isEmailVerified()) {
+                throw new com.kawi_niveau.backend.exception.EmailNotVerifiedException(
+                    "Veuillez vérifier votre adresse email avant de vous connecter. Consultez votre boîte de réception pour le lien de vérification."
+                );
+            }
+        }
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -42,10 +56,17 @@ public class AuthController {
         return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getUsername()));
     }
 
+    @Autowired
+    private com.kawi_niveau.backend.service.EmailService emailService;
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
         if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Username already exists"));
+        }
+
+        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
         }
 
         com.kawi_niveau.backend.entity.User user = new com.kawi_niveau.backend.entity.User();
@@ -53,9 +74,22 @@ public class AuthController {
         user.setEmail(registerRequest.getEmail());
         user.setPassword(encoder.encode(registerRequest.getPassword()));
         user.setProvider("local");
+        user.setEmailVerified(false);
+        
+        // Generate verification token
+        String verificationToken = java.util.UUID.randomUUID().toString();
+        user.setVerificationToken(verificationToken);
 
         userRepository.save(user);
-        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
+
+        // Send verification email
+        try {
+            emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), verificationToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("User registered but email sending failed: " + e.getMessage()));
+        }
+
+        return ResponseEntity.ok(new MessageResponse("User registered successfully. Please check your email to verify your account."));
     }
 
     @Autowired
@@ -75,5 +109,68 @@ public class AuthController {
     @GetMapping("/test")
     public ResponseEntity<?> test() {
         return ResponseEntity.ok("Backend is working!");
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+        com.kawi_niveau.backend.entity.User user = userRepository.findByVerificationToken(token)
+                .orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Invalid verification token"));
+        }
+
+        user.setEmailVerified(true);
+        user.setVerificationToken(null);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new MessageResponse("Email verified successfully. You can now login."));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody com.kawi_niveau.backend.dto.ForgotPasswordRequest request) {
+        com.kawi_niveau.backend.entity.User user = userRepository.findByEmail(request.getEmail())
+                .orElse(null);
+
+        if (user == null) {
+            // Don't reveal if email exists or not for security
+            return ResponseEntity.ok(new MessageResponse("If the email exists, a password reset link has been sent."));
+        }
+
+        // Generate reset token
+        String resetToken = java.util.UUID.randomUUID().toString();
+        user.setResetToken(resetToken);
+        user.setResetTokenExpiry(System.currentTimeMillis() + 3600000); // 1 hour
+        userRepository.save(user);
+
+        // Send reset email
+        try {
+            emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), resetToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("Error sending reset email: " + e.getMessage()));
+        }
+
+        return ResponseEntity.ok(new MessageResponse("If the email exists, a password reset link has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody com.kawi_niveau.backend.dto.ResetPasswordRequest request) {
+        com.kawi_niveau.backend.entity.User user = userRepository.findByResetToken(request.getToken())
+                .orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Invalid reset token"));
+        }
+
+        if (user.getResetTokenExpiry() < System.currentTimeMillis()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Reset token has expired"));
+        }
+
+        user.setPassword(encoder.encode(request.getNewPassword()));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new MessageResponse("Password reset successfully. You can now login with your new password."));
     }
 }
