@@ -39,4 +39,10 @@ public class User {
 
     @Column(name = "reset_token_expiry")
     private Long resetTokenExpiry;
+
+    @Column(name = "delete_token")
+    private String deleteToken;
+
+    @Column(name = "delete_token_expiry")
+    private Long deleteTokenExpiry;
 }

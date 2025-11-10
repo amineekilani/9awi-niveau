@@ -108,4 +108,43 @@ public class EmailService {
             throw new RuntimeException("Erreur lors de l'envoi de l'email de réinitialisation: " + e.getMessage(), e);
         }
     }
+
+    public void sendAccountDeletionEmail(String toEmail, String username, String token) {
+        try {
+            TransactionalEmailsApi apiInstance = getApiInstance();
+            
+            SendSmtpEmailSender sender = new SendSmtpEmailSender();
+            sender.setEmail(senderEmail);
+            sender.setName(senderName);
+
+            SendSmtpEmailTo recipient = new SendSmtpEmailTo();
+            recipient.setEmail(toEmail);
+            recipient.setName(username);
+
+            String deleteLink = frontendUrl + "/confirm-delete?token=" + token;
+            
+            SendSmtpEmail sendSmtpEmail = new SendSmtpEmail();
+            sendSmtpEmail.setSender(sender);
+            sendSmtpEmail.setTo(Arrays.asList(recipient));
+            sendSmtpEmail.setSubject("Confirmation de suppression de compte - 9awi Niveau");
+            sendSmtpEmail.setHtmlContent(
+                "<html><body>" +
+                "<h2>Suppression de compte</h2>" +
+                "<p>Bonjour " + username + ",</p>" +
+                "<p>Vous avez demandé à supprimer votre compte. Cette action est irréversible et supprimera toutes vos données.</p>" +
+                "<p>Pour confirmer la suppression de votre compte, cliquez sur le lien ci-dessous :</p>" +
+                "<p><a href='" + deleteLink + "' style='background-color: #f44336; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>Confirmer la suppression</a></p>" +
+                "<p>Ou copiez ce lien dans votre navigateur :</p>" +
+                "<p>" + deleteLink + "</p>" +
+                "<p>Ce lien est valide pendant 1 heure.</p>" +
+                "<p><strong>Si vous n'avez pas demandé cette suppression, ignorez cet email et votre compte restera actif.</strong></p>" +
+                "<br><p>Cordialement,<br>L'équipe 9awi Niveau</p>" +
+                "</body></html>"
+            );
+
+            apiInstance.sendTransacEmail(sendSmtpEmail);
+        } catch (ApiException e) {
+            throw new RuntimeException("Erreur lors de l'envoi de l'email de suppression: " + e.getMessage(), e);
+        }
+    }
 }
