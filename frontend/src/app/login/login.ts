@@ -3,8 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../environments/environment';
 
 declare const feather: any;
+declare const google: any;
 
 @Component({
   selector: 'app-login',
@@ -45,5 +47,41 @@ export class LoginComponent {
     if (typeof feather !== 'undefined') {
       feather.replace();
     }
+    this.initializeGoogleSignIn();
+  }
+
+  initializeGoogleSignIn(): void {
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: environment.googleClientId,
+        callback: (response: any) => this.handleGoogleSignIn(response)
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById('google-signin-button'),
+        { 
+          theme: 'outline', 
+          size: 'large',
+          width: '100%',
+          text: 'signin_with',
+          locale: 'fr'
+        }
+      );
+    }
+  }
+
+  handleGoogleSignIn(response: any): void {
+    this.error = '';
+    this.authService.loginWithGoogle(response.credential).subscribe({
+      next: () => this.router.navigate(['/home']),
+      error: (err) => {
+        console.log('Erreur Google OAuth:', err);
+        if (err.error?.message) {
+          this.error = err.error.message;
+        } else {
+          this.error = 'Échec de l\'authentification Google. Veuillez réessayer.';
+        }
+      }
+    });
   }
 }

@@ -9,7 +9,7 @@
 <div class="relative z-10 w-full max-w-6xl bg-white rounded-2xl overflow-hidden shadow-xl flex flex-col md:flex-row mx-auto mt-10">
   <!-- Colonne gauche - Illustration -->
   <div class="hidden md:block w-full md:w-1/2 bg-gradient-to-br from-primary-500 to-primary-700 relative overflow-hidden">
-    <img src="register.jpg" alt="Illustration d'inscription" class="w-full h-full object-cover absolute inset-0">
+    <img src="login.jpg" alt="Illustration d'inscription" class="w-full h-full object-cover absolute inset-0">
     <div class="absolute top-0 left-0 w-32 h-32 rounded-full bg-white/10 -translate-x-16 -translate-y-16 animate-pulse-slow"></div>
     <div class="absolute bottom-0 right-0 w-48 h-48 rounded-full bg-white/10 translate-x-24 translate-y-24 animate-pulse-slow"></div>
     <div class="absolute top-1/3 right-1/4 w-16 h-16 rounded-full bg-white/20 animate-pulse-slow"></div>
@@ -21,7 +21,7 @@
       <div class="w-12 h-12 rounded-lg bg-primary-500 flex items-center justify-center mr-4">
         <i data-feather="book" class="text-white" width="24" height="24"></i>
       </div>
-      <h1 class="text-3xl font-bold text-primary-500">9awiNiveau</h1>
+      <h1 class="text-3xl font-bold text-primary-500">9awi Niveau</h1>
     </div>
 
     <div class="mb-8">
@@ -107,6 +107,21 @@
       <p class="text-center text-red-500 font-medium" *ngIf="error">{{ error }}</p>
       <p class="text-center text-green-500 font-medium" *ngIf="success">{{ success }}</p>
     </form>
+
+    <div class="mt-6">
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-white text-gray-500">Ou s'inscrire avec</span>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <div id="google-signup-button" class="w-full"></div>
+      </div>
+    </div>
 
     <div class="mt-8 text-center text-sm text-gray-600">
       Déjà un compte ?

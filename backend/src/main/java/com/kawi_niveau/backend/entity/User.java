@@ -17,8 +17,14 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     private String role = "USER";
+
+    @Column(name = "provider")
+    private String provider; // "local" ou "google"
+
+    @Column(name = "provider_id")
+    private String providerId; // ID Google de l'utilisateur
 }

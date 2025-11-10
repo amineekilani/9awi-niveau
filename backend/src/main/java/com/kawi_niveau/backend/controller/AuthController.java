@@ -52,9 +52,24 @@ public class AuthController {
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(encoder.encode(registerRequest.getPassword()));
+        user.setProvider("local");
 
         userRepository.save(user);
         return ResponseEntity.ok(new MessageResponse("User registered successfully"));
+    }
+
+    @Autowired
+    private com.kawi_niveau.backend.service.OAuth2Service oauth2Service;
+
+    @PostMapping("/google")
+    public ResponseEntity<?> authenticateWithGoogle(@RequestBody com.kawi_niveau.backend.dto.OAuth2LoginRequest request) {
+        try {
+            com.kawi_niveau.backend.entity.User user = oauth2Service.processGoogleUser(request.getToken());
+            String jwt = jwtUtils.generateJwtToken(user.getUsername());
+            return ResponseEntity.ok(new JwtResponse(jwt, user.getUsername()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Google authentication failed: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/test")

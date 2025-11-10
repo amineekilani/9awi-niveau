@@ -27,6 +27,19 @@ export class AuthService {
     );
   }
 
+  loginWithGoogle(googleToken: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/google`, { token: googleToken }).pipe(
+      tap((res: any) => {
+        localStorage.setItem(this.tokenKey, res.token);
+        localStorage.setItem(this.usernameKey, res.username);
+        this.loggedIn.next(true);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => error);
+      })
+    );
+  }
+
   register(credentials: { username: string; email: string; password: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, credentials, { responseType: 'text' as 'json' });
   }
