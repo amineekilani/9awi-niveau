@@ -45,4 +45,13 @@ public class User {
 
     @Column(name = "delete_token_expiry")
     private Long deleteTokenExpiry;
+
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "last_failed_login")
+    private Long lastFailedLogin;
+
+    @Column(name = "account_locked_until")
+    private Long accountLockedUntil;
 }

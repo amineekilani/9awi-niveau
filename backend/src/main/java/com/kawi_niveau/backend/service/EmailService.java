@@ -147,4 +147,44 @@ public class EmailService {
             throw new RuntimeException("Erreur lors de l'envoi de l'email de suppression: " + e.getMessage(), e);
         }
     }
+
+    public void sendFailedLoginAlertEmail(String toEmail, String username, int attemptCount) {
+        try {
+            TransactionalEmailsApi apiInstance = getApiInstance();
+            
+            SendSmtpEmailSender sender = new SendSmtpEmailSender();
+            sender.setEmail(senderEmail);
+            sender.setName(senderName);
+
+            SendSmtpEmailTo recipient = new SendSmtpEmailTo();
+            recipient.setEmail(toEmail);
+            recipient.setName(username);
+            
+            SendSmtpEmail sendSmtpEmail = new SendSmtpEmail();
+            sendSmtpEmail.setSender(sender);
+            sendSmtpEmail.setTo(Arrays.asList(recipient));
+            sendSmtpEmail.setSubject("⚠️ Alerte de sécurité - Tentatives de connexion échouées");
+            sendSmtpEmail.setHtmlContent(
+                "<html><body>" +
+                "<h2 style='color: #f44336;'>⚠️ Alerte de sécurité</h2>" +
+                "<p>Bonjour " + username + ",</p>" +
+                "<p><strong>Nous avons détecté " + attemptCount + " tentatives de connexion échouées sur votre compte.</strong></p>" +
+                "<p>Si vous êtes à l'origine de ces tentatives, veuillez vérifier votre mot de passe. Si vous l'avez oublié, vous pouvez le réinitialiser en cliquant sur le lien ci-dessous :</p>" +
+                "<p><a href='" + frontendUrl + "/forgot-password' style='background-color: #2196F3; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>Réinitialiser mon mot de passe</a></p>" +
+                "<p><strong style='color: #f44336;'>Si vous n'êtes pas à l'origine de ces tentatives, votre compte pourrait être compromis.</strong> Nous vous recommandons de :</p>" +
+                "<ul>" +
+                "<li>Changer immédiatement votre mot de passe</li>" +
+                "<li>Vérifier l'activité récente de votre compte</li>" +
+                "<li>Contacter notre support si nécessaire</li>" +
+                "</ul>" +
+                "<p>Pour votre sécurité, après 5 tentatives échouées, votre compte sera temporairement verrouillé pendant 15 minutes.</p>" +
+                "<br><p>Cordialement,<br>L'équipe 9awi Niveau</p>" +
+                "</body></html>"
+            );
+
+            apiInstance.sendTransacEmail(sendSmtpEmail);
+        } catch (ApiException e) {
+            throw new RuntimeException("Erreur lors de l'envoi de l'email d'alerte: " + e.getMessage(), e);
+        }
+    }
 }

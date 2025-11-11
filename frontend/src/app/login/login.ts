@@ -32,6 +32,8 @@ export class LoginComponent {
         // Vérifier d'abord si le backend a renvoyé un message
         if (err.error?.message) {
           this.error = err.error.message;
+        } else if (err.status === 423) {
+          this.error = 'Votre compte est temporairement verrouillé suite à plusieurs tentatives de connexion échouées. Veuillez réessayer plus tard ou réinitialiser votre mot de passe.';
         } else if (err.status === 403) {
           this.error = 'Veuillez vérifier votre adresse email avant de vous connecter.';
         } else if (err.status === 401) {

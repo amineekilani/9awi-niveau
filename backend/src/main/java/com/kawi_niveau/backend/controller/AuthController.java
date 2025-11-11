@@ -39,6 +39,14 @@ public class AuthController {
 
         // Vérifier si l'utilisateur est un utilisateur local (pas Google OAuth)
         if (user != null && "local".equals(user.getProvider())) {
+            // Vérifier si le compte est verrouillé
+            if (user.getAccountLockedUntil() != null && user.getAccountLockedUntil() > System.currentTimeMillis()) {
+                long remainingMinutes = (user.getAccountLockedUntil() - System.currentTimeMillis()) / 60000;
+                return ResponseEntity.status(423).body(new MessageResponse(
+                    "Votre compte est temporairement verrouillé suite à plusieurs tentatives de connexion échouées. Réessayez dans " + remainingMinutes + " minute(s)."
+                ));
+            }
+
             // Vérifier si l'email est vérifié
             if (!user.isEmailVerified()) {
                 throw new com.kawi_niveau.backend.exception.EmailNotVerifiedException(
@@ -47,13 +55,53 @@ public class AuthController {
             }
         }
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication.getName());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication.getName());
 
-        return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getUsername()));
+            // Réinitialiser les tentatives échouées en cas de succès
+            if (user != null) {
+                user.setFailedLoginAttempts(0);
+                user.setLastFailedLogin(null);
+                user.setAccountLockedUntil(null);
+                userRepository.save(user);
+            }
+
+            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getUsername()));
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            // Gérer les tentatives échouées
+            if (user != null && "local".equals(user.getProvider())) {
+                int attempts = user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0;
+                attempts++;
+                user.setFailedLoginAttempts(attempts);
+                user.setLastFailedLogin(System.currentTimeMillis());
+
+                // Envoyer un email d'alerte après 5 tentatives
+                if (attempts == 5) {
+                    try {
+                        emailService.sendFailedLoginAlertEmail(user.getEmail(), user.getUsername(), attempts);
+                    } catch (Exception emailEx) {
+                        // Log l'erreur mais ne pas bloquer la réponse
+                        System.err.println("Erreur lors de l'envoi de l'email d'alerte: " + emailEx.getMessage());
+                    }
+                    // Verrouiller le compte pour 15 minutes
+                    user.setAccountLockedUntil(System.currentTimeMillis() + 900000); // 15 minutes
+                }
+
+                userRepository.save(user);
+
+                if (attempts >= 5) {
+                    return ResponseEntity.status(423).body(new MessageResponse(
+                        "Trop de tentatives échouées. Votre compte est verrouillé pendant 15 minutes. Un email d'alerte vous a été envoyé."
+                    ));
+                }
+            }
+
+            throw e;
+        }
     }
 
     @Autowired
