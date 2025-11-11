@@ -123,6 +123,9 @@ public class AuthController {
         user.setPassword(encoder.encode(registerRequest.getPassword()));
         user.setProvider("local");
         user.setEmailVerified(false);
+        user.setFirstName(registerRequest.getFirstName());
+        user.setLastName(registerRequest.getLastName());
+        user.setDateOfBirth(registerRequest.getDateOfBirth());
         
         // Generate verification token
         String verificationToken = java.util.UUID.randomUUID().toString();

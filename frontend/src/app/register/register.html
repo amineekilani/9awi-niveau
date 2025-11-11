@@ -48,6 +48,43 @@
         </div>
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-gray-700">Prénom</label>
+          <input
+            type="text"
+            class="input-focus-effect block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            placeholder="Prénom"
+            [(ngModel)]="firstName"
+            name="firstName"
+            required
+          />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-gray-700">Nom</label>
+          <input
+            type="text"
+            class="input-focus-effect block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            placeholder="Nom"
+            [(ngModel)]="lastName"
+            name="lastName"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">Date de naissance</label>
+        <input
+          type="date"
+          class="input-focus-effect block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
+          [(ngModel)]="dateOfBirth"
+          name="dateOfBirth"
+          required
+        />
+      </div>
+
       <div class="space-y-1">
         <label class="text-sm font-medium text-gray-700">Email</label>
         <div class="relative">

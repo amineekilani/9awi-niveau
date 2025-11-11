@@ -13,6 +13,9 @@ interface Profile {
   email: string;
   provider: string;
   emailVerified: boolean;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
 }
 
 @Component({
@@ -32,6 +35,9 @@ export class ProfileComponent implements OnInit {
   editMode = false;
   editUsername = '';
   editEmail = '';
+  editFirstName = '';
+  editLastName = '';
+  editDateOfBirth = '';
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
@@ -73,6 +79,9 @@ export class ProfileComponent implements OnInit {
           this.profile = data;
           this.editUsername = data.username;
           this.editEmail = data.email;
+          this.editFirstName = data.firstName || '';
+          this.editLastName = data.lastName || '';
+          this.editDateOfBirth = data.dateOfBirth || '';
           this.loading = false;
         },
         error: (error) => {
@@ -93,6 +102,9 @@ export class ProfileComponent implements OnInit {
     if (this.profile) {
       this.editUsername = this.profile.username;
       this.editEmail = this.profile.email;
+      this.editFirstName = this.profile.firstName || '';
+      this.editLastName = this.profile.lastName || '';
+      this.editDateOfBirth = this.profile.dateOfBirth || '';
     }
     this.currentPassword = '';
     this.newPassword = '';
@@ -123,7 +135,10 @@ export class ProfileComponent implements OnInit {
 
     const updateData: any = {
       username: this.editUsername,
-      email: this.editEmail
+      email: this.editEmail,
+      firstName: this.editFirstName,
+      lastName: this.editLastName,
+      dateOfBirth: this.editDateOfBirth
     };
 
     if (this.newPassword) {

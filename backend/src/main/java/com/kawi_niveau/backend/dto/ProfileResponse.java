@@ -11,4 +11,7 @@ public class ProfileResponse {
     private String email;
     private String provider;
     private boolean emailVerified;
+    private String firstName;
+    private String lastName;
+    private String dateOfBirth;
 }

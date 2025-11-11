@@ -20,6 +20,9 @@ export class RegisterComponent {
   email = '';
   password = '';
   confirmPassword = '';
+  firstName = '';
+  lastName = '';
+  dateOfBirth = '';
   error = '';
   success = '';
 
@@ -34,7 +37,14 @@ export class RegisterComponent {
     this.error = '';
     this.success = '';
 
-    this.authService.register({ username: this.username, email: this.email, password: this.password }).subscribe({
+    this.authService.register({ 
+      username: this.username, 
+      email: this.email, 
+      password: this.password,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      dateOfBirth: this.dateOfBirth
+    }).subscribe({
       next: () => {
         // Auto-login after successful registration
         this.authService.login({ username: this.username, password: this.password }).subscribe({

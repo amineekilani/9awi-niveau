@@ -36,7 +36,10 @@ public class ProfileController {
                 user.getUsername(),
                 user.getEmail(),
                 user.getProvider(),
-                user.isEmailVerified()
+                user.isEmailVerified(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getDateOfBirth()
         );
 
         return ResponseEntity.ok(profile);
@@ -63,6 +66,17 @@ public class ProfileController {
             user.setEmail(request.getEmail());
             // If email is changed, mark as not verified
             user.setEmailVerified(false);
+        }
+
+        // Update personal information
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+        if (request.getDateOfBirth() != null) {
+            user.setDateOfBirth(request.getDateOfBirth());
         }
 
         // Update password if provided (only for local users)

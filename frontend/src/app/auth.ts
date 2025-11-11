@@ -40,7 +40,7 @@ export class AuthService {
     );
   }
 
-  register(credentials: { username: string; email: string; password: string }): Observable<any> {
+  register(credentials: { username: string; email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, credentials, { responseType: 'text' as 'json' });
   }
 
