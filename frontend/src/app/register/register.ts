@@ -46,16 +46,8 @@ export class RegisterComponent {
       dateOfBirth: this.dateOfBirth
     }).subscribe({
       next: () => {
-        // Auto-login after successful registration
-        this.authService.login({ username: this.username, password: this.password }).subscribe({
-          next: () => {
-            this.router.navigate(['/home']);
-          },
-          error: () => {
-            this.error = 'Inscription réussie mais erreur de connexion.';
-            setTimeout(() => this.router.navigate(['/login']), 2000);
-          }
-        });
+        this.success = 'Un mail a été envoyé, veuillez confirmer votre adresse.';
+        setTimeout(() => this.router.navigate(['/login']), 3000);
       },
       error: (err) => {
         console.error('Registration error:', err);
