@@ -33,7 +33,7 @@ public class EmailService {
         return new TransactionalEmailsApi();
     }
 
-    public void sendVerificationEmail(String toEmail, String username, String token) {
+    public void sendVerificationEmail(String toEmail, String displayName, String token) {
         try {
             TransactionalEmailsApi apiInstance = getApiInstance();
             
@@ -43,7 +43,7 @@ public class EmailService {
 
             SendSmtpEmailTo recipient = new SendSmtpEmailTo();
             recipient.setEmail(toEmail);
-            recipient.setName(username);
+            recipient.setName(displayName);
 
             String verificationLink = frontendUrl + "/verify-email?token=" + token;
             
@@ -54,7 +54,7 @@ public class EmailService {
             sendSmtpEmail.setHtmlContent(
                 "<html><body>" +
                 "<h2>Bienvenue sur 9awi Niveau !</h2>" +
-                "<p>Bonjour " + username + ",</p>" +
+                "<p>Bonjour,</p>" +
                 "<p>Merci de vous être inscrit. Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le lien ci-dessous :</p>" +
                 "<p><a href='" + verificationLink + "' style='background-color: #4CAF50; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>Confirmer mon email</a></p>" +
                 "<p>Ou copiez ce lien dans votre navigateur :</p>" +
@@ -71,7 +71,7 @@ public class EmailService {
         }
     }
 
-    public void sendPasswordResetEmail(String toEmail, String username, String token) {
+    public void sendPasswordResetEmail(String toEmail, String displayName, String token) {
         try {
             TransactionalEmailsApi apiInstance = getApiInstance();
             
@@ -81,7 +81,7 @@ public class EmailService {
 
             SendSmtpEmailTo recipient = new SendSmtpEmailTo();
             recipient.setEmail(toEmail);
-            recipient.setName(username);
+            recipient.setName(displayName);
 
             String resetLink = frontendUrl + "/reset-password?token=" + token;
             
@@ -92,7 +92,7 @@ public class EmailService {
             sendSmtpEmail.setHtmlContent(
                 "<html><body>" +
                 "<h2>Réinitialisation de mot de passe</h2>" +
-                "<p>Bonjour " + username + ",</p>" +
+                "<p>Bonjour,</p>" +
                 "<p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous pour créer un nouveau mot de passe :</p>" +
                 "<p><a href='" + resetLink + "' style='background-color: #2196F3; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>Réinitialiser mon mot de passe</a></p>" +
                 "<p>Ou copiez ce lien dans votre navigateur :</p>" +
@@ -109,7 +109,7 @@ public class EmailService {
         }
     }
 
-    public void sendAccountDeletionEmail(String toEmail, String username, String token) {
+    public void sendAccountDeletionEmail(String toEmail, String displayName, String token) {
         try {
             TransactionalEmailsApi apiInstance = getApiInstance();
             
@@ -119,7 +119,7 @@ public class EmailService {
 
             SendSmtpEmailTo recipient = new SendSmtpEmailTo();
             recipient.setEmail(toEmail);
-            recipient.setName(username);
+            recipient.setName(displayName);
 
             String deleteLink = frontendUrl + "/confirm-delete?token=" + token;
             
@@ -130,7 +130,7 @@ public class EmailService {
             sendSmtpEmail.setHtmlContent(
                 "<html><body>" +
                 "<h2>Suppression de compte</h2>" +
-                "<p>Bonjour " + username + ",</p>" +
+                "<p>Bonjour,</p>" +
                 "<p>Vous avez demandé à supprimer votre compte. Cette action est irréversible et supprimera toutes vos données.</p>" +
                 "<p>Pour confirmer la suppression de votre compte, cliquez sur le lien ci-dessous :</p>" +
                 "<p><a href='" + deleteLink + "' style='background-color: #f44336; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>Confirmer la suppression</a></p>" +
@@ -148,7 +148,7 @@ public class EmailService {
         }
     }
 
-    public void sendFailedLoginAlertEmail(String toEmail, String username, int attemptCount) {
+    public void sendFailedLoginAlertEmail(String toEmail, String displayName, int attemptCount) {
         try {
             TransactionalEmailsApi apiInstance = getApiInstance();
             
@@ -158,7 +158,7 @@ public class EmailService {
 
             SendSmtpEmailTo recipient = new SendSmtpEmailTo();
             recipient.setEmail(toEmail);
-            recipient.setName(username);
+            recipient.setName(displayName);
             
             SendSmtpEmail sendSmtpEmail = new SendSmtpEmail();
             sendSmtpEmail.setSender(sender);
@@ -167,7 +167,7 @@ public class EmailService {
             sendSmtpEmail.setHtmlContent(
                 "<html><body>" +
                 "<h2 style='color: #f44336;'>⚠️ Alerte de sécurité</h2>" +
-                "<p>Bonjour " + username + ",</p>" +
+                "<p>Bonjour,</p>" +
                 "<p><strong>Nous avons détecté " + attemptCount + " tentatives de connexion échouées sur votre compte.</strong></p>" +
                 "<p>Si vous êtes à l'origine de ces tentatives, veuillez vérifier votre mot de passe. Si vous l'avez oublié, vous pouvez le réinitialiser en cliquant sur le lien ci-dessous :</p>" +
                 "<p><a href='" + frontendUrl + "/forgot-password' style='background-color: #2196F3; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>Réinitialiser mon mot de passe</a></p>" +

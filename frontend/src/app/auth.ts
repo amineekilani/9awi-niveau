@@ -8,16 +8,16 @@ import { tap, catchError } from 'rxjs/operators';
 export class AuthService {
   private apiUrl = 'http://localhost:8080/api/auth';
   private tokenKey = 'auth-token';
-  private usernameKey = 'auth-username';
+  private emailKey = 'auth-email';
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  login(credentials: { username: string; password: string }): Observable<any> {
+  login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((res: any) => {
         localStorage.setItem(this.tokenKey, res.token);
-        localStorage.setItem(this.usernameKey, res.username);
+        localStorage.setItem(this.emailKey, res.email);
         this.loggedIn.next(true);
       }),
       catchError((error: HttpErrorResponse) => {
@@ -31,7 +31,7 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/google`, { token: googleToken }).pipe(
       tap((res: any) => {
         localStorage.setItem(this.tokenKey, res.token);
-        localStorage.setItem(this.usernameKey, res.username);
+        localStorage.setItem(this.emailKey, res.email);
         this.loggedIn.next(true);
       }),
       catchError((error: HttpErrorResponse) => {
@@ -40,13 +40,13 @@ export class AuthService {
     );
   }
 
-  register(credentials: { username: string; email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }): Observable<any> {
+  register(credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, credentials, { responseType: 'text' as 'json' });
   }
 
   logout() {
     localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.usernameKey);
+    localStorage.removeItem(this.emailKey);
     this.loggedIn.next(false);
     this.router.navigate(['/login']);
   }
@@ -55,8 +55,8 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
-  getUsername(): string | null {
-    return localStorage.getItem(this.usernameKey);
+  getEmail(): string | null {
+    return localStorage.getItem(this.emailKey);
   }
 
   isLoggedIn(): Observable<boolean> {

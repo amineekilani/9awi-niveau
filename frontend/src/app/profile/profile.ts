@@ -9,7 +9,6 @@ declare const feather: any;
 
 interface Profile {
   id: number;
-  username: string;
   email: string;
   provider: string;
   emailVerified: boolean;
@@ -33,7 +32,6 @@ export class ProfileComponent implements OnInit {
   
   // Edit mode
   editMode = false;
-  editUsername = '';
   editEmail = '';
   editFirstName = '';
   editLastName = '';
@@ -77,7 +75,6 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.profile = data;
-          this.editUsername = data.username;
           this.editEmail = data.email;
           this.editFirstName = data.firstName || '';
           this.editLastName = data.lastName || '';
@@ -100,7 +97,6 @@ export class ProfileComponent implements OnInit {
   cancelEdit() {
     this.editMode = false;
     if (this.profile) {
-      this.editUsername = this.profile.username;
       this.editEmail = this.profile.email;
       this.editFirstName = this.profile.firstName || '';
       this.editLastName = this.profile.lastName || '';
@@ -134,7 +130,6 @@ export class ProfileComponent implements OnInit {
     }
 
     const updateData: any = {
-      username: this.editUsername,
       email: this.editEmail,
       firstName: this.editFirstName,
       lastName: this.editLastName,
@@ -159,9 +154,9 @@ export class ProfileComponent implements OnInit {
         this.confirmPassword = '';
         this.loadProfile();
         
-        // Update username in localStorage if changed
-        if (this.editUsername !== this.authService.getUsername()) {
-          localStorage.setItem('auth-username', this.editUsername);
+        // Update email in localStorage if changed
+        if (this.editEmail !== this.authService.getEmail()) {
+          localStorage.setItem('auth-email', this.editEmail);
         }
       },
       error: (error) => {

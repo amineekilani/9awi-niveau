@@ -28,12 +28,11 @@ public class ProfileController {
 
     @GetMapping
     public ResponseEntity<?> getProfile(Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
+        User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         ProfileResponse profile = new ProfileResponse(
                 user.getId(),
-                user.getUsername(),
                 user.getEmail(),
                 user.getProvider(),
                 user.isEmailVerified(),
@@ -47,16 +46,8 @@ public class ProfileController {
 
     @PutMapping
     public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest request, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
+        User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Check if username is being changed and if it's already taken
-        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
-            if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-                return ResponseEntity.badRequest().body(new MessageResponse("Username already exists"));
-            }
-            user.setUsername(request.getUsername());
-        }
 
         // Check if email is being changed and if it's already taken
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
@@ -100,7 +91,7 @@ public class ProfileController {
 
     @PostMapping("/request-delete")
     public ResponseEntity<?> requestAccountDeletion(@RequestBody DeleteAccountRequest request, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
+        User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Verify email matches
@@ -116,7 +107,7 @@ public class ProfileController {
 
         // Send deletion confirmation email
         try {
-            emailService.sendAccountDeletionEmail(user.getEmail(), user.getUsername(), deleteToken);
+            emailService.sendAccountDeletionEmail(user.getEmail(), user.getEmail(), deleteToken);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("Error sending deletion email: " + e.getMessage()));
         }

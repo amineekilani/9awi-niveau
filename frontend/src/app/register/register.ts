@@ -16,7 +16,6 @@ declare const google: any;
   styleUrls: ['./register.css']
 })
 export class RegisterComponent {
-  username = '';
   email = '';
   password = '';
   confirmPassword = '';
@@ -38,7 +37,6 @@ export class RegisterComponent {
     this.success = '';
 
     this.authService.register({ 
-      username: this.username, 
       email: this.email, 
       password: this.password,
       firstName: this.firstName,

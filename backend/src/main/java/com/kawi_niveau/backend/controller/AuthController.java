@@ -34,7 +34,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         // Vérifier si l'utilisateur existe
-        com.kawi_niveau.backend.entity.User user = userRepository.findByUsername(loginRequest.getUsername())
+        com.kawi_niveau.backend.entity.User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElse(null);
 
         // Vérifier si l'utilisateur est un utilisateur local (pas Google OAuth)
@@ -57,7 +57,7 @@ public class AuthController {
 
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtils.generateJwtToken(authentication.getName());
@@ -70,7 +70,7 @@ public class AuthController {
                 userRepository.save(user);
             }
 
-            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getUsername()));
+            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail()));
         } catch (org.springframework.security.core.AuthenticationException e) {
             // Gérer les tentatives échouées
             if (user != null && "local".equals(user.getProvider())) {
@@ -82,7 +82,7 @@ public class AuthController {
                 // Envoyer un email d'alerte après 5 tentatives
                 if (attempts == 5) {
                     try {
-                        emailService.sendFailedLoginAlertEmail(user.getEmail(), user.getUsername(), attempts);
+                        emailService.sendFailedLoginAlertEmail(user.getEmail(), user.getEmail(), attempts);
                     } catch (Exception emailEx) {
                         // Log l'erreur mais ne pas bloquer la réponse
                         System.err.println("Erreur lors de l'envoi de l'email d'alerte: " + emailEx.getMessage());
@@ -109,16 +109,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
-        if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Username already exists"));
-        }
-
         if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
         }
 
         com.kawi_niveau.backend.entity.User user = new com.kawi_niveau.backend.entity.User();
-        user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(encoder.encode(registerRequest.getPassword()));
         user.setProvider("local");
@@ -135,7 +130,7 @@ public class AuthController {
 
         // Send verification email
         try {
-            emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), verificationToken);
+            emailService.sendVerificationEmail(user.getEmail(), user.getEmail(), verificationToken);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("User registered but email sending failed: " + e.getMessage()));
         }
@@ -150,8 +145,8 @@ public class AuthController {
     public ResponseEntity<?> authenticateWithGoogle(@RequestBody com.kawi_niveau.backend.dto.OAuth2LoginRequest request) {
         try {
             com.kawi_niveau.backend.entity.User user = oauth2Service.processGoogleUser(request.getToken());
-            String jwt = jwtUtils.generateJwtToken(user.getUsername());
-            return ResponseEntity.ok(new JwtResponse(jwt, user.getUsername()));
+            String jwt = jwtUtils.generateJwtToken(user.getEmail());
+            return ResponseEntity.ok(new JwtResponse(jwt, user.getEmail()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Google authentication failed: " + e.getMessage()));
         }
@@ -196,7 +191,7 @@ public class AuthController {
 
         // Send reset email
         try {
-            emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), resetToken);
+            emailService.sendPasswordResetEmail(user.getEmail(), user.getEmail(), resetToken);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("Error sending reset email: " + e.getMessage()));
         }

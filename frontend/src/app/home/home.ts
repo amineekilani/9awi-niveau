@@ -13,7 +13,7 @@ declare const feather: any;
   styleUrls: ['./home.css']
 })
 export class HomeComponent implements OnInit {
-  username: string | null = null;
+  email: string | null = null;
 
   constructor(
     private authService: AuthService,
@@ -21,7 +21,7 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.username = this.authService.getUsername();
+    this.email = this.authService.getEmail();
   }
 
   logout() {

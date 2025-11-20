@@ -48,7 +48,6 @@ public class OAuth2Service {
             // Créer un nouvel utilisateur
             User newUser = new User();
             newUser.setEmail(email);
-            newUser.setUsername(email.split("@")[0]); // Utiliser la partie avant @ comme username
             newUser.setProvider("google");
             newUser.setProviderId(googleId);
             newUser.setRole("USER");

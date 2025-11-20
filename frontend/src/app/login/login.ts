@@ -16,7 +16,7 @@ declare const google: any;
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
-  username = '';
+  email = '';
   password = '';
   error = '';
 
@@ -24,7 +24,7 @@ export class LoginComponent {
 
   onSubmit() {
     this.error = ''; // Réinitialiser l'erreur
-    this.authService.login({ username: this.username, password: this.password }).subscribe({
+    this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => this.router.navigate(['/home']),
       error: (err) => {
         console.log('Erreur complète:', err); // Pour déboguer
@@ -37,7 +37,7 @@ export class LoginComponent {
         } else if (err.status === 403) {
           this.error = 'Veuillez vérifier votre adresse email avant de vous connecter.';
         } else if (err.status === 401) {
-          this.error = 'Nom d\'utilisateur ou mot de passe incorrect. Veuillez réessayer.';
+          this.error = 'Email ou mot de passe incorrect. Veuillez réessayer.';
         } else if (err.status === 0) {
           this.error = 'Impossible de se connecter au serveur.';
         } else {

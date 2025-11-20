@@ -7,7 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class ProfileResponse {
     private Long id;
-    private String username;
     private String email;
     private String provider;
     private boolean emailVerified;
