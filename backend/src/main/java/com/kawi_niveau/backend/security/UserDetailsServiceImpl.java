@@ -21,9 +21,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found: " + email));
 
+        // Pour les utilisateurs OAuth (Google), le mot de passe peut être null
+        // On utilise une chaîne vide dans ce cas pour éviter les erreurs
+        String password = user.getPassword() != null ? user.getPassword() : "";
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
-                .password(user.getPassword())
+                .password(password)
                 .authorities("ROLE_" + user.getRole())
                 .build();
     }

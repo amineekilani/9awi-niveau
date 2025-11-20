@@ -86,7 +86,7 @@ public class ProfileController {
 
         userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("Profile updated successfully"));
+        return ResponseEntity.ok(new MessageResponse("Profil mis à jour avec succès"));
     }
 
     @PostMapping("/request-delete")
