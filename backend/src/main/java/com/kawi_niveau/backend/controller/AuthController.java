@@ -33,8 +33,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
-        // Vérifier si l'utilisateur existe
-        com.kawi_niveau.backend.entity.User user = userRepository.findByEmail(loginRequest.getEmail())
+        // Vérifier si l'utilisateur existe et n'est pas archivé
+        com.kawi_niveau.backend.entity.User user = userRepository.findByEmailAndArchivedFalse(loginRequest.getEmail())
                 .orElse(null);
 
         // Vérifier si l'utilisateur est un utilisateur local (pas Google OAuth)
@@ -109,7 +109,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
-        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+        if (userRepository.findByEmailAndArchivedFalse(registerRequest.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
         }
 
@@ -175,7 +175,7 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody com.kawi_niveau.backend.dto.ForgotPasswordRequest request) {
-        com.kawi_niveau.backend.entity.User user = userRepository.findByEmail(request.getEmail())
+        com.kawi_niveau.backend.entity.User user = userRepository.findByEmailAndArchivedFalse(request.getEmail())
                 .orElse(null);
 
         if (user == null) {

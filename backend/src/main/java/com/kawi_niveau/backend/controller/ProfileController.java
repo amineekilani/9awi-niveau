@@ -28,7 +28,7 @@ public class ProfileController {
 
     @GetMapping
     public ResponseEntity<?> getProfile(Authentication authentication) {
-        User user = userRepository.findByEmail(authentication.getName())
+        User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         ProfileResponse profile = new ProfileResponse(
@@ -46,12 +46,12 @@ public class ProfileController {
 
     @PutMapping
     public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest request, Authentication authentication) {
-        User user = userRepository.findByEmail(authentication.getName())
+        User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Check if email is being changed and if it's already taken
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
-            if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            if (userRepository.findByEmailAndArchivedFalse(request.getEmail()).isPresent()) {
                 return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
             }
             user.setEmail(request.getEmail());
@@ -91,7 +91,7 @@ public class ProfileController {
 
     @PostMapping("/request-delete")
     public ResponseEntity<?> requestAccountDeletion(@RequestBody DeleteAccountRequest request, Authentication authentication) {
-        User user = userRepository.findByEmail(authentication.getName())
+        User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Verify email matches
@@ -112,7 +112,7 @@ public class ProfileController {
             return ResponseEntity.status(500).body(new MessageResponse("Error sending deletion email: " + e.getMessage()));
         }
 
-        return ResponseEntity.ok(new MessageResponse("Deletion confirmation email sent. Please check your inbox."));
+        return ResponseEntity.ok(new MessageResponse("Courriel de confirmation de suppression envoyé. Veuillez consulter votre boîte de réception."));
     }
 
     @DeleteMapping("/confirm-delete")
@@ -128,9 +128,13 @@ public class ProfileController {
             return ResponseEntity.badRequest().body(new MessageResponse("Deletion token has expired"));
         }
 
-        // Delete the user
-        userRepository.delete(user);
+        // Archive the user instead of deleting
+        user.setArchived(true);
+        user.setArchivedAt(System.currentTimeMillis());
+        user.setDeleteToken(null);
+        user.setDeleteTokenExpiry(null);
+        userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("Account deleted successfully"));
+        return ResponseEntity.ok(new MessageResponse("Account archived successfully"));
     }
 }

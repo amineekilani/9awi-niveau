@@ -18,7 +18,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndArchivedFalse(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found: " + email));
 
         // Pour les utilisateurs OAuth (Google), le mot de passe peut être null

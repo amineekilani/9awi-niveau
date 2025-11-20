@@ -31,8 +31,8 @@ public class OAuth2Service {
         String googleId = (String) googleUserInfo.get("sub");
         String name = (String) googleUserInfo.get("name");
 
-        // Chercher ou créer l'utilisateur
-        Optional<User> existingUser = userRepository.findByEmail(email);
+        // Chercher ou créer l'utilisateur (exclure les comptes archivés)
+        Optional<User> existingUser = userRepository.findByEmailAndArchivedFalse(email);
         
         if (existingUser.isPresent()) {
             User user = existingUser.get();

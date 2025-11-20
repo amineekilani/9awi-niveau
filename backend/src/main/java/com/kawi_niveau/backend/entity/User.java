@@ -60,4 +60,10 @@ public class User {
 
     @Column(name = "account_locked_until")
     private Long accountLockedUntil;
+
+    @Column(name = "archived")
+    private boolean archived = false;
+
+    @Column(name = "archived_at")
+    private Long archivedAt;
 }
