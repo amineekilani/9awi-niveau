@@ -4,11 +4,13 @@ import com.kawi_niveau.backend.dto.*;
 import com.kawi_niveau.backend.entity.User;
 import com.kawi_niveau.backend.repository.UserRepository;
 import com.kawi_niveau.backend.service.EmailService;
+import com.kawi_niveau.backend.service.ImageUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -26,6 +28,9 @@ public class ProfileController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private ImageUploadService imageUploadService;
+
     @GetMapping
     public ResponseEntity<?> getProfile(Authentication authentication) {
         User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
@@ -38,7 +43,8 @@ public class ProfileController {
                 user.isEmailVerified(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getDateOfBirth()
+                user.getDateOfBirth(),
+                user.getProfileImage()
         );
 
         return ResponseEntity.ok(profile);
@@ -89,6 +95,40 @@ public class ProfileController {
         return ResponseEntity.ok(new MessageResponse("Profil mis à jour avec succès"));
     }
 
+    /**
+     * Upload et met à jour l'image de profil de l'utilisateur
+     * @param file Le fichier image
+     * @param authentication L'authentification de l'utilisateur
+     * @return La réponse avec le nom du fichier
+     */
+    @PostMapping("/upload-image")
+    public ResponseEntity<?> uploadProfileImage(@RequestParam("file") MultipartFile file, Authentication authentication) {
+        try {
+            User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Le fichier est vide"));
+            }
+
+            // Supprimer l'ancienne image si elle existe
+            if (user.getProfileImage() != null && !user.getProfileImage().isEmpty()) {
+                imageUploadService.deleteProfileImage(user.getProfileImage());
+            }
+
+            // Sauvegarder la nouvelle image
+            String filename = imageUploadService.saveProfileImage(file);
+            user.setProfileImage(filename);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(new ImageUploadController.ImageUploadResponse(filename));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("Erreur lors de l'upload: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/request-delete")
     public ResponseEntity<?> requestAccountDeletion(@RequestBody DeleteAccountRequest request, Authentication authentication) {
         User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
@@ -126,6 +166,11 @@ public class ProfileController {
 
         if (user.getDeleteTokenExpiry() < System.currentTimeMillis()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Deletion token has expired"));
+        }
+
+        // Supprimer l'image de profil si elle existe
+        if (user.getProfileImage() != null && !user.getProfileImage().isEmpty()) {
+            imageUploadService.deleteProfileImage(user.getProfileImage());
         }
 
         // Archive the user instead of deleting

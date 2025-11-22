@@ -24,8 +24,40 @@ export class RegisterComponent {
   dateOfBirth = '';
   error = '';
   success = '';
+  
+  // Profile image
+  selectedImageFile: File | null = null;
+  profileImagePreview: string | null = null;
 
   constructor(private authService: AuthService, private router: Router) {}
+
+  onProfileImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      
+      // Validation de taille (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        this.error = 'L\'image ne doit pas dépasser 10MB';
+        return;
+      }
+
+      this.selectedImageFile = file;
+
+      // Créer une prévisualisation
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.profileImagePreview = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  clearProfileImage(event: Event): void {
+    event.stopPropagation();
+    this.selectedImageFile = null;
+    this.profileImagePreview = null;
+  }
 
   onSubmit() {
     if (this.password !== this.confirmPassword) {
@@ -36,6 +68,7 @@ export class RegisterComponent {
     this.error = '';
     this.success = '';
 
+    // D'abord, enregistrer l'utilisateur
     this.authService.register({ 
       email: this.email, 
       password: this.password,
@@ -44,12 +77,36 @@ export class RegisterComponent {
       dateOfBirth: this.dateOfBirth
     }).subscribe({
       next: () => {
-        this.success = 'Un mail a été envoyé, veuillez confirmer votre adresse.';
-        setTimeout(() => this.router.navigate(['/login']), 3000);
+        // Si une image a été sélectionnée, l'uploader après l'inscription
+        if (this.selectedImageFile) {
+          this.uploadProfileImage();
+        } else {
+          this.success = 'Un mail a été envoyé, veuillez confirmer votre adresse.';
+          setTimeout(() => this.router.navigate(['/login']), 3000);
+        }
       },
       error: (err) => {
         console.error('Registration error:', err);
         this.error = 'Erreur lors de l\'inscription. Veuillez réessayer.';
+      }
+    });
+  }
+
+  uploadProfileImage(): void {
+    if (!this.selectedImageFile) {
+      return;
+    }
+
+    this.authService.uploadProfileImage(this.selectedImageFile).subscribe({
+      next: () => {
+        this.success = 'Un mail a été envoyé, veuillez confirmer votre adresse.';
+        setTimeout(() => this.router.navigate(['/login']), 3000);
+      },
+      error: (err) => {
+        console.error('Image upload error:', err);
+        // Même si l'upload d'image échoue, rediriger vers login
+        this.success = 'Un mail a été envoyé, veuillez confirmer votre adresse.';
+        setTimeout(() => this.router.navigate(['/login']), 3000);
       }
     });
   }

@@ -13,4 +13,5 @@ public class ProfileResponse {
     private String firstName;
     private String lastName;
     private String dateOfBirth;
+    private String profileImage;
 }

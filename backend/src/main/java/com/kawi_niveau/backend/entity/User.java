@@ -66,4 +66,7 @@ public class User {
 
     @Column(name = "archived_at")
     private Long archivedAt;
+
+    @Column(name = "profile_image")
+    private String profileImage; // Nom du fichier image de profil
 }

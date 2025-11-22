@@ -15,6 +15,7 @@ interface Profile {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
+  profileImage?: string;
 }
 
 @Component({
@@ -39,6 +40,11 @@ export class ProfileComponent implements OnInit {
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
+  
+  // Profile image
+  selectedImageFile: File | null = null;
+  profileImagePreview: string | null = null;
+  uploadingImage = false;
   
   // Delete mode
   deleteMode = false;
@@ -211,5 +217,66 @@ export class ProfileComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/home']);
+  }
+
+  /**
+   * Gère la sélection d'une image de profil
+   */
+  onProfileImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+
+      // Validation de taille (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        this.errorMessage = 'L\'image ne doit pas dépasser 10MB';
+        return;
+      }
+
+      this.selectedImageFile = file;
+
+      // Créer une prévisualisation
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.profileImagePreview = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  /**
+   * Efface l'image de profil sélectionnée
+   */
+  clearProfileImage(event: Event): void {
+    event.stopPropagation();
+    this.selectedImageFile = null;
+    this.profileImagePreview = null;
+  }
+
+  /**
+   * Upload l'image de profil sélectionnée
+   */
+  uploadProfileImage(): void {
+    if (!this.selectedImageFile) {
+      return;
+    }
+
+    this.uploadingImage = true;
+    this.errorMessage = '';
+
+    this.authService.uploadProfileImage(this.selectedImageFile).subscribe({
+      next: () => {
+        this.message = 'Photo de profil mise à jour avec succès';
+        this.selectedImageFile = null;
+        this.profileImagePreview = null;
+        this.uploadingImage = false;
+        this.loadProfile();
+      },
+      error: (err) => {
+        console.error('Image upload error:', err);
+        this.errorMessage = 'Erreur lors de l\'upload de l\'image. Veuillez réessayer.';
+        this.uploadingImage = false;
+      }
+    });
   }
 }

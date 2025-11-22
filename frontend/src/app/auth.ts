@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
@@ -77,5 +77,23 @@ export class AuthService {
 
   resetPassword(token: string, newPassword: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/reset-password`, { token, newPassword });
+  }
+
+  uploadProfileImage(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const headers = this.getAuthHeaders();
+    return this.http.post('http://localhost:8080/api/profile/upload-image', formData, { headers });
+  }
+
+  private getAuthHeaders() {
+    const token = this.getToken();
+    const headerObj: any = {};
+    if (token) {
+      headerObj['Authorization'] = `Bearer ${token}`;
+    }
+    // Note: Don't set Content-Type, let the browser set it automatically for FormData
+    return new HttpHeaders(headerObj);
   }
 }
