@@ -8,6 +8,9 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password';
 import { ResetPasswordComponent } from './reset-password/reset-password';
 import { ProfileComponent } from './profile/profile';
 import { ConfirmDeleteComponent } from './confirm-delete/confirm-delete';
+import { FormateurDashboardComponent } from './formateur-dashboard/formateur-dashboard';
+import { CoursFormComponent } from './cours-form/cours-form';
+import { CoursListComponent } from './cours-list/cours-list';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -18,5 +21,9 @@ export const routes: Routes = [
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'home', component: HomeComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
-  { path: 'confirm-delete', component: ConfirmDeleteComponent, canActivate: [authGuard] }
+  { path: 'confirm-delete', component: ConfirmDeleteComponent, canActivate: [authGuard] },
+  { path: 'formateur-dashboard', component: FormateurDashboardComponent, canActivate: [authGuard] },
+  { path: 'cours/nouveau', component: CoursFormComponent, canActivate: [authGuard] },
+  { path: 'cours/modifier/:id', component: CoursFormComponent, canActivate: [authGuard] },
+  { path: 'cours', component: CoursListComponent, canActivate: [authGuard] }
 ];

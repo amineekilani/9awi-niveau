@@ -9,6 +9,7 @@ export class AuthService {
   private apiUrl = 'http://localhost:8080/api/auth';
   private tokenKey = 'auth-token';
   private emailKey = 'auth-email';
+  private roleKey = 'auth-role';
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -18,6 +19,7 @@ export class AuthService {
       tap((res: any) => {
         localStorage.setItem(this.tokenKey, res.token);
         localStorage.setItem(this.emailKey, res.email);
+        localStorage.setItem(this.roleKey, res.role);
         this.loggedIn.next(true);
       }),
       catchError((error: HttpErrorResponse) => {
@@ -32,6 +34,7 @@ export class AuthService {
       tap((res: any) => {
         localStorage.setItem(this.tokenKey, res.token);
         localStorage.setItem(this.emailKey, res.email);
+        localStorage.setItem(this.roleKey, res.role);
         this.loggedIn.next(true);
       }),
       catchError((error: HttpErrorResponse) => {
@@ -47,6 +50,7 @@ export class AuthService {
   logout() {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.emailKey);
+    localStorage.removeItem(this.roleKey);
     this.loggedIn.next(false);
     this.router.navigate(['/login']);
   }
@@ -57,6 +61,14 @@ export class AuthService {
 
   getEmail(): string | null {
     return localStorage.getItem(this.emailKey);
+  }
+
+  getRole(): string | null {
+    return localStorage.getItem(this.roleKey);
+  }
+
+  isFormateur(): boolean {
+    return this.getRole() === 'FORMATEUR';
   }
 
   isLoggedIn(): Observable<boolean> {

@@ -50,7 +50,7 @@ public class OAuth2Service {
             newUser.setEmail(email);
             newUser.setProvider("google");
             newUser.setProviderId(googleId);
-            newUser.setRole("USER");
+            newUser.setRole(com.kawi_niveau.backend.entity.Role.ETUDIANT);
             newUser.setEmailVerified(true); // Les utilisateurs Google ont leur email déjà vérifié
             return userRepository.save(newUser);
         }

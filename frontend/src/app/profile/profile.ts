@@ -16,6 +16,7 @@ interface Profile {
   lastName: string;
   dateOfBirth: string;
   profileImage?: string;
+  role: string;
 }
 
 @Component({
@@ -49,6 +50,10 @@ export class ProfileComponent implements OnInit {
   // Delete mode
   deleteMode = false;
   deleteEmail = '';
+  
+  // Role change
+  changingRole = false;
+  newRole = '';
   
   private apiUrl = 'http://localhost:8080/api/profile';
 
@@ -276,6 +281,41 @@ export class ProfileComponent implements OnInit {
         console.error('Image upload error:', err);
         this.errorMessage = 'Erreur lors de l\'upload de l\'image. Veuillez réessayer.';
         this.uploadingImage = false;
+      }
+    });
+  }
+
+  changeRole() {
+    if (!this.newRole) {
+      this.errorMessage = 'Veuillez sélectionner un rôle';
+      return;
+    }
+
+    this.changingRole = true;
+    this.errorMessage = '';
+
+    this.http.put(`${this.apiUrl}/change-role`, 
+      { role: this.newRole },
+      { headers: this.getHeaders() }
+    ).subscribe({
+      next: (response: any) => {
+        this.message = response.message || 'Rôle modifié avec succès';
+        localStorage.setItem('auth-role', this.newRole);
+        this.changingRole = false;
+        this.loadProfile();
+        
+        // Rediriger vers la page appropriée
+        setTimeout(() => {
+          if (this.newRole === 'FORMATEUR') {
+            this.router.navigate(['/formateur-dashboard']);
+          } else {
+            this.router.navigate(['/cours']);
+          }
+        }, 1500);
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Erreur lors du changement de rôle';
+        this.changingRole = false;
       }
     });
   }

@@ -70,7 +70,7 @@ public class AuthController {
                 userRepository.save(user);
             }
 
-            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail()));
+            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail(), user.getRole().name()));
         } catch (org.springframework.security.core.AuthenticationException e) {
             // Gérer les tentatives échouées
             if (user != null && "local".equals(user.getProvider())) {
@@ -146,7 +146,7 @@ public class AuthController {
         try {
             com.kawi_niveau.backend.entity.User user = oauth2Service.processGoogleUser(request.getToken());
             String jwt = jwtUtils.generateJwtToken(user.getEmail());
-            return ResponseEntity.ok(new JwtResponse(jwt, user.getEmail()));
+            return ResponseEntity.ok(new JwtResponse(jwt, user.getEmail(), user.getRole().name()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Google authentication failed: " + e.getMessage()));
         }

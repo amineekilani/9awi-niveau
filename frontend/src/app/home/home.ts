@@ -22,6 +22,13 @@ export class HomeComponent implements OnInit {
 
   ngOnInit() {
     this.email = this.authService.getEmail();
+    
+    // Rediriger selon le rôle
+    if (this.authService.isFormateur()) {
+      this.router.navigate(['/formateur-dashboard']);
+    } else {
+      this.router.navigate(['/cours']);
+    }
   }
 
   logout() {

@@ -44,7 +44,8 @@ public class ProfileController {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getDateOfBirth(),
-                user.getProfileImage()
+                user.getProfileImage(),
+                user.getRole().name()
         );
 
         return ResponseEntity.ok(profile);
@@ -181,5 +182,20 @@ public class ProfileController {
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("Account archived successfully"));
+    }
+
+    @PutMapping("/change-role")
+    public ResponseEntity<?> changeRole(@RequestBody ChangeRoleRequest request, Authentication authentication) {
+        User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        try {
+            com.kawi_niveau.backend.entity.Role newRole = com.kawi_niveau.backend.entity.Role.valueOf(request.getRole());
+            user.setRole(newRole);
+            userRepository.save(user);
+            return ResponseEntity.ok(new MessageResponse("Rôle modifié avec succès"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Rôle invalide. Utilisez ETUDIANT ou FORMATEUR"));
+        }
     }
 }

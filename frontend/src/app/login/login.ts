@@ -25,7 +25,14 @@ export class LoginComponent {
   onSubmit() {
     this.error = ''; // Réinitialiser l'erreur
     this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => {
+        // Rediriger selon le rôle
+        if (this.authService.isFormateur()) {
+          this.router.navigate(['/formateur-dashboard']);
+        } else {
+          this.router.navigate(['/cours']);
+        }
+      },
       error: (err) => {
         console.log('Erreur complète:', err); // Pour déboguer
         
@@ -77,7 +84,14 @@ export class LoginComponent {
   handleGoogleSignIn(response: any): void {
     this.error = '';
     this.authService.loginWithGoogle(response.credential).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => {
+        // Rediriger selon le rôle
+        if (this.authService.isFormateur()) {
+          this.router.navigate(['/formateur-dashboard']);
+        } else {
+          this.router.navigate(['/cours']);
+        }
+      },
       error: (err) => {
         console.log('Erreur Google OAuth:', err);
         if (err.error?.message) {

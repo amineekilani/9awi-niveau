@@ -26,7 +26,9 @@ public class User {
     @Column(name = "date_of_birth")
     private String dateOfBirth;
 
-    private String role = "USER";
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.ETUDIANT;
 
     @Column(name = "provider")
     private String provider; // "local" ou "google"

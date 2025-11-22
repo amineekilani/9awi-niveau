@@ -1,0 +1,46 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-gray-900">Cours disponibles</h1>
+      <div class="flex gap-4">
+        <a *ngIf="authService.isFormateur()" routerLink="/formateur-dashboard" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Mon Dashboard
+        </a>
+        <a routerLink="/profile" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+          Profil
+        </a>
+        <button (click)="logout()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+          Déconnexion
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <!-- Error Message -->
+    <div *ngIf="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+      {{ error }}
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-8">
+      <p class="text-gray-600">Chargement...</p>
+    </div>
+
+    <!-- Cours List -->
+    <div *ngIf="!loading" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div *ngFor="let c of cours" class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-xl font-semibold mb-2">{{ c.titre }}</h3>
+        <p class="text-gray-600 mb-2">{{ c.description }}</p>
+        <p class="text-sm text-gray-500">Formateur: {{ c.formateurNom }}</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && cours.length === 0" class="text-center py-12">
+      <p class="text-gray-600 text-lg">Aucun cours disponible pour le moment</p>
+    </div>
+  </main>
+</div>
