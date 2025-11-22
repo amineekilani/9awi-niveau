@@ -22,6 +22,9 @@ export class RegisterComponent {
   firstName = '';
   lastName = '';
   dateOfBirth = '';
+  // Phone number split: prefix fixed, suffix for the 8 digits
+  phoneNumberPrefix = '+216';
+  phoneNumberSuffix = '';
   error = '';
   success = '';
   
@@ -69,12 +72,15 @@ export class RegisterComponent {
     this.success = '';
 
     // D'abord, enregistrer l'utilisateur
+    const phoneNumber = this.phoneNumberPrefix + (this.phoneNumberSuffix || '');
+
     this.authService.register({ 
       email: this.email, 
       password: this.password,
       firstName: this.firstName,
       lastName: this.lastName,
-      dateOfBirth: this.dateOfBirth
+      dateOfBirth: this.dateOfBirth,
+      phoneNumber: phoneNumber
     }).subscribe({
       next: () => {
         // Si une image a été sélectionnée, l'uploader après l'inscription
@@ -97,7 +103,7 @@ export class RegisterComponent {
       return;
     }
 
-    this.authService.uploadProfileImage(this.selectedImageFile).subscribe({
+    this.authService.uploadProfileImageAfterRegister(this.selectedImageFile, this.email).subscribe({
       next: () => {
         this.success = 'Un mail a été envoyé, veuillez confirmer votre adresse.';
         setTimeout(() => this.router.navigate(['/login']), 3000);

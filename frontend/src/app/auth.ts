@@ -43,7 +43,7 @@ export class AuthService {
     );
   }
 
-  register(credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }): Observable<any> {
+  register(credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string; phoneNumber?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, credentials, { responseType: 'text' as 'json' });
   }
 
@@ -97,6 +97,15 @@ export class AuthService {
     
     const headers = this.getAuthHeaders();
     return this.http.post('http://localhost:8080/api/profile/upload-image', formData, { headers });
+  }
+
+  uploadProfileImageAfterRegister(file: File, email: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('email', email);
+    
+    // No authentication needed for post-registration upload
+    return this.http.post('http://localhost:8080/api/profile/upload-image-after-register', formData);
   }
 
   private getAuthHeaders() {

@@ -15,4 +15,6 @@ public class ProfileResponse {
     private String dateOfBirth;
     private String profileImage;
     private String role;
+    private Long createdAt;
+    private String phoneNumber;
 }

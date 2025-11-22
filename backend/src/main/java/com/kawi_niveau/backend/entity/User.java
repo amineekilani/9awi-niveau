@@ -71,4 +71,10 @@ public class User {
 
     @Column(name = "profile_image")
     private String profileImage; // Nom du fichier image de profil
+
+    @Column(name = "created_at")
+    private Long createdAt; // Timestamp de l'inscription
+
+    @Column(name = "phone_number")
+    private String phoneNumber; // Format: +216XXXXXXXX (8 chiffres après +216)
 }

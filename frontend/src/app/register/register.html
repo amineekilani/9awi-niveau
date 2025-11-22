@@ -68,6 +68,23 @@
       </div>
 
       <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">Numéro de téléphone</label>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium">+216</span>
+          <input
+            type="text"
+            class="input-focus-effect block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            placeholder="12345678"
+            [(ngModel)]="phoneNumberSuffix"
+            name="phoneNumberSuffix"
+            pattern="^\\d{8}$"
+            required
+          />
+        </div>
+        <p class="text-xs text-gray-500">Entrez 8 chiffres (ex: 12345678)</p>
+      </div>
+
+      <div class="space-y-1">
         <label class="text-sm font-medium text-gray-700">Photo de profil (optionnel)</label>
         <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer" (click)="fileInput.click()">
           <input

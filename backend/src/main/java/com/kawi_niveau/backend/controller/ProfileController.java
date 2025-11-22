@@ -45,7 +45,9 @@ public class ProfileController {
                 user.getLastName(),
                 user.getDateOfBirth(),
                 user.getProfileImage(),
-                user.getRole().name()
+               user.getRole().name(),
+               user.getCreatedAt(),
+               user.getPhoneNumber()
         );
 
         return ResponseEntity.ok(profile);
@@ -76,6 +78,9 @@ public class ProfileController {
         if (request.getDateOfBirth() != null) {
             user.setDateOfBirth(request.getDateOfBirth());
         }
+           if (request.getPhoneNumber() != null) {
+               user.setPhoneNumber(request.getPhoneNumber());
+           }
 
         // Update password if provided (only for local users)
         if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
@@ -196,6 +201,44 @@ public class ProfileController {
             return ResponseEntity.ok(new MessageResponse("Rôle modifié avec succès"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Rôle invalide. Utilisez ETUDIANT ou FORMATEUR"));
+        }
+    }
+
+    /**
+     * Endpoint public pour uploader l'image de profil après inscription
+     * Permet à un utilisateur non-authentifié d'uploader une image immédiatement après s'inscrire
+     * @param file Le fichier image
+     * @param email L'email de l'utilisateur
+     * @return La réponse avec le nom du fichier
+     */
+    @PostMapping("/upload-image-after-register")
+    public ResponseEntity<?> uploadProfileImageAfterRegister(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("email") String email) {
+        try {
+            // Trouver l'utilisateur par email
+            User user = userRepository.findByEmailAndArchivedFalse(email)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Le fichier est vide"));
+            }
+
+            // Supprimer l'ancienne image si elle existe
+            if (user.getProfileImage() != null && !user.getProfileImage().isEmpty()) {
+                imageUploadService.deleteProfileImage(user.getProfileImage());
+            }
+
+            // Sauvegarder la nouvelle image
+            String filename = imageUploadService.saveProfileImage(file);
+            user.setProfileImage(filename);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(new ImageUploadController.ImageUploadResponse(filename));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("Erreur lors de l'upload: " + e.getMessage()));
         }
     }
 }

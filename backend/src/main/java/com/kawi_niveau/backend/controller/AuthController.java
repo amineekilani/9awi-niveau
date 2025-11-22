@@ -121,6 +121,8 @@ public class AuthController {
         user.setFirstName(registerRequest.getFirstName());
         user.setLastName(registerRequest.getLastName());
         user.setDateOfBirth(registerRequest.getDateOfBirth());
+        user.setPhoneNumber(registerRequest.getPhoneNumber());
+        user.setCreatedAt(System.currentTimeMillis()); // Set registration date
         
         // Generate verification token
         String verificationToken = java.util.UUID.randomUUID().toString();

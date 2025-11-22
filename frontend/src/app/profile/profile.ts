@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,15 +8,17 @@ import { AuthService } from '../auth';
 declare const feather: any;
 
 interface Profile {
-  id: number;
-  email: string;
-  provider: string;
-  emailVerified: boolean;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
+  id?: number;
+  email?: string;
+  provider?: string;
+  emailVerified?: boolean;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
   profileImage?: string;
-  role: string;
+  role?: string;
+  createdAt?: number;
+  phoneNumber?: string;
 }
 
 @Component({
@@ -26,35 +28,37 @@ interface Profile {
   templateUrl: './profile.html',
   styleUrls: ['./profile.css']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, AfterViewInit {
   profile: Profile | null = null;
   loading = false;
   message = '';
   errorMessage = '';
-  
+
   // Edit mode
   editMode = false;
   editEmail = '';
   editFirstName = '';
   editLastName = '';
   editDateOfBirth = '';
+  // store only suffix (8 digits) without +216
+  editPhoneNumberSuffix = '';
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
-  
+
   // Profile image
   selectedImageFile: File | null = null;
   profileImagePreview: string | null = null;
   uploadingImage = false;
-  
+
   // Delete mode
   deleteMode = false;
   deleteEmail = '';
-  
+
   // Role change
   changingRole = false;
   newRole = '';
-  
+
   private apiUrl = 'http://localhost:8080/api/profile';
 
   constructor(
@@ -75,43 +79,47 @@ export class ProfileComponent implements OnInit {
 
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
+    const headerObj: any = {};
+    if (token) {
+      headerObj['Authorization'] = `Bearer ${token}`;
+    }
+    return new HttpHeaders(headerObj);
   }
 
-  loadProfile() {
+  loadProfile(): void {
     this.loading = true;
     this.http.get<Profile>(this.apiUrl, { headers: this.getHeaders() })
       .subscribe({
         next: (data) => {
           this.profile = data;
-          this.editEmail = data.email;
+          this.editEmail = data.email || '';
           this.editFirstName = data.firstName || '';
           this.editLastName = data.lastName || '';
           this.editDateOfBirth = data.dateOfBirth || '';
+          this.editPhoneNumberSuffix = data.phoneNumber ? data.phoneNumber.replace(/^\+216/, '') : '';
           this.loading = false;
         },
-        error: (error) => {
+        error: () => {
           this.errorMessage = 'Erreur lors du chargement du profil';
           this.loading = false;
         }
       });
   }
 
-  enableEditMode() {
+  enableEditMode(): void {
     this.editMode = true;
     this.message = '';
     this.errorMessage = '';
   }
 
-  cancelEdit() {
+  cancelEdit(): void {
     this.editMode = false;
     if (this.profile) {
-      this.editEmail = this.profile.email;
+      this.editEmail = this.profile.email || '';
       this.editFirstName = this.profile.firstName || '';
       this.editLastName = this.profile.lastName || '';
       this.editDateOfBirth = this.profile.dateOfBirth || '';
+      this.editPhoneNumberSuffix = this.profile.phoneNumber ? this.profile.phoneNumber.replace(/^\+216/, '') : '';
     }
     this.currentPassword = '';
     this.newPassword = '';
@@ -120,7 +128,7 @@ export class ProfileComponent implements OnInit {
     this.errorMessage = '';
   }
 
-  updateProfile() {
+  updateProfile(): void {
     this.message = '';
     this.errorMessage = '';
 
@@ -147,15 +155,19 @@ export class ProfileComponent implements OnInit {
       dateOfBirth: this.editDateOfBirth
     };
 
+    // Include phone number (prefix +216 fixed)
+    if (this.editPhoneNumberSuffix) {
+      updateData.phoneNumber = '+216' + this.editPhoneNumberSuffix;
+    }
+
     if (this.newPassword) {
       updateData.currentPassword = this.currentPassword;
       updateData.newPassword = this.newPassword;
     }
 
     this.loading = true;
-    this.http.put(this.apiUrl, updateData, { 
-      headers: this.getHeaders(),
-      responseType: 'json'
+    this.http.put(this.apiUrl, updateData, {
+      headers: this.getHeaders()
     }).subscribe({
       next: (response: any) => {
         this.message = response.message || 'Profil mis à jour avec succès';
@@ -164,7 +176,7 @@ export class ProfileComponent implements OnInit {
         this.newPassword = '';
         this.confirmPassword = '';
         this.loadProfile();
-        
+
         // Update email in localStorage if changed
         if (this.editEmail !== this.authService.getEmail()) {
           localStorage.setItem('auth-email', this.editEmail);
@@ -177,21 +189,21 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  enableDeleteMode() {
+  enableDeleteMode(): void {
     this.deleteMode = true;
     this.deleteEmail = '';
     this.message = '';
     this.errorMessage = '';
   }
 
-  cancelDelete() {
+  cancelDelete(): void {
     this.deleteMode = false;
     this.deleteEmail = '';
     this.message = '';
     this.errorMessage = '';
   }
 
-  requestAccountDeletion() {
+  requestAccountDeletion(): void {
     if (!this.deleteEmail) {
       this.errorMessage = 'Veuillez entrer votre email';
       return;
@@ -203,7 +215,7 @@ export class ProfileComponent implements OnInit {
     }
 
     this.loading = true;
-    this.http.post(`${this.apiUrl}/request-delete`, 
+    this.http.post(`${this.apiUrl}/request-delete`,
       { email: this.deleteEmail },
       { headers: this.getHeaders() }
     ).subscribe({
@@ -220,7 +232,7 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  goBack() {
+  goBack(): void {
     this.router.navigate(['/home']);
   }
 
@@ -249,18 +261,12 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  /**
-   * Efface l'image de profil sélectionnée
-   */
   clearProfileImage(event: Event): void {
     event.stopPropagation();
     this.selectedImageFile = null;
     this.profileImagePreview = null;
   }
 
-  /**
-   * Upload l'image de profil sélectionnée
-   */
   uploadProfileImage(): void {
     if (!this.selectedImageFile) {
       return;
@@ -285,7 +291,7 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  changeRole() {
+  changeRole(): void {
     if (!this.newRole) {
       this.errorMessage = 'Veuillez sélectionner un rôle';
       return;
@@ -294,7 +300,7 @@ export class ProfileComponent implements OnInit {
     this.changingRole = true;
     this.errorMessage = '';
 
-    this.http.put(`${this.apiUrl}/change-role`, 
+    this.http.put(`${this.apiUrl}/change-role`,
       { role: this.newRole },
       { headers: this.getHeaders() }
     ).subscribe({
@@ -303,7 +309,7 @@ export class ProfileComponent implements OnInit {
         localStorage.setItem('auth-role', this.newRole);
         this.changingRole = false;
         this.loadProfile();
-        
+
         // Rediriger vers la page appropriée
         setTimeout(() => {
           if (this.newRole === 'FORMATEUR') {
@@ -318,5 +324,23 @@ export class ProfileComponent implements OnInit {
         this.changingRole = false;
       }
     });
+  }
+
+  // Format timestamp to French date like '22 Novembre 2025, 14:35'
+  formatDateFrench(ts?: number): string {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    return `${day} ${month.charAt(0).toUpperCase()+month.slice(1)} ${year}, ${hh}:${mm}`;
+  }
+
+  formatPhoneSuffix(profile: Profile | null | undefined): string {
+    if (!profile || !profile.phoneNumber) return 'Non renseigné';
+    return profile.phoneNumber.replace(/^\+216/, '');
   }
 }
