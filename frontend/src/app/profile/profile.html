@@ -1,0 +1,317 @@
+<div id="vanta-bg" class="fixed inset-0 z-0">
+  <div class="particle w-4 h-4 top-10 left-10"></div>
+  <div class="particle w-6 h-6 top-1/3 left-1/4"></div>
+  <div class="particle w-8 h-8 top-2/3 right-1/4"></div>
+  <div class="particle w-5 h-5 bottom-20 left-1/2"></div>
+  <div class="particle w-7 h-7 bottom-10 right-10"></div>
+</div>
+
+<div class="relative z-10 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <button (click)="goBack()" class="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <i data-feather="arrow-left" class="text-primary-500" width="24" height="24"></i>
+          </button>
+          <div class="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center mr-3">
+            <i data-feather="user" class="text-white" width="20" height="20"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-primary-500">Gestion du Profil</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <p class="mt-4 text-gray-600">Chargement...</p>
+      </div>
+
+      <!-- Messages -->
+      <div *ngIf="message" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div class="flex items-center">
+          <i data-feather="check-circle" class="text-green-500 mr-2" width="20" height="20"></i>
+          <p class="text-green-700">{{ message }}</p>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div class="flex items-center">
+          <i data-feather="alert-circle" class="text-red-500 mr-2" width="20" height="20"></i>
+          <p class="text-red-700">{{ errorMessage }}</p>
+        </div>
+      </div>
+
+      <!-- Profile Display Mode -->
+      <div *ngIf="profile && !loading && !editMode && !deleteMode">
+        <div class="flex items-center mb-8">
+          <div *ngIf="profile.profileImage" class="w-20 h-20 rounded-full overflow-hidden mr-4 shadow-lg">
+            <img [src]="'http://localhost:8080/images/users/' + profile.profileImage" alt="Photo de profil" class="w-full h-full object-cover" />
+          </div>
+          <div *ngIf="!profile.profileImage" class="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mr-4">
+            <i data-feather="user" class="text-white" width="40" height="40"></i>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-gray-900">{{ profile.email }}</h2>
+            <p class="text-gray-600 mt-1">Compte {{ profile.provider === 'local' ? 'local' : 'Google' }}</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 mb-8">
+          <div class="border-t border-gray-200 pt-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+                <p class="text-lg text-gray-900">{{ profile.firstName || 'Non renseigné' }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                <p class="text-lg text-gray-900">{{ profile.lastName || 'Non renseigné' }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <div class="flex items-center">
+                  <p class="text-lg text-gray-900 mr-2">{{ profile.email }}</p>
+                  <span *ngIf="profile.emailVerified" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <i data-feather="check" width="12" height="12" class="mr-1"></i>
+                    Vérifié
+                  </span>
+                  <span *ngIf="!profile.emailVerified" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <i data-feather="alert-triangle" width="12" height="12" class="mr-1"></i>
+                    Non vérifié
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Date de naissance</label>
+                <p class="text-lg text-gray-900">{{ profile.dateOfBirth || 'Non renseignée' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <button (click)="enableEditMode()" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all">
+            <i data-feather="edit-2" width="18" height="18"></i>
+            Modifier le profil
+          </button>
+          
+          <button (click)="enableDeleteMode()" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+            <i data-feather="trash-2" width="18" height="18"></i>
+            Supprimer le compte
+          </button>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div *ngIf="editMode && !loading">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6">Modifier le profil</h3>
+        
+        <form (ngSubmit)="updateProfile()" class="space-y-6">
+          <!-- Image de profil -->
+          <div class="border-t border-gray-200 pt-6">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Photo de profil</h4>
+            
+            <div class="flex items-start gap-6">
+              <!-- Affichage actuel -->
+              <div class="flex-shrink-0">
+                <div *ngIf="profile?.profileImage" class="w-24 h-24 rounded-full overflow-hidden shadow-lg">
+                  <img [src]="'http://localhost:8080/images/users/' + (profile?.profileImage || '')" alt="Photo de profil" class="w-full h-full object-cover" />
+                </div>
+                <div *ngIf="!profile?.profileImage" class="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg">
+                  <i data-feather="user" class="text-white" width="40" height="40"></i>
+                </div>
+              </div>
+
+              <!-- Zone d'upload -->
+              <div class="flex-1">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer" (click)="fileInput.click()">
+                  <input
+                    #fileInput
+                    type="file"
+                    class="hidden"
+                    accept="image/*"
+                    (change)="onProfileImageSelected($event)"
+                    name="profileImage"
+                  />
+                  <div *ngIf="!profileImagePreview" class="flex flex-col items-center">
+                    <i data-feather="image" class="text-gray-400 mb-2" width="32" height="32"></i>
+                    <p class="text-sm text-gray-600">Cliquez ou glissez une image</p>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF (max 10MB)</p>
+                  </div>
+                  <div *ngIf="profileImagePreview" class="flex flex-col items-center">
+                    <img [src]="profileImagePreview" class="h-16 w-16 object-cover rounded-lg mb-2" />
+                    <p class="text-sm text-gray-600">{{ selectedImageFile?.name }}</p>
+                    <p class="text-xs text-primary-500 cursor-pointer mt-1" (click)="clearProfileImage($event)">Supprimer</p>
+                  </div>
+                </div>
+
+                <!-- Bouton d'upload d'image -->
+                <button 
+                  *ngIf="selectedImageFile && !uploadingImage"
+                  type="button"
+                  (click)="uploadProfileImage()"
+                  class="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all"
+                >
+                  <i data-feather="upload" width="18" height="18"></i>
+                  Uploader la photo
+                </button>
+
+                <!-- Loading spinner pour upload -->
+                <div *ngIf="uploadingImage" class="mt-4 flex items-center justify-center gap-2 text-primary-500">
+                  <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-500"></div>
+                  <span>Upload en cours...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input 
+              type="email" 
+              [(ngModel)]="editEmail" 
+              name="email"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+              <input 
+                type="text" 
+                [(ngModel)]="editFirstName" 
+                name="firstName"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+              <input 
+                type="text" 
+                [(ngModel)]="editLastName" 
+                name="lastName"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Date de naissance</label>
+            <input 
+              type="date" 
+              [(ngModel)]="editDateOfBirth" 
+              name="dateOfBirth"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
+          <div *ngIf="profile?.provider === 'local'" class="border-t border-gray-200 pt-6">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Changer le mot de passe (optionnel)</h4>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe actuel</label>
+                <input 
+                  type="password" 
+                  [(ngModel)]="currentPassword" 
+                  name="currentPassword"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
+                <input 
+                  type="password" 
+                  [(ngModel)]="newPassword" 
+                  name="newPassword"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
+                <input 
+                  type="password" 
+                  [(ngModel)]="confirmPassword" 
+                  name="confirmPassword"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <button type="submit" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all">
+              <i data-feather="save" width="18" height="18"></i>
+              Enregistrer
+            </button>
+            
+            <button type="button" (click)="cancelEdit()" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+              <i data-feather="x" width="18" height="18"></i>
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Delete Mode -->
+      <div *ngIf="deleteMode && !loading">
+        <div class="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-6">
+          <div class="flex items-start">
+            <i data-feather="alert-triangle" class="text-red-500 mr-3 mt-1" width="24" height="24"></i>
+            <div>
+              <h3 class="text-xl font-bold text-red-900 mb-2">Attention : Action irréversible</h3>
+              <p class="text-red-700 mb-4">
+                La suppression de votre compte est définitive. Toutes vos données seront perdues et ne pourront pas être récupérées.
+              </p>
+              <p class="text-red-700">
+                Pour confirmer, nous vous enverrons un email avec un lien de confirmation. Vous devrez cliquer sur ce lien pour finaliser la suppression.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form (ngSubmit)="requestAccountDeletion()" class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Confirmez votre email pour continuer
+            </label>
+            <input 
+              type="email" 
+              [(ngModel)]="deleteEmail" 
+              name="deleteEmail"
+              placeholder="Entrez votre email"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div class="flex gap-4">
+            <button type="submit" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+              <i data-feather="mail" width="18" height="18"></i>
+              Envoyer l'email de confirmation
+            </button>
+            
+            <button type="button" (click)="cancelDelete()" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+              <i data-feather="x" width="18" height="18"></i>
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
