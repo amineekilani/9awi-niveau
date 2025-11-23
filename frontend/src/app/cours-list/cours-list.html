@@ -34,7 +34,10 @@
       <div *ngFor="let c of cours" class="bg-white rounded-lg shadow p-6">
         <h3 class="text-xl font-semibold mb-2">{{ c.titre }}</h3>
         <p class="text-gray-600 mb-2">{{ c.description }}</p>
-        <p class="text-sm text-gray-500">Formateur: {{ c.formateurNom }}</p>
+        <p class="text-sm text-gray-500 mb-4">Formateur: {{ c.formateurNom }}</p>
+        <a [routerLink]="['/cours', c.id]" class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Voir le cours
+        </a>
       </div>
     </div>
 

@@ -11,6 +11,7 @@ import { ConfirmDeleteComponent } from './confirm-delete/confirm-delete';
 import { FormateurDashboardComponent } from './formateur-dashboard/formateur-dashboard';
 import { CoursFormComponent } from './cours-form/cours-form';
 import { CoursListComponent } from './cours-list/cours-list';
+import { CoursDetailComponent } from './cours-detail/cours-detail';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -25,5 +26,6 @@ export const routes: Routes = [
   { path: 'formateur-dashboard', component: FormateurDashboardComponent, canActivate: [authGuard] },
   { path: 'cours/nouveau', component: CoursFormComponent, canActivate: [authGuard] },
   { path: 'cours/modifier/:id', component: CoursFormComponent, canActivate: [authGuard] },
+  { path: 'cours/:id', component: CoursDetailComponent, canActivate: [authGuard] },
   { path: 'cours', component: CoursListComponent, canActivate: [authGuard] }
 ];
