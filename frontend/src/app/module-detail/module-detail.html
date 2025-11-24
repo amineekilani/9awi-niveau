@@ -431,11 +431,12 @@
                   Options de réponse <span class="text-red-500">*</span>
                 </label>
                 <div class="space-y-3">
-                  <div *ngFor="let option of questionForm.options; let i = index" class="flex gap-2">
+                  <div *ngFor="let option of questionForm.options; let i = index; trackBy: trackByIndex" class="flex gap-2">
                     <input
                       type="text"
                       [(ngModel)]="questionForm.options[i]"
-                      [name]="'option' + i"
+                      [name]="'option_' + i"
+                      [id]="'option_' + i"
                       required
                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                       [placeholder]="'Option ' + (i + 1)"

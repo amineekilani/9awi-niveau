@@ -429,6 +429,10 @@ export class ModuleDetailComponent implements OnInit {
     }
   }
 
+  trackByIndex(index: number): number {
+    return index;
+  }
+
   goBack() {
     this.router.navigate(['/cours', this.module?.coursId]);
   }
