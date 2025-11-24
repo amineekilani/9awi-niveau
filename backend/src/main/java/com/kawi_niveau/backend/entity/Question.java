@@ -69,10 +69,20 @@ public class Question {
     private void deserializeOptions() {
         if (optionsJson != null && !optionsJson.isEmpty()) {
             try {
+                // Essayer d'abord de parser comme JSON
                 ObjectMapper mapper = new ObjectMapper();
                 this.options = mapper.readValue(optionsJson, new TypeReference<List<String>>() {});
             } catch (JsonProcessingException e) {
-                this.options = new ArrayList<>();
+                // Si ce n'est pas du JSON, essayer de splitter par |
+                if (optionsJson.contains("|")) {
+                    String[] optionsArray = optionsJson.split("\\|");
+                    this.options = new ArrayList<>();
+                    for (String option : optionsArray) {
+                        this.options.add(option.trim());
+                    }
+                } else {
+                    this.options = new ArrayList<>();
+                }
             }
         } else {
             this.options = new ArrayList<>();

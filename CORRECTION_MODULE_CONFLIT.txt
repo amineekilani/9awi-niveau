@@ -1,0 +1,90 @@
+================================================================================
+                    CORRECTION - CONFLIT MODULE
+================================================================================
+
+PROBLEME :
+----------
+reference to Module is ambiguous
+both class com.kawi_niveau.backend.entity.Module and class java.lang.Module
+
+CAUSE :
+-------
+L'import wildcard (*) importe Module de l'entité, mais Java a aussi
+java.lang.Module qui entre en conflit.
+
+SOLUTION :
+----------
+Fichier : backend/src/main/java/com/kawi_niveau/backend/service/ModuleProgressService.java
+
+1. Remplacer les imports wildcard par des imports explicites :
+   
+   Avant :
+   import com.kawi_niveau.backend.entity.*;
+   import com.kawi_niveau.backend.repository.*;
+   
+   Après :
+   import com.kawi_niveau.backend.entity.Cours;
+   import com.kawi_niveau.backend.entity.Enrollment;
+   import com.kawi_niveau.backend.entity.Lecon;
+   ... (tous les imports explicites)
+
+2. Spécifier le chemin complet pour Module dans le code :
+   
+   Avant :
+   List<Module> modules = ...
+   for (Module module : modules) {
+   
+   Après :
+   List<com.kawi_niveau.backend.entity.Module> modules = ...
+   for (com.kawi_niveau.backend.entity.Module module : modules) {
+
+================================================================================
+
+FICHIERS CORRIGES :
+-------------------
+✅ ModuleProgressService.java
+
+FICHIERS DEJA CORRIGES PRECEDEMMENT :
+--------------------------------------
+✅ EnrollmentService.java
+✅ Question.java
+✅ QuizService.java
+
+================================================================================
+
+POUR TESTER :
+-------------
+
+1. COMPILER LE BACKEND :
+   cd backend
+   mvnw.cmd clean compile
+   
+   Devrait afficher : BUILD SUCCESS
+
+2. DEMARRER LE BACKEND :
+   mvnw.cmd spring-boot:run
+
+3. RAFRAICHIR LE FRONTEND :
+   Ctrl+F5
+
+4. TESTER :
+   - Se connecter en tant qu'étudiant
+   - Ouvrir un cours
+   - Voir la progression des modules !
+
+================================================================================
+
+VERIFICATION RAPIDE :
+---------------------
+
+# Compiler seulement
+cd backend
+mvnw.cmd clean compile
+
+# Si BUILD SUCCESS → ✅ Tout est OK !
+# Si erreur → Vérifier les logs
+
+================================================================================
+
+                        CORRECTION TERMINEE !
+================================================================================

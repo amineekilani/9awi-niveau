@@ -39,6 +39,32 @@
       <p class="text-gray-600 mt-4">Chargement du cours...</p>
     </div>
 
+    <!-- Enrollment Status & Progress (Étudiant) -->
+    <div *ngIf="!authService.isFormateur() && !loading" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div *ngIf="enrollment" class="flex items-center justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold">
+              {{ enrollment.progress }}%
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">Votre progression</h3>
+              <p class="text-gray-600">{{ enrollment.completedLecons }} / {{ enrollment.totalLecons }} leçons complétées</p>
+            </div>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" [style.width.%]="enrollment.progress"></div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!enrollment" class="text-center py-4">
+        <p class="text-gray-600 mb-4">Vous n'êtes pas encore inscrit à ce cours</p>
+        <button (click)="enrollInCourse()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+          S'inscrire au cours
+        </button>
+      </div>
+    </div>
+
     <!-- Course Description -->
     <div *ngIf="cours && !loading" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
       <div class="flex items-center gap-2 mb-3">
@@ -198,6 +224,51 @@
                 </svg>
                 <span>Supprimer</span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progression pour les étudiants -->
+        <div *ngIf="!authService.isFormateur() && module.id && getModuleProgress(module.id) as progress" class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Progression des leçons -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0">
+                <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-sm font-medium text-gray-700">Leçons</span>
+                  <span class="text-sm font-bold" [class]="progress.leconsCompletees === progress.totalLecons ? 'text-green-600' : 'text-blue-600'">
+                    {{ progress.leconsCompletees }} / {{ progress.totalLecons }}
+                  </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" [style.width.%]="progress.progressionLecons"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Résultat du quiz -->
+            <div *ngIf="progress.hasQuiz" class="flex items-center gap-3">
+              <div class="flex-shrink-0">
+                <svg class="w-6 h-6" [class]="progress.quizPassed ? 'text-green-600' : 'text-gray-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <div class="text-sm font-medium text-gray-700 mb-1">Quiz</div>
+                <div *ngIf="progress.quizPassed" class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-green-600">✓ Passé</span>
+                  <span class="text-sm text-gray-600">Meilleur: {{ progress.bestScore }}%</span>
+                  <span class="text-xs text-gray-500">({{ progress.totalAttempts }} tentative{{ progress.totalAttempts > 1 ? 's' : '' }})</span>
+                </div>
+                <div *ngIf="!progress.quizPassed" class="text-sm text-gray-500">
+                  Pas encore passé
+                </div>
+              </div>
             </div>
           </div>
         </div>

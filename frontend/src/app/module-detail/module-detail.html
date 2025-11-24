@@ -279,6 +279,23 @@
               Votre navigateur ne supporte pas la lecture de vidéos.
             </video>
           </div>
+
+          <!-- Bouton de complétion pour les étudiants -->
+          <div *ngIf="!authService.isFormateur()" class="mt-6 pt-6 border-t border-gray-200">
+            <button 
+              (click)="toggleLeconCompletion(lecon)"
+              [class]="lecon.completed ? 
+                'w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center justify-center gap-2' : 
+                'w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center justify-center gap-2'">
+              <svg *ngIf="lecon.completed" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <svg *ngIf="!lecon.completed" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{{ lecon.completed ? '✓ Leçon complétée' : 'Marquer comme complétée' }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -366,6 +383,29 @@
                 <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
                   {{ quiz.questions?.length || 0 }} question(s)
                 </span>
+                <!-- Bouton Passer le quiz pour les étudiants -->
+                <div *ngIf="!authService.isFormateur() && quiz.questions && quiz.questions.length > 0">
+                  <a *ngIf="allLeconsCompleted()" 
+                     [routerLink]="['/quiz', quiz.id, 'module', moduleId]"
+                     class="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>Passer le quiz</span>
+                  </a>
+                  <button *ngIf="!allLeconsCompleted()" 
+                          disabled
+                          class="px-6 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed inline-flex items-center gap-2 font-medium opacity-60"
+                          title="Complétez toutes les leçons pour débloquer le quiz">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Quiz verrouillé</span>
+                  </button>
+                  <p *ngIf="!allLeconsCompleted()" class="text-sm text-orange-600 mt-2">
+                    ⚠️ Complétez toutes les leçons pour débloquer le quiz
+                  </p>
+                </div>
               </div>
             </div>
             <div *ngIf="authService.isFormateur()" class="flex gap-2 ml-4">
@@ -516,8 +556,8 @@
             </form>
           </div>
 
-          <!-- Questions List -->
-          <div *ngIf="quiz.questions && quiz.questions.length > 0" class="space-y-4">
+          <!-- Questions List (Formateur seulement) -->
+          <div *ngIf="authService.isFormateur() && quiz.questions && quiz.questions.length > 0" class="space-y-4">
             <div *ngFor="let question of quiz.questions; let i = index" class="bg-gray-50 rounded-lg border border-gray-200 p-5">
               <div class="flex justify-between items-start mb-3">
                 <div class="flex items-start gap-3 flex-1">

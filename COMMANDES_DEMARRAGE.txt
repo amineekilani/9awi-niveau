@@ -1,0 +1,69 @@
+================================================================================
+                        COMMANDES DE DEMARRAGE
+================================================================================
+
+ETAPE 1 : MIGRATION SQL
+------------------------
+Ouvrir un terminal MySQL et exécuter :
+
+mysql -u root -p
+
+Puis entrer votre mot de passe, puis :
+
+USE votre_nom_de_database;
+SOURCE C:/Users/bahae/OneDrive/Bureau/9awi-niveau-master/backend/migration_add_enrollments.sql;
+
+OU copier-coller le contenu du fichier migration_add_enrollments.sql
+
+
+ETAPE 2 : DEMARRER LE BACKEND
+------------------------------
+Ouvrir un terminal dans le dossier backend :
+
+cd C:\Users\bahae\OneDrive\Bureau\9awi-niveau-master\backend
+mvnw.cmd spring-boot:run
+
+Attendre le message : "Started BackendApplication in X seconds"
+
+
+ETAPE 3 : DEMARRER LE FRONTEND
+-------------------------------
+Ouvrir un NOUVEAU terminal dans le dossier frontend :
+
+cd C:\Users\bahae\OneDrive\Bureau\9awi-niveau-master\frontend
+npm start
+
+Attendre que le navigateur s'ouvre automatiquement sur http://localhost:4200
+
+
+ETAPE 4 : TESTER
+----------------
+1. Créer un compte étudiant (ou se connecter)
+2. Vous êtes redirigé vers /mes-cours
+3. Cliquer sur "Découvrir des cours"
+4. Cliquer sur "S'inscrire" pour un cours
+5. Cliquer sur "Commencer"
+6. Sélectionner une leçon
+7. Cliquer sur "Marquer comme complétée"
+8. Voir la progression augmenter !
+
+
+VERIFICATION EN BASE DE DONNEES
+--------------------------------
+Pour vérifier que tout fonctionne :
+
+SELECT * FROM enrollments;
+SELECT * FROM lecon_completions;
+
+
+ARRETER LES SERVEURS
+---------------------
+Backend : Ctrl+C dans le terminal backend
+Frontend : Ctrl+C dans le terminal frontend
+
+
+REDEMARRER
+----------
+Répéter les étapes 2 et 3 (pas besoin de refaire la migration SQL)
+
+================================================================================

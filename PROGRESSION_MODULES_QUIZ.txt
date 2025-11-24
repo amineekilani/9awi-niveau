@@ -1,0 +1,198 @@
+================================================================================
+                PROGRESSION MODULES ET RESULTATS QUIZ
+================================================================================
+
+FONCTIONNALITE AJOUTEE :
+-------------------------
+
+Dans la page /cours/:id, pour chaque module, affichage de :
+✅ Progression des leçons (X / Y leçons terminées)
+✅ Barre de progression visuelle
+✅ Statut du quiz (Passé ou Pas encore passé)
+✅ Meilleur score du quiz
+✅ Nombre de tentatives
+
+================================================================================
+
+BACKEND (3 fichiers) :
+----------------------
+
+1. ModuleProgressResponse.java (DTO)
+   - Informations du module
+   - totalLecons, leconsCompletees, progressionLecons
+   - hasQuiz, quizPassed, bestScore, totalAttempts
+
+2. ModuleProgressService.java
+   - Calcule la progression pour chaque module
+   - Récupère les résultats de quiz
+   - Retourne tout en un seul appel
+
+3. ModuleProgressController.java
+   - GET /api/module-progress/cours/{coursId}
+   - Retourne tous les modules avec progression
+
+================================================================================
+
+FRONTEND (2 fichiers) :
+-----------------------
+
+1. module-progress.service.ts
+   - Service Angular pour appeler l'API
+
+2. cours-detail.ts et cours-detail.html (modifiés)
+   - Charge les modules avec progression pour les étudiants
+   - Affiche la progression sous chaque module
+   - Affiche les résultats de quiz
+
+================================================================================
+
+AFFICHAGE POUR LES ETUDIANTS :
+-------------------------------
+
+Pour chaque module :
+
+┌─────────────────────────────────────────────────────────┐
+│ Module 1: Introduction à Spring                         │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│ ✓ Leçons                    Quiz 📋                     │
+│   2 / 3                     ✓ Passé                     │
+│   ████████░░ 66%            Meilleur: 85%               │
+│                             (2 tentatives)               │
+│                                                          │
+├─────────────────────────────────────────────────────────┤
+│ Contenu du module...                                    │
+└─────────────────────────────────────────────────────────┘
+
+LEGENDE :
+- Barre bleue : Progression des leçons
+- ✓ Passé (vert) : Quiz réussi au moins une fois
+- Pas encore passé (gris) : Quiz non tenté
+- Meilleur score : Meilleur résultat parmi toutes les tentatives
+
+================================================================================
+
+POUR LES FORMATEURS :
+---------------------
+
+Pas de changement ! Les formateurs voient les modules normalement sans
+la progression (car ils ne sont pas inscrits aux cours).
+
+================================================================================
+
+API ENDPOINT :
+--------------
+
+GET /api/module-progress/cours/{coursId}
+
+Headers:
+  Authorization: Bearer <token>
+
+Response:
+[
+  {
+    "id": 1,
+    "titre": "Introduction à Spring",
+    "contenu": "...",
+    "ordre": 1,
+    "totalLecons": 3,
+    "leconsCompletees": 2,
+    "progressionLecons": 66.67,
+    "hasQuiz": true,
+    "quizId": 1,
+    "quizTitre": "Quiz Spring",
+    "quizPassed": true,
+    "bestScore": 85.0,
+    "totalAttempts": 2
+  }
+]
+
+================================================================================
+
+LOGIQUE DE CALCUL :
+-------------------
+
+1. PROGRESSION LECONS :
+   - Récupère toutes les leçons du module
+   - Compte celles qui sont dans lecon_completions
+   - Calcule : (complétées / total) × 100
+
+2. RESULTATS QUIZ :
+   - Vérifie si le module a un quiz
+   - Récupère tous les ResultatQuiz de l'utilisateur
+   - Trouve le meilleur score
+   - Compte le nombre de tentatives
+
+================================================================================
+
+POUR TESTER :
+-------------
+
+1. REDEMARRER LE BACKEND :
+   cd backend
+   Ctrl+C
+   mvnw.cmd spring-boot:run
+
+2. RAFRAICHIR LE FRONTEND :
+   Ctrl+F5
+
+3. TEST ETUDIANT :
+   a) Se connecter en tant qu'étudiant
+   b) S'inscrire à un cours
+   c) Ouvrir le cours (/cours/:id)
+   d) Voir la progression sous chaque module :
+      - "0 / 3" si aucune leçon complétée
+      - "Quiz: Pas encore passé" si quiz non tenté
+   
+   e) Ouvrir un module
+   f) Compléter quelques leçons
+   g) Retour au cours
+   h) Voir "2 / 3" avec barre de progression
+   
+   i) Passer le quiz
+   j) Retour au cours
+   k) Voir "✓ Passé - Meilleur: 80%"
+
+================================================================================
+
+AVANTAGES :
+-----------
+
+✅ Vue d'ensemble rapide de la progression
+✅ Motivation visuelle (barres de progression)
+✅ Suivi des résultats de quiz
+✅ Consultation facile des résultats
+✅ Tout en un seul écran
+
+================================================================================
+
+CAS D'UTILISATION "CONSULTER SES RESULTATS" :
+----------------------------------------------
+
+L'étudiant peut maintenant :
+1. Aller sur /cours/:id
+2. Voir immédiatement pour chaque module :
+   - Combien de leçons complétées
+   - Si le quiz est passé
+   - Son meilleur score
+   - Nombre de tentatives
+
+Pour voir les détails d'un quiz :
+1. Aller dans le module
+2. Cliquer "Passer le quiz"
+3. Voir l'historique des tentatives avant de commencer
+
+================================================================================
+
+COMPILATION :
+-------------
+
+✅ Backend : Aucune erreur
+✅ Frontend : Aucune erreur
+✅ Nouveau endpoint fonctionnel
+✅ Interface mise à jour
+
+================================================================================
+
+                        FONCTIONNALITE COMPLETE !
+================================================================================

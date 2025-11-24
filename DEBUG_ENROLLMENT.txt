@@ -1,0 +1,111 @@
+================================================================================
+                        DEBUG - ERREUR ENROLLMENT
+================================================================================
+
+VERIFICATIONS A FAIRE :
+-----------------------
+
+1. BACKEND DEMARRE ?
+   - Vérifier que le backend tourne sur http://localhost:8080
+   - Vérifier les logs du backend pour voir l'erreur
+
+2. MIGRATION SQL EXECUTEE ?
+   - Vérifier que les tables existent :
+     SELECT * FROM enrollments;
+     SELECT * FROM lecon_completions;
+
+3. UTILISATEUR AUTHENTIFIE ?
+   - Vérifier que vous êtes connecté
+   - Vérifier le token JWT dans localStorage
+   - Ouvrir Console (F12) → Application → Local Storage
+
+4. ERREUR DANS LA CONSOLE ?
+   - Ouvrir Console (F12) → Console
+   - Chercher les erreurs en rouge
+   - Copier le message d'erreur complet
+
+5. ERREUR RESEAU ?
+   - Ouvrir Console (F12) → Network
+   - Cliquer sur "S'inscrire"
+   - Chercher la requête POST /api/enrollments
+   - Cliquer dessus et voir la réponse
+
+================================================================================
+
+ERREURS POSSIBLES :
+-------------------
+
+1. "401 Unauthorized" :
+   → Vous n'êtes pas connecté
+   → Token JWT expiré
+   → Solution : Se reconnecter
+
+2. "403 Forbidden" :
+   → Vous n'avez pas les droits
+   → Solution : Vérifier le rôle (doit être ETUDIANT)
+
+3. "404 Not Found" :
+   → L'endpoint n'existe pas
+   → Backend pas démarré
+   → Solution : Démarrer le backend
+
+4. "500 Internal Server Error" :
+   → Erreur côté backend
+   → Migration SQL pas exécutée
+   → Solution : Vérifier les logs backend
+
+5. "Cours non trouvé" :
+   → Le cours n'existe pas en base
+   → Solution : Vérifier que le cours existe
+
+6. "Vous êtes déjà inscrit à ce cours" :
+   → Normal, vous êtes déjà inscrit
+   → Solution : Rafraîchir la page
+
+================================================================================
+
+COMMANDES DE DEBUG :
+--------------------
+
+1. Vérifier les tables :
+   mysql -u root -p
+   USE votre_database;
+   SHOW TABLES LIKE '%enrollment%';
+   SELECT * FROM enrollments;
+
+2. Vérifier le backend :
+   - Regarder les logs du terminal backend
+   - Chercher les erreurs en rouge
+
+3. Vérifier le frontend :
+   - Console (F12) → Console
+   - Chercher les erreurs
+
+4. Tester l'API directement :
+   - Ouvrir Postman ou curl
+   - POST http://localhost:8080/api/enrollments
+   - Headers: Authorization: Bearer <votre_token>
+   - Body: { "coursId": 1 }
+
+================================================================================
+
+SOLUTION RAPIDE :
+-----------------
+
+1. Redémarrer le backend
+2. Rafraîchir la page frontend (Ctrl+F5)
+3. Se reconnecter
+4. Réessayer
+
+================================================================================
+
+BESOIN D'AIDE :
+---------------
+
+Envoie-moi :
+1. Le message d'erreur exact
+2. Les logs de la console (F12)
+3. Les logs du backend
+4. La réponse de la requête Network
+
+================================================================================

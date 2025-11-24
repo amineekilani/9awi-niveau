@@ -210,10 +210,18 @@ public class QuizService {
     }
 
     private QuestionResponse mapQuestionToResponse(Question question) {
+        List<String> options = question.getOptions();
+        System.out.println("=== Mapping Question ===");
+        System.out.println("Question ID: " + question.getId());
+        System.out.println("Question: " + question.getQuestion());
+        System.out.println("Options JSON brut: " + question.getOptionsJson());
+        System.out.println("Options après désérialisation: " + options);
+        System.out.println("Nombre d'options: " + (options != null ? options.size() : 0));
+        
         return new QuestionResponse(
                 question.getId(),
                 question.getQuestion(),
-                question.getOptions(),
+                options,
                 question.getCorrectAnswer(),
                 question.getOrdre(),
                 question.getCreatedAt()

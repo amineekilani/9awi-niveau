@@ -1,0 +1,229 @@
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button (click)="goBack()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ quiz?.titre }}</h1>
+            <p class="text-gray-600">{{ quiz?.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <!-- Error Message -->
+    <div *ngIf="error" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
+      {{ error }}
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent"></div>
+      <p class="text-gray-600 mt-4">Chargement...</p>
+    </div>
+
+    <!-- Quiz Not Started -->
+    <div *ngIf="!loading && !quizStarted && !quizFinished" class="max-w-3xl mx-auto">
+      <div class="bg-white rounded-xl shadow-lg p-8">
+        <div class="text-center mb-8">
+          <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ quiz?.titre }}</h2>
+          <p class="text-gray-600">{{ quiz?.description }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+          <div class="bg-purple-50 rounded-lg p-4 text-center">
+            <div class="text-3xl font-bold text-purple-600">{{ questions.length }}</div>
+            <div class="text-sm text-gray-600">Questions</div>
+          </div>
+          <div *ngIf="bestScore" class="bg-green-50 rounded-lg p-4 text-center">
+            <div class="text-3xl font-bold text-green-600">{{ bestScore.score }}%</div>
+            <div class="text-sm text-gray-600">Meilleur score</div>
+          </div>
+        </div>
+
+        <!-- Previous Attempts -->
+        <div *ngIf="previousAttempts.length > 0" class="mb-8">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Tentatives précédentes</h3>
+          <div class="space-y-2">
+            <div *ngFor="let attempt of previousAttempts.slice(0, 3)" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span class="text-sm text-gray-600">{{ formatDate(attempt.datePassed) }}</span>
+              <span class="font-semibold" [class]="getScoreColor(attempt.score)">{{ attempt.score }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <button (click)="startQuiz()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-semibold text-lg shadow-lg">
+          {{ previousAttempts.length > 0 ? 'Recommencer le quiz' : 'Commencer le quiz' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Quiz In Progress -->
+    <div *ngIf="quizStarted && !quizFinished" class="max-w-4xl mx-auto">
+      <!-- Progress Bar -->
+      <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-700">Question {{ currentQuestionIndex + 1 }} / {{ questions.length }}</span>
+          <span class="text-sm font-medium text-gray-700">{{ getAnsweredCount() }} / {{ questions.length }} répondues</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="bg-gradient-to-r from-purple-600 to-blue-600 h-3 rounded-full transition-all duration-300" [style.width.%]="getProgress()"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div *ngIf="getCurrentQuestion() as question" class="bg-white rounded-xl shadow-lg p-8">
+        <div class="mb-8">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="flex items-center justify-center w-10 h-10 bg-purple-600 text-white rounded-full font-bold">
+              {{ currentQuestionIndex + 1 }}
+            </span>
+            <h3 class="text-2xl font-bold text-gray-900">{{ question.question }}</h3>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="space-y-3 mb-8">
+          <div *ngIf="!question.options || question.options.length === 0" class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+            ⚠️ Aucune option disponible pour cette question. Veuillez contacter le formateur.
+          </div>
+          <div *ngFor="let option of question.options; let i = index" 
+               (click)="selectReponse(question.id!, option)"
+               [class]="reponses[question.id!] === option ? 
+                 'border-purple-600 bg-purple-50' : 
+                 'border-gray-300 hover:border-purple-300'"
+               class="p-4 border-2 rounded-lg cursor-pointer transition-all">
+            <div class="flex items-center gap-3">
+              <div [class]="reponses[question.id!] === option ? 
+                     'border-purple-600 bg-purple-600' : 
+                     'border-gray-300'"
+                   class="w-6 h-6 rounded-full border-2 flex items-center justify-center">
+                <div *ngIf="reponses[question.id!] === option" class="w-3 h-3 bg-white rounded-full"></div>
+              </div>
+              <span class="text-lg" [class]="reponses[question.id!] === option ? 'font-semibold text-purple-900' : 'text-gray-700'">
+                {{ option }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-between items-center">
+          <button (click)="previousQuestion()" 
+                  [disabled]="currentQuestionIndex === 0"
+                  class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            ← Précédent
+          </button>
+
+          <button *ngIf="currentQuestionIndex < questions.length - 1" 
+                  (click)="nextQuestion()"
+                  class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all">
+            Suivant →
+          </button>
+
+          <button *ngIf="currentQuestionIndex === questions.length - 1" 
+                  (click)="submitQuiz()"
+                  [disabled]="!canSubmit()"
+                  class="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold">
+            Valider le quiz
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Results -->
+    <div *ngIf="quizFinished && resultat" class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-xl shadow-lg p-8">
+        <!-- Score Display -->
+        <div class="text-center mb-8">
+          <div class="w-32 h-32 mx-auto mb-6 rounded-full flex items-center justify-center" 
+               [class]="getScoreBgColor(resultat.score)">
+            <div class="text-5xl font-bold" [class]="getScoreColor(resultat.score)">
+              {{ resultat.score }}%
+            </div>
+          </div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            {{ resultat.score >= 80 ? 'Excellent !' : resultat.score >= 60 ? 'Bien joué !' : 'Continuez vos efforts !' }}
+          </h2>
+          <p class="text-gray-600">{{ resultat.reponsesCorrectes }} / {{ resultat.nombreQuestions }} réponses correctes</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+          <div class="bg-purple-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-purple-600">{{ resultat.score }}%</div>
+            <div class="text-sm text-gray-600">Score</div>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-blue-600">{{ resultat.reponsesCorrectes }}/{{ resultat.nombreQuestions }}</div>
+            <div class="text-sm text-gray-600">Correctes</div>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-600">{{ formatTime(resultat.tempsPasse) }}</div>
+            <div class="text-sm text-gray-600">Temps</div>
+          </div>
+        </div>
+
+        <!-- Detailed Results -->
+        <div *ngIf="resultat.details && resultat.details.length > 0" class="mb-8">
+          <h3 class="text-xl font-bold text-gray-900 mb-4">Détails des réponses</h3>
+          <div class="space-y-4">
+            <div *ngFor="let detail of resultat.details; let i = index" 
+                 class="p-4 rounded-lg border-2"
+                 [class]="detail.correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'">
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                  <div *ngIf="detail.correct" class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div *ngIf="!detail.correct" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="font-semibold text-gray-900 mb-2">Question {{ i + 1 }}: {{ detail.question }}</p>
+                  <p class="text-sm text-gray-700 mb-1">
+                    <span class="font-medium">Votre réponse:</span> 
+                    <span [class]="detail.correct ? 'text-green-700' : 'text-red-700'">{{ detail.reponseUtilisateur }}</span>
+                  </p>
+                  <p *ngIf="!detail.correct" class="text-sm text-gray-700">
+                    <span class="font-medium">Réponse correcte:</span> 
+                    <span class="text-green-700">{{ detail.reponseCorrecte }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4">
+          <button (click)="retryQuiz()" class="flex-1 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all font-semibold">
+            Réessayer
+          </button>
+          <button (click)="goBack()" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-semibold">
+            Retour au module
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

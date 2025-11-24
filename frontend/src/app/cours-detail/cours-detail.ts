@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CoursService, Cours } from '../cours.service';
 import { ModuleService, Module } from '../module.service';
+import { EnrollmentService, Enrollment } from '../enrollment.service';
+import { ModuleProgressService, ModuleProgress } from '../module-progress.service';
 import { AuthService } from '../auth';
 
 @Component({
@@ -16,10 +18,12 @@ import { AuthService } from '../auth';
 export class CoursDetailComponent implements OnInit {
   cours: Cours | null = null;
   modules: Module[] = [];
+  modulesProgress: ModuleProgress[] = [];
   coursId!: number;
   loading = false;
   error = '';
   success = '';
+  enrollment: Enrollment | null = null;
 
   // Module form
   showModuleForm = false;
@@ -33,6 +37,8 @@ export class CoursDetailComponent implements OnInit {
   constructor(
     private coursService: CoursService,
     private moduleService: ModuleService,
+    private enrollmentService: EnrollmentService,
+    private moduleProgressService: ModuleProgressService,
     public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
@@ -42,6 +48,35 @@ export class CoursDetailComponent implements OnInit {
     this.coursId = Number(this.route.snapshot.paramMap.get('id'));
     this.loadCours();
     this.loadModules();
+    if (!this.authService.isFormateur()) {
+      this.loadEnrollment();
+    }
+  }
+
+  loadEnrollment() {
+    this.enrollmentService.getEnrollmentDetails(this.coursId).subscribe({
+      next: (data) => {
+        this.enrollment = data;
+      },
+      error: (err) => {
+        // Pas inscrit, proposer l'inscription
+        console.log('Pas inscrit à ce cours');
+      }
+    });
+  }
+
+  enrollInCourse() {
+    this.enrollmentService.enrollInCourse(this.coursId).subscribe({
+      next: () => {
+        this.success = 'Inscription réussie !';
+        this.loadEnrollment();
+        setTimeout(() => this.success = '', 3000);
+      },
+      error: (err) => {
+        this.error = err.error?.message || 'Erreur lors de l\'inscription';
+        setTimeout(() => this.error = '', 3000);
+      }
+    });
   }
 
   loadCours() {
@@ -59,14 +94,33 @@ export class CoursDetailComponent implements OnInit {
   }
 
   loadModules() {
-    this.moduleService.getModulesByCours(this.coursId).subscribe({
-      next: (data) => {
-        this.modules = data;
-      },
-      error: (err) => {
-        this.error = 'Erreur lors du chargement des modules';
-      }
-    });
+    if (!this.authService.isFormateur()) {
+      // Pour les étudiants, charger avec progression
+      this.moduleProgressService.getModulesWithProgress(this.coursId).subscribe({
+        next: (data) => {
+          this.modulesProgress = data;
+          this.modules = data; // Pour compatibilité avec le template
+        },
+        error: (err) => {
+          this.error = 'Erreur lors du chargement des modules';
+        }
+      });
+    } else {
+      // Pour les formateurs, charger normalement
+      this.moduleService.getModulesByCours(this.coursId).subscribe({
+        next: (data) => {
+          this.modules = data;
+        },
+        error: (err) => {
+          this.error = 'Erreur lors du chargement des modules';
+        }
+      });
+    }
+  }
+
+  getModuleProgress(moduleId: number | undefined): ModuleProgress | null {
+    if (!moduleId) return null;
+    return this.modulesProgress.find(m => m.id === moduleId) || null;
   }
 
   isOwner(): boolean {

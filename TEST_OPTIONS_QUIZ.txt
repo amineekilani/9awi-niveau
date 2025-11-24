@@ -1,0 +1,133 @@
+================================================================================
+                        TEST RAPIDE - OPTIONS QUIZ
+================================================================================
+
+ETAPE 1 : REDEMARRER LE BACKEND (OBLIGATOIRE !)
+------------------------------------------------
+
+cd backend
+Ctrl+C (arrêter le backend)
+mvnw.cmd spring-boot:run
+
+Attendre : "Started BackendApplication"
+
+
+ETAPE 2 : RAFRAICHIR LE FRONTEND
+---------------------------------
+
+Dans le navigateur : Ctrl+F5 (ou Ctrl+Shift+R)
+
+
+ETAPE 3 : TESTER LE QUIZ
+-------------------------
+
+1. Se connecter en tant qu'étudiant
+
+2. Aller sur un cours → Module avec quiz
+
+3. Compléter TOUTES les leçons
+   (cliquer "Marquer comme complétée" sur chaque leçon)
+
+4. Le bouton "Passer le quiz" se débloque
+
+5. Cliquer sur "Passer le quiz"
+
+6. Cliquer "Commencer le quiz"
+
+7. VERIFIER :
+   ✅ La question s'affiche
+   ✅ Les OPTIONS s'affichent (Spring, Spring Boot, etc.)
+   ✅ On peut cliquer sur une option
+   ✅ Le radio button se sélectionne
+   ✅ On peut naviguer avec "Suivant"
+
+
+ETAPE 4 : VERIFIER LES LOGS BACKEND
+------------------------------------
+
+Dans le terminal backend, chercher :
+
+=== Mapping Question ===
+Question ID: 1
+Question: Quel framework Java ?
+Options JSON brut: Spring|Spring Boot|JPA|Hibernate
+Options après désérialisation: [Spring, Spring Boot, JPA, Hibernate]
+Nombre d'options: 4
+
+Si vous voyez ça → ✅ TOUT FONCTIONNE !
+
+
+ETAPE 5 : VERIFIER LA CONSOLE FRONTEND
+---------------------------------------
+
+F12 → Console
+
+Chercher :
+"Quiz chargé:"
+"Questions:"
+"Options de la première question: ["Spring", "Spring Boot", ...]"
+
+Si vous voyez les options → ✅ TOUT FONCTIONNE !
+
+
+================================================================================
+
+RESULTATS ATTENDUS :
+--------------------
+
+✅ Questions cachées dans module-detail (sauf pour formateur)
+✅ Quiz verrouillé si leçons non complétées
+✅ Quiz débloqué si toutes leçons complétées
+✅ Options affichées dans le quiz-viewer
+✅ Radio buttons cliquables
+✅ Navigation entre questions
+✅ Validation et résultat
+
+================================================================================
+
+SI LES OPTIONS NE S'AFFICHENT TOUJOURS PAS :
+---------------------------------------------
+
+1. Vérifier les logs backend :
+   - Chercher "Options après désérialisation:"
+   - Si vide [] → Vérifier la base de données
+
+2. Vérifier la base de données :
+   mysql -u root -p
+   USE votre_database;
+   SELECT id, question, options FROM question LIMIT 5;
+   
+   Les options doivent contenir des "|" :
+   "Option1|Option2|Option3"
+
+3. Si les options sont NULL ou vides :
+   - Le formateur doit recréer les questions
+   - Ou mettre à jour manuellement :
+     UPDATE question 
+     SET options = 'Spring|Spring Boot|JPA|Hibernate' 
+     WHERE id = 1;
+
+================================================================================
+
+EXEMPLE COMPLET DE TEST :
+-------------------------
+
+1. Backend démarré ✅
+2. Frontend rafraîchi ✅
+3. Connexion étudiant ✅
+4. Cours → Module ✅
+5. Toutes leçons complétées ✅
+6. "Passer le quiz" cliqué ✅
+7. "Commencer le quiz" cliqué ✅
+8. Question affichée ✅
+9. OPTIONS AFFICHEES ✅ ← OBJECTIF
+10. Option sélectionnée ✅
+11. "Suivant" cliqué ✅
+12. Toutes questions répondues ✅
+13. "Valider le quiz" cliqué ✅
+14. Résultat affiché ✅
+
+================================================================================
+
+                        BONNE CHANCE ! 🚀
+================================================================================

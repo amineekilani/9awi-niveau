@@ -1,0 +1,187 @@
+================================================================================
+                    CORRECTION - OPTIONS QUIZ (FORMAT PIPE)
+================================================================================
+
+PROBLEME IDENTIFIE :
+--------------------
+
+Les options sont stockées dans la base de données comme :
+"Spring|Spring Boot|JPA|Hibernate"
+
+Mais le code essayait de les parser comme JSON :
+["Spring", "Spring Boot", "JPA", "Hibernate"]
+
+================================================================================
+
+SOLUTION APPLIQUEE :
+--------------------
+
+Fichier : backend/src/main/java/com/kawi_niveau/backend/entity/Question.java
+
+Méthode deserializeOptions() modifiée pour gérer les deux formats :
+
+1. Essayer d'abord de parser comme JSON
+2. Si échec, vérifier si contient "|"
+3. Si oui, splitter par "|" et créer un tableau
+4. Sinon, retourner tableau vide
+
+Code :
+```java
+private void deserializeOptions() {
+    if (optionsJson != null && !optionsJson.isEmpty()) {
+        try {
+            // Essayer JSON
+            ObjectMapper mapper = new ObjectMapper();
+            this.options = mapper.readValue(optionsJson, ...);
+        } catch (JsonProcessingException e) {
+            // Sinon splitter par |
+            if (optionsJson.contains("|")) {
+                String[] optionsArray = optionsJson.split("\\|");
+                this.options = new ArrayList<>();
+                for (String option : optionsArray) {
+                    this.options.add(option.trim());
+                }
+            }
+        }
+    }
+}
+```
+
+================================================================================
+
+LOGS AJOUTES :
+--------------
+
+Fichier : backend/src/main/java/com/kawi_niveau/backend/service/QuizService.java
+
+Dans mapQuestionToResponse() :
+- Question ID
+- Question texte
+- Options JSON brut (ex: "Spring|Spring Boot|JPA|Hibernate")
+- Options après désérialisation (ex: [Spring, Spring Boot, JPA, Hibernate])
+- Nombre d'options
+
+Ces logs permettent de vérifier que la conversion fonctionne.
+
+================================================================================
+
+POUR TESTER :
+-------------
+
+1. REDEMARRER LE BACKEND (IMPORTANT !) :
+   cd backend
+   Ctrl+C
+   mvnw.cmd spring-boot:run
+
+2. RAFRAICHIR LE FRONTEND :
+   Ctrl+F5
+
+3. OUVRIR UN MODULE AVEC QUIZ :
+   - Compléter toutes les leçons
+   - Cliquer "Passer le quiz"
+
+4. VERIFIER LES LOGS BACKEND :
+   Dans le terminal backend, chercher :
+   "=== Mapping Question ==="
+   "Options JSON brut: Spring|Spring Boot|JPA|Hibernate"
+   "Options après désérialisation: [Spring, Spring Boot, JPA, Hibernate]"
+   "Nombre d'options: 4"
+
+5. VERIFIER LE FRONTEND :
+   - Les options doivent s'afficher
+   - Vous pouvez cliquer dessus
+   - Le radio button se sélectionne
+
+================================================================================
+
+EXEMPLE DE CONVERSION :
+-----------------------
+
+Base de données (colonne options) :
+"Spring|Spring Boot|JPA|Hibernate"
+
+Après désérialisation :
+[
+  "Spring",
+  "Spring Boot",
+  "JPA",
+  "Hibernate"
+]
+
+Envoyé au frontend :
+{
+  "id": 1,
+  "question": "Quel framework Java ?",
+  "options": ["Spring", "Spring Boot", "JPA", "Hibernate"],
+  "correctAnswer": "Spring Boot"
+}
+
+Affiché dans le quiz-viewer :
+○ Spring
+○ Spring Boot
+○ JPA
+○ Hibernate
+
+================================================================================
+
+SI CA NE FONCTIONNE TOUJOURS PAS :
+-----------------------------------
+
+1. Vérifier les logs backend :
+   - Si "Options après désérialisation: []" → Problème de parsing
+   - Si "Options après désérialisation: [Spring, ...]" → OK backend
+
+2. Vérifier la console frontend (F12) :
+   - Chercher "Options de la première question:"
+   - Doit afficher : ["Spring", "Spring Boot", ...]
+
+3. Vérifier la base de données :
+   SELECT id, question, options FROM question WHERE quiz_id = X;
+   
+   Les options doivent contenir des "|" :
+   "Option1|Option2|Option3"
+
+4. Si les options sont vides en base :
+   - Le formateur doit recréer les questions
+   - Ou mettre à jour manuellement :
+     UPDATE question SET options = 'A|B|C|D' WHERE id = X;
+
+================================================================================
+
+FORMATS SUPPORTES MAINTENANT :
+-------------------------------
+
+✅ Format JSON (nouveau) :
+   ["Option A", "Option B", "Option C"]
+
+✅ Format PIPE (existant) :
+   "Option A|Option B|Option C"
+
+✅ Format PIPE avec espaces :
+   "Option A | Option B | Option C"
+   (les espaces sont automatiquement supprimés avec .trim())
+
+================================================================================
+
+VERIFICATION RAPIDE :
+---------------------
+
+# Vérifier une question en base
+mysql -u root -p
+USE votre_database;
+SELECT id, question, options, correct_answer FROM question LIMIT 1;
+
+# Exemple de résultat attendu :
+# id | question              | options                           | correct_answer
+# 1  | Quel framework Java ? | Spring|Spring Boot|JPA|Hibernate | Spring Boot
+
+================================================================================
+
+                        CORRECTION TERMINEE !
+================================================================================
+
+PROCHAINES ETAPES :
+1. Redémarrer le backend
+2. Tester le quiz
+3. Vérifier les logs
+4. Si ça marche, supprimer les console.log du frontend

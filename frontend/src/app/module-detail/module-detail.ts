@@ -5,7 +5,12 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ModuleService, Module } from '../module.service';
 import { LeconService, Lecon } from '../lecon.service';
 import { QuizService, Quiz, Question } from '../quiz.service';
+import { EnrollmentService } from '../enrollment.service';
 import { AuthService } from '../auth';
+
+interface LeconWithCompletion extends Lecon {
+  completed?: boolean;
+}
 
 @Component({
   selector: 'app-module-detail',
@@ -16,12 +21,14 @@ import { AuthService } from '../auth';
 })
 export class ModuleDetailComponent implements OnInit {
   module: Module | null = null;
-  lecons: Lecon[] = [];
+  lecons: LeconWithCompletion[] = [];
   quiz: Quiz | null = null;
   moduleId!: number;
+  coursId!: number;
   loading = false;
   error = '';
   success = '';
+  completedLeconIds: Set<number> = new Set();
 
   // Lecon form
   showLeconForm = false;
@@ -58,6 +65,7 @@ export class ModuleDetailComponent implements OnInit {
     private moduleService: ModuleService,
     private leconService: LeconService,
     private quizService: QuizService,
+    private enrollmentService: EnrollmentService,
     public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
@@ -66,8 +74,6 @@ export class ModuleDetailComponent implements OnInit {
   ngOnInit() {
     this.moduleId = Number(this.route.snapshot.paramMap.get('id'));
     this.loadModule();
-    this.loadLecons();
-    this.loadQuiz();
   }
 
   loadModule() {
@@ -75,6 +81,10 @@ export class ModuleDetailComponent implements OnInit {
     this.moduleService.getModuleById(this.moduleId).subscribe({
       next: (data) => {
         this.module = data;
+        this.coursId = data.coursId!;
+        this.loadCompletedLecons();
+        this.loadLecons();
+        this.loadQuiz();
         this.loading = false;
       },
       error: (err) => {
@@ -84,15 +94,74 @@ export class ModuleDetailComponent implements OnInit {
     });
   }
 
+  loadCompletedLecons() {
+    if (!this.authService.isFormateur()) {
+      this.enrollmentService.getCompletedLeconIds(this.coursId).subscribe({
+        next: (ids) => {
+          this.completedLeconIds = new Set(ids);
+          // Mettre à jour les leçons si déjà chargées
+          this.lecons.forEach(lecon => {
+            lecon.completed = this.completedLeconIds.has(lecon.id!);
+          });
+        },
+        error: (err) => {
+          console.error('Erreur chargement completions:', err);
+        }
+      });
+    }
+  }
+
+  allLeconsCompleted(): boolean {
+    if (this.lecons.length === 0) return false;
+    return this.lecons.every(lecon => lecon.completed);
+  }
+
   loadLecons() {
     this.leconService.getLeconsByModule(this.moduleId).subscribe({
       next: (data) => {
-        this.lecons = data;
+        this.lecons = data.map(lecon => ({
+          ...lecon,
+          completed: this.completedLeconIds.has(lecon.id!)
+        }));
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des leçons';
       }
     });
+  }
+
+  toggleLeconCompletion(lecon: LeconWithCompletion) {
+    if (this.authService.isFormateur()) return;
+
+    if (lecon.completed) {
+      // Démarquer
+      this.enrollmentService.unmarkLeconAsCompleted(this.coursId, lecon.id!).subscribe({
+        next: () => {
+          lecon.completed = false;
+          this.completedLeconIds.delete(lecon.id!);
+          this.success = 'Leçon démarquée';
+          setTimeout(() => this.success = '', 2000);
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la mise à jour';
+          setTimeout(() => this.error = '', 3000);
+        }
+      });
+    } else {
+      // Marquer comme complétée
+      this.enrollmentService.markLeconAsCompleted(this.coursId, lecon.id!).subscribe({
+        next: () => {
+          lecon.completed = true;
+          this.completedLeconIds.add(lecon.id!);
+          this.success = 'Leçon marquée comme complétée !';
+          setTimeout(() => this.success = '', 2000);
+        },
+        error: (err) => {
+          this.error = err.error?.message || 'Erreur lors de la mise à jour';
+          setTimeout(() => this.error = '', 3000);
+        }
+      });
+    }
   }
 
   openLeconForm() {
