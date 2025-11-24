@@ -1,0 +1,228 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <button (click)="goBack()" class="mr-4 p-2 hover:bg-gray-100 rounded-lg">
+            ← Retour au cours
+          </button>
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ module?.titre }}</h1>
+            <p class="text-gray-600 mt-1">{{ module?.contenu }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <!-- Messages -->
+    <div *ngIf="success" class="mb-4 p-4 bg-green-100 text-green-700 rounded">
+      {{ success }}
+    </div>
+
+    <div *ngIf="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+      {{ error }}
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-8">
+      <p class="text-gray-600">Chargement...</p>
+    </div>
+
+    <!-- Add Lecon Button (Formateur only) -->
+    <div *ngIf="authService.isFormateur() && !showLeconForm" class="mb-6">
+      <button (click)="openLeconForm()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        + Ajouter une leçon
+      </button>
+    </div>
+
+    <!-- Lecon Form -->
+    <div *ngIf="showLeconForm" class="bg-white rounded-lg shadow p-6 mb-6">
+      <h3 class="text-xl font-semibold mb-4">
+        {{ editingLecon ? 'Modifier la leçon' : 'Nouvelle leçon' }}
+      </h3>
+
+      <form (ngSubmit)="saveLecon()" #leconFormRef="ngForm">
+        <div class="mb-4">
+          <label for="titre" class="block text-sm font-medium text-gray-700 mb-2">
+            Titre de la leçon *
+          </label>
+          <input
+            type="text"
+            id="titre"
+            name="titre"
+            [(ngModel)]="leconForm.titre"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ex: Introduction aux variables"
+          />
+        </div>
+
+        <div class="mb-4">
+          <label for="typeContenu" class="block text-sm font-medium text-gray-700 mb-2">
+            Type de contenu *
+          </label>
+          <select
+            id="typeContenu"
+            name="typeContenu"
+            [(ngModel)]="leconForm.typeContenu"
+            required
+            [disabled]="editingLecon !== null"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="TEXTE">📝 Texte</option>
+            <option value="PDF">📄 PDF</option>
+            <option value="IMAGE">🖼️ Image</option>
+            <option value="VIDEO">🎥 Vidéo</option>
+          </select>
+        </div>
+
+        <!-- Contenu Texte -->
+        <div *ngIf="leconForm.typeContenu === 'TEXTE'" class="mb-4">
+          <label for="contenuTexte" class="block text-sm font-medium text-gray-700 mb-2">
+            Contenu
+          </label>
+          <textarea
+            id="contenuTexte"
+            name="contenuTexte"
+            [(ngModel)]="leconForm.contenuTexte"
+            rows="10"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Contenu de la leçon..."
+          ></textarea>
+        </div>
+
+        <!-- File Upload -->
+        <div *ngIf="leconForm.typeContenu !== 'TEXTE' && !editingLecon" class="mb-4">
+          <label for="file" class="block text-sm font-medium text-gray-700 mb-2">
+            Fichier *
+          </label>
+          <input
+            type="file"
+            id="file"
+            (change)="onFileSelected($event)"
+            [accept]="leconForm.typeContenu === 'PDF' ? '.pdf' : leconForm.typeContenu === 'IMAGE' ? 'image/*' : 'video/*'"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label for="ordre" class="block text-sm font-medium text-gray-700 mb-2">
+              Ordre (optionnel)
+            </label>
+            <input
+              type="number"
+              id="ordre"
+              name="ordre"
+              [(ngModel)]="leconForm.ordre"
+              min="1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="1, 2, 3..."
+            />
+          </div>
+
+          <div>
+            <label for="duree" class="block text-sm font-medium text-gray-700 mb-2">
+              Durée (minutes)
+            </label>
+            <input
+              type="number"
+              id="duree"
+              name="duree"
+              [(ngModel)]="leconForm.duree"
+              min="1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ex: 30"
+            />
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <button
+            type="submit"
+            [disabled]="!leconFormRef.form.valid"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {{ editingLecon ? 'Modifier' : 'Ajouter' }}
+          </button>
+          <button
+            type="button"
+            (click)="cancelLeconForm()"
+            class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+          >
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Lecons List -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">Leçons du module</h2>
+
+      <div *ngIf="lecons.length === 0" class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-600">Aucune leçon pour ce module</p>
+      </div>
+
+      <div *ngFor="let lecon of lecons" class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <span>{{ getTypeIcon(lecon.typeContenu) }}</span>
+              <span>{{ lecon.ordre ? lecon.ordre + '. ' : '' }}{{ lecon.titre }}</span>
+              <span *ngIf="lecon.duree" class="text-sm text-gray-500 font-normal">
+                ({{ lecon.duree }} min)
+              </span>
+            </h3>
+          </div>
+          <div *ngIf="authService.isFormateur()" class="flex gap-2 ml-4">
+            <button
+              (click)="editLecon(lecon)"
+              class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+            >
+              Modifier
+            </button>
+            <button
+              (click)="deleteLecon(lecon.id!)"
+              class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+
+        <!-- Contenu selon le type -->
+        <div class="mt-4">
+          <!-- Texte -->
+          <div *ngIf="lecon.typeContenu === 'TEXTE'" class="text-gray-700 whitespace-pre-wrap">
+            {{ lecon.contenuTexte || 'Aucun contenu' }}
+          </div>
+
+          <!-- PDF -->
+          <div *ngIf="lecon.typeContenu === 'PDF' && lecon.fichierUrl">
+            <a [href]="getFileUrl(lecon.fichierUrl, lecon.typeContenu)" target="_blank" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+              📄 Ouvrir le PDF
+            </a>
+          </div>
+
+          <!-- Image -->
+          <div *ngIf="lecon.typeContenu === 'IMAGE' && lecon.fichierUrl">
+            <img [src]="getFileUrl(lecon.fichierUrl, lecon.typeContenu)" [alt]="lecon.titre" class="max-w-full h-auto rounded-lg shadow" (error)="onImageError($event)" />
+          </div>
+
+          <!-- Video -->
+          <div *ngIf="lecon.typeContenu === 'VIDEO' && lecon.fichierUrl">
+            <video controls class="w-full max-w-3xl rounded-lg shadow">
+              <source [src]="getFileUrl(lecon.fichierUrl, lecon.typeContenu)" type="video/mp4">
+              Votre navigateur ne supporte pas la lecture de vidéos.
+            </video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

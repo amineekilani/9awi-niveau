@@ -12,6 +12,7 @@ import { FormateurDashboardComponent } from './formateur-dashboard/formateur-das
 import { CoursFormComponent } from './cours-form/cours-form';
 import { CoursListComponent } from './cours-list/cours-list';
 import { CoursDetailComponent } from './cours-detail/cours-detail';
+import { ModuleDetailComponent } from './module-detail/module-detail';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -27,5 +28,6 @@ export const routes: Routes = [
   { path: 'cours/nouveau', component: CoursFormComponent, canActivate: [authGuard] },
   { path: 'cours/modifier/:id', component: CoursFormComponent, canActivate: [authGuard] },
   { path: 'cours/:id', component: CoursDetailComponent, canActivate: [authGuard] },
-  { path: 'cours', component: CoursListComponent, canActivate: [authGuard] }
+  { path: 'cours', component: CoursListComponent, canActivate: [authGuard] },
+  { path: 'module/:id', component: ModuleDetailComponent, canActivate: [authGuard] }
 ];

@@ -59,7 +59,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/profile/upload-image-after-register").permitAll()
+                        .requestMatchers("/api/files/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
+                        .requestMatchers("/files/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling().authenticationEntryPoint((request, response, authException) -> {

@@ -20,17 +20,37 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Obtenir le chemin absolu du répertoire uploads/users
-        String uploadsPath = Paths.get(uploadDir, "users").toAbsolutePath().toUri().toString();
+        String uploadsUsersPath = Paths.get(uploadDir, "users").toAbsolutePath().toUri().toString();
+        
+        // Obtenir le chemin absolu du répertoire uploads/lecons
+        String uploadsLeconsPath = Paths.get(uploadDir, "lecons").toAbsolutePath().toUri().toString();
 
         registry
                 .addResourceHandler("/images/users/**")
-                .addResourceLocations(uploadsPath + "/")
+                .addResourceLocations(uploadsUsersPath + "/")
+                .setCachePeriod(3600); // Cache 1 heure
+                
+        registry
+                .addResourceHandler("/files/lecons/**")
+                .addResourceLocations(uploadsLeconsPath + "/")
+                .setCachePeriod(3600); // Cache 1 heure
+                
+        registry
+                .addResourceHandler("/images/lecons/**")
+                .addResourceLocations(uploadsLeconsPath + "/")
                 .setCachePeriod(3600); // Cache 1 heure
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/images/**")
+                .allowedOrigins("http://localhost:4200")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+                
+        registry.addMapping("/files/**")
                 .allowedOrigins("http://localhost:4200")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
