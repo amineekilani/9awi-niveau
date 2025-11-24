@@ -12,7 +12,8 @@ import { CoursService, Cours } from '../cours.service';
   styleUrls: ['./formateur-dashboard.css']
 })
 export class FormateurDashboardComponent implements OnInit {
-  cours: Cours[] = [];
+  allCours: Cours[] = [];
+  activeTab: 'actifs' | 'archives' = 'actifs';
   loading = false;
   error = '';
 
@@ -30,11 +31,31 @@ export class FormateurDashboardComponent implements OnInit {
     this.loadCours();
   }
 
+  get coursActifs(): Cours[] {
+    return this.allCours.filter(c => !c.archived);
+  }
+
+  get coursArchives(): Cours[] {
+    return this.allCours.filter(c => c.archived);
+  }
+
+  get displayedCours(): Cours[] {
+    return this.activeTab === 'actifs' ? this.coursActifs : this.coursArchives;
+  }
+
+  switchTab(tab: 'actifs' | 'archives') {
+    this.activeTab = tab;
+  }
+
   loadCours() {
     this.loading = true;
+    this.error = '';
     this.coursService.getMesCours().subscribe({
       next: (data) => {
-        this.cours = data;
+        console.log('Cours reçus du backend:', data);
+        this.allCours = data;
+        console.log('Cours actifs:', this.coursActifs);
+        console.log('Cours archivés:', this.coursArchives);
         this.loading = false;
       },
       error: (err) => {
@@ -52,6 +73,19 @@ export class FormateurDashboardComponent implements OnInit {
         },
         error: (err) => {
           this.error = 'Erreur lors de l\'archivage du cours';
+        }
+      });
+    }
+  }
+
+  unarchiveCours(id: number) {
+    if (confirm('Êtes-vous sûr de vouloir réactiver ce cours ?')) {
+      this.coursService.unarchiveCours(id).subscribe({
+        next: () => {
+          this.loadCours();
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la réactivation du cours';
         }
       });
     }

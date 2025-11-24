@@ -10,6 +10,7 @@ import java.util.List;
 @Repository
 public interface CoursRepository extends JpaRepository<Cours, Long> {
     List<Cours> findByFormateurAndArchivedFalse(User formateur);
+    List<Cours> findByFormateurOrderByCreatedAtDesc(User formateur);
     List<Cours> findByFormateur(User formateur);
     List<Cours> findByArchivedFalse();
 }

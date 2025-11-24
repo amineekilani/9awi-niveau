@@ -73,11 +73,29 @@ public class CoursService {
         coursRepository.save(cours);
     }
 
+    public void unarchiveCours(Long id, String email) {
+        Cours cours = coursRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
+
+        User formateur = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        if (!cours.getFormateur().getId().equals(formateur.getId())) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à réactiver ce cours");
+        }
+
+        cours.setArchived(false);
+        cours.setArchivedAt(null);
+        coursRepository.save(cours);
+    }
+
     public List<CoursResponse> getMesCours(String email) {
         User formateur = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        List<Cours> coursList = coursRepository.findByFormateurAndArchivedFalse(formateur);
+        List<Cours> coursList = coursRepository.findByFormateurOrderByCreatedAtDesc(formateur);
+        System.out.println("Nombre de cours trouvés pour le formateur: " + coursList.size());
+        coursList.forEach(c -> System.out.println("Cours: " + c.getTitre() + ", Archivé: " + c.isArchived()));
         return coursList.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 

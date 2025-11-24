@@ -53,6 +53,17 @@ public class CoursController {
         }
     }
 
+    @PutMapping("/{id}/unarchive")
+    public ResponseEntity<?> unarchiveCours(@PathVariable Long id, Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            coursService.unarchiveCours(id, email);
+            return ResponseEntity.ok(new MessageResponse("Cours réactivé avec succès"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
     @GetMapping("/mes-cours")
     public ResponseEntity<List<CoursResponse>> getMesCours(Authentication authentication) {
         String email = authentication.getName();

@@ -35,6 +35,10 @@ export class CoursService {
     return this.http.put(`${this.apiUrl}/${id}/archive`, {});
   }
 
+  unarchiveCours(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/unarchive`, {});
+  }
+
   getMesCours(): Observable<Cours[]> {
     return this.http.get<Cours[]>(`${this.apiUrl}/mes-cours`);
   }
