@@ -1,15 +1,21 @@
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
   <!-- Header -->
-  <header class="bg-white shadow">
+  <header class="bg-white shadow-sm border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <button (click)="goBack()" class="mr-4 p-2 hover:bg-gray-100 rounded-lg">
-            ← Retour
+        <div class="flex items-center gap-4">
+          <button (click)="goBack()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex items-center gap-2 text-gray-600 hover:text-gray-900">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span class="hidden sm:inline">Retour</span>
           </button>
+          <div class="h-8 w-px bg-gray-300"></div>
           <div>
-            <h1 class="text-3xl font-bold text-gray-900">{{ cours?.titre }}</h1>
-            <p class="text-gray-600 mt-1">Par {{ cours?.formateurNom }}</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ cours?.titre }}</h1>
+            <p class="text-gray-600 mt-1">
+              Par {{ cours?.formateurNom }}
+            </p>
           </div>
         </div>
       </div>
@@ -19,42 +25,51 @@
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
     <!-- Messages -->
-    <div *ngIf="success" class="mb-4 p-4 bg-green-100 text-green-700 rounded">
+    <div *ngIf="success" class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg animate-fade-in">
       {{ success }}
     </div>
 
-    <div *ngIf="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+    <div *ngIf="error" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg animate-fade-in">
       {{ error }}
     </div>
 
     <!-- Loading -->
-    <div *ngIf="loading" class="text-center py-8">
-      <p class="text-gray-600">Chargement...</p>
+    <div *ngIf="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      <p class="text-gray-600 mt-4">Chargement du cours...</p>
     </div>
 
     <!-- Course Description -->
-    <div *ngIf="cours && !loading" class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-2">Description</h2>
-      <p class="text-gray-700">{{ cours.description || 'Aucune description disponible' }}</p>
+    <div *ngIf="cours && !loading" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h2 class="text-xl font-bold text-gray-900">Description du cours</h2>
+      </div>
+      <p class="text-gray-700 leading-relaxed">{{ cours.description || 'Aucune description disponible' }}</p>
     </div>
 
     <!-- Add Module Button (Formateur only) -->
     <div *ngIf="authService.isFormateur() && !showModuleForm" class="mb-6">
-      <button (click)="openModuleForm()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        + Ajouter un module
+      <button (click)="openModuleForm()" class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Ajouter un module</span>
       </button>
     </div>
 
     <!-- Module Form -->
-    <div *ngIf="showModuleForm" class="bg-white rounded-lg shadow p-6 mb-6">
-      <h3 class="text-xl font-semibold mb-4">
+    <div *ngIf="showModuleForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-fade-in">
+      <h3 class="text-2xl font-bold text-gray-900 mb-6">
         {{ editingModule ? 'Modifier le module' : 'Nouveau module' }}
       </h3>
 
       <form (ngSubmit)="saveModule()" #moduleFormRef="ngForm">
-        <div class="mb-4">
-          <label for="titre" class="block text-sm font-medium text-gray-700 mb-2">
-            Titre du module *
+        <div class="mb-5">
+          <label for="titre" class="block text-sm font-semibold text-gray-900 mb-2">
+            Titre du module <span class="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -62,28 +77,28 @@
             name="titre"
             [(ngModel)]="moduleForm.titre"
             required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ex: Introduction"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            placeholder="Ex: Introduction aux concepts de base"
           />
         </div>
 
-        <div class="mb-4">
-          <label for="contenu" class="block text-sm font-medium text-gray-700 mb-2">
-            Contenu
+        <div class="mb-5">
+          <label for="contenu" class="block text-sm font-semibold text-gray-900 mb-2">
+            Contenu du module
           </label>
           <textarea
             id="contenu"
             name="contenu"
             [(ngModel)]="moduleForm.contenu"
             rows="8"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Contenu du module..."
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+            placeholder="Décrivez le contenu et les objectifs de ce module..."
           ></textarea>
         </div>
 
         <div class="mb-6">
-          <label for="ordre" class="block text-sm font-medium text-gray-700 mb-2">
-            Ordre (optionnel)
+          <label for="ordre" class="block text-sm font-semibold text-gray-900 mb-2">
+            Ordre d'affichage
           </label>
           <input
             type="number"
@@ -91,23 +106,24 @@
             name="ordre"
             [(ngModel)]="moduleForm.ordre"
             min="1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             placeholder="1, 2, 3..."
           />
+          <p class="text-xs text-gray-500 mt-1">Définit l'ordre d'apparition du module dans le cours</p>
         </div>
 
-        <div class="flex gap-4">
+        <div class="border-t border-gray-200 pt-4 flex flex-col sm:flex-row gap-3">
           <button
             type="submit"
             [disabled]="!moduleFormRef.form.valid"
-            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+            class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium"
           >
-            {{ editingModule ? 'Modifier' : 'Ajouter' }}
+            {{ editingModule ? 'Enregistrer' : 'Ajouter le module' }}
           </button>
           <button
             type="button"
             (click)="cancelModuleForm()"
-            class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+            class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
           >
             Annuler
           </button>
@@ -117,41 +133,80 @@
 
     <!-- Modules List -->
     <div class="space-y-4">
-      <h2 class="text-2xl font-bold text-gray-900 mb-4">Modules du cours</h2>
-
-      <div *ngIf="modules.length === 0" class="bg-white rounded-lg shadow p-8 text-center">
-        <p class="text-gray-600">Aucun module pour ce cours</p>
+      <div class="flex items-center gap-3 mb-6">
+        <svg class="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <h2 class="text-2xl font-bold text-gray-900">Modules du cours</h2>
+        <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">{{ modules.length }}</span>
       </div>
 
-      <div *ngFor="let module of modules" class="bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-start mb-4">
-          <div class="flex-1">
-            <h3 class="text-xl font-semibold text-gray-900">
-              {{ module.ordre ? module.ordre + '. ' : '' }}{{ module.titre }}
-            </h3>
-          </div>
-          <div class="flex gap-2 ml-4">
-            <a [routerLink]="['/module', module.id]" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
-              Voir leçons
-            </a>
-            <button
-              *ngIf="authService.isFormateur()"
-              (click)="editModule(module)"
-              class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-            >
-              Modifier
-            </button>
-            <button
-              *ngIf="authService.isFormateur()"
-              (click)="deleteModule(module.id!)"
-              class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-            >
-              Supprimer
-            </button>
+      <div *ngIf="modules.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun module pour ce cours</h3>
+        <p class="text-gray-600 mb-4">Commencez par ajouter des modules pour structurer votre contenu</p>
+        <button *ngIf="authService.isFormateur()" (click)="openModuleForm()" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Ajouter le premier module</span>
+        </button>
+      </div>
+
+      <div *ngFor="let module of modules; let i = index" class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200 overflow-hidden group">
+        <!-- Module Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full text-sm font-bold">
+                  {{ module.ordre || i + 1 }}
+                </span>
+                <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {{ module.titre }}
+                </h3>
+              </div>
+            </div>
+            <div class="flex gap-2 ml-4">
+              <a [routerLink]="['/module', module.id]" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                <span>Voir leçons</span>
+              </a>
+              <button
+                *ngIf="authService.isFormateur()"
+                (click)="editModule(module)"
+                class="px-3 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
+                title="Modifier"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Modifier</span>
+              </button>
+              <button
+                *ngIf="authService.isFormateur()"
+                (click)="deleteModule(module.id!)"
+                class="px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
+                title="Supprimer"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Supprimer</span>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="text-gray-700 whitespace-pre-wrap">
-          {{ module.contenu || 'Aucun contenu' }}
+        
+        <!-- Module Content -->
+        <div class="px-6 py-5">
+          <div class="text-gray-700 whitespace-pre-wrap leading-relaxed">
+            {{ module.contenu || 'Aucun contenu disponible pour ce module' }}
+          </div>
         </div>
       </div>
     </div>

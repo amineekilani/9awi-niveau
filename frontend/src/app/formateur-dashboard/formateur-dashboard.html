@@ -1,58 +1,124 @@
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
   <!-- Header -->
-  <header class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-      <h1 class="text-3xl font-bold text-gray-900">Tableau de bord Formateur</h1>
-      <button (click)="logout()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-        Déconnexion
-      </button>
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Tableau de bord Formateur</h1>
+          <p class="text-gray-600 mt-1">Gérez vos cours et contenus pédagogiques</p>
+        </div>
+        <button (click)="logout()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Déconnexion</span>
+        </button>
+      </div>
     </div>
   </header>
 
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-    <!-- Actions -->
-    <div class="mb-6">
-      <a routerLink="/cours/nouveau" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-block">
-        + Ajouter un cours
-      </a>
+    <!-- Stats & Actions Bar -->
+    <div class="mb-8 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ cours.length }}</div>
+            <div class="text-sm text-gray-600">Cours actifs</div>
+          </div>
+        </div>
+        <a routerLink="/cours/nouveau" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Créer un nouveau cours</span>
+        </a>
+      </div>
     </div>
 
     <!-- Error Message -->
-    <div *ngIf="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+    <div *ngIf="error" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg animate-fade-in">
       {{ error }}
     </div>
 
     <!-- Loading -->
-    <div *ngIf="loading" class="text-center py-8">
-      <p class="text-gray-600">Chargement...</p>
+    <div *ngIf="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      <p class="text-gray-600 mt-4">Chargement de vos cours...</p>
     </div>
 
     <!-- Cours List -->
-    <div *ngIf="!loading" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <div *ngFor="let c of cours" class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-xl font-semibold mb-2">{{ c.titre }}</h3>
-        <p class="text-gray-600 mb-4">{{ c.description }}</p>
-        <div class="flex gap-2 flex-wrap">
-          <a [routerLink]="['/cours', c.id]" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-            Voir détails
-          </a>
-          <a [routerLink]="['/cours/modifier', c.id]" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
-            Modifier
-          </a>
-          <button (click)="archiveCours(c.id!)" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
-            Archiver
-          </button>
+    <div *ngIf="!loading && cours.length > 0">
+      <div class="flex items-center gap-2 mb-4">
+        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <h2 class="text-xl font-semibold text-gray-900">Mes cours</h2>
+      </div>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div *ngFor="let c of cours" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
+          <!-- Card Header with gradient -->
+          <div class="h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+          
+          <div class="p-6">
+            <!-- Title -->
+            <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
+              {{ c.titre }}
+            </h3>
+            
+            <!-- Description -->
+            <p class="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
+              {{ c.description || 'Aucune description disponible' }}
+            </p>
+            
+            <!-- Divider -->
+            <div class="border-t border-gray-100 my-4"></div>
+            
+            <!-- Actions -->
+            <div class="flex flex-col gap-2">
+              <a [routerLink]="['/cours', c.id]" class="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-center font-medium flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span>Voir les détails</span>
+              </a>
+              <div class="grid grid-cols-2 gap-2">
+                <a [routerLink]="['/cours/modifier', c.id]" class="px-3 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-center text-sm font-medium flex items-center justify-center gap-1">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Modifier</span>
+                </a>
+                <button (click)="archiveCours(c.id!)" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm font-medium flex items-center justify-center gap-1">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  <span>Archiver</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!loading && cours.length === 0" class="text-center py-12">
-      <p class="text-gray-600 text-lg">Aucun cours pour le moment</p>
-      <a routerLink="/cours/nouveau" class="mt-4 inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        Créer votre premier cours
-      </a>
+    <div *ngIf="!loading && cours.length === 0" class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+      <div class="max-w-md mx-auto">
+        <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">Aucun cours pour le moment</h3>
+        <p class="text-gray-600 mb-6">Commencez à créer votre premier cours et partagez vos connaissances avec vos étudiants.</p>
+        <a routerLink="/cours/nouveau" class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Créer votre premier cours</span>
+        </a>
+      </div>
     </div>
   </main>
 </div>
