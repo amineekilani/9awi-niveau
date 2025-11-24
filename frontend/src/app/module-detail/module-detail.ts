@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ModuleService, Module } from '../module.service';
 import { LeconService, Lecon } from '../lecon.service';
+import { QuizService, Quiz, Question } from '../quiz.service';
 import { AuthService } from '../auth';
 
 @Component({
@@ -16,6 +17,7 @@ import { AuthService } from '../auth';
 export class ModuleDetailComponent implements OnInit {
   module: Module | null = null;
   lecons: Lecon[] = [];
+  quiz: Quiz | null = null;
   moduleId!: number;
   loading = false;
   error = '';
@@ -33,9 +35,29 @@ export class ModuleDetailComponent implements OnInit {
   };
   selectedFile: File | null = null;
 
+  // Quiz form
+  showQuizForm = false;
+  editingQuiz = false;
+  quizForm: Quiz = {
+    titre: '',
+    description: '',
+    questions: []
+  };
+
+  // Question form
+  showQuestionForm = false;
+  editingQuestion: Question | null = null;
+  questionForm: Question = {
+    question: '',
+    options: ['', '', '', ''],
+    correctAnswer: '',
+    ordre: undefined
+  };
+
   constructor(
     private moduleService: ModuleService,
     private leconService: LeconService,
+    private quizService: QuizService,
     public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
@@ -45,6 +67,7 @@ export class ModuleDetailComponent implements OnInit {
     this.moduleId = Number(this.route.snapshot.paramMap.get('id'));
     this.loadModule();
     this.loadLecons();
+    this.loadQuiz();
   }
 
   loadModule() {
@@ -202,6 +225,208 @@ export class ModuleDetailComponent implements OnInit {
   onImageError(event: any) {
     console.error('Erreur de chargement de l\'image:', event);
     this.error = 'Impossible de charger l\'image. Vérifiez que le fichier existe.';
+  }
+
+  // Quiz methods
+  loadQuiz() {
+    this.quizService.getQuizByModuleId(this.moduleId).subscribe({
+      next: (data) => {
+        console.log('Quiz chargé:', data);
+        // Vérifier si c'est un vrai quiz ou un message
+        if (data && data.id) {
+          this.quiz = data;
+          console.log('Quiz ID:', this.quiz.id);
+        } else {
+          this.quiz = null;
+          console.log('Pas de quiz pour ce module');
+        }
+      },
+      error: (err) => {
+        // Pas de quiz pour ce module, c'est normal
+        console.log('Erreur chargement quiz (normal si pas de quiz):', err);
+        this.quiz = null;
+      }
+    });
+  }
+
+  openQuizForm() {
+    if (this.quiz) {
+      this.editingQuiz = true;
+      this.quizForm = { ...this.quiz };
+    } else {
+      this.editingQuiz = false;
+      this.quizForm = {
+        titre: '',
+        description: '',
+        questions: []
+      };
+    }
+    this.showQuizForm = true;
+    this.error = '';
+    this.success = '';
+  }
+
+  cancelQuizForm() {
+    this.showQuizForm = false;
+    this.editingQuiz = false;
+  }
+
+  saveQuiz() {
+    this.error = '';
+    this.success = '';
+
+    if (this.editingQuiz && this.quiz) {
+      this.quizService.updateQuiz(this.quiz.id!, this.quizForm).subscribe({
+        next: (response) => {
+          console.log('Quiz modifié:', response);
+          this.success = 'Quiz modifié avec succès';
+          this.loadQuiz();
+          this.cancelQuizForm();
+        },
+        error: (err) => {
+          console.error('Erreur modification quiz:', err);
+          this.error = err.error?.message || 'Erreur lors de la modification du quiz';
+        }
+      });
+    } else {
+      this.quizService.createQuiz(this.moduleId, this.quizForm).subscribe({
+        next: (response) => {
+          console.log('Quiz créé:', response);
+          this.success = 'Quiz créé avec succès';
+          this.quiz = response; // Mettre à jour immédiatement
+          this.loadQuiz(); // Recharger pour être sûr
+          this.cancelQuizForm();
+        },
+        error: (err) => {
+          console.error('Erreur création quiz:', err);
+          this.error = err.error?.message || 'Erreur lors de la création du quiz';
+        }
+      });
+    }
+  }
+
+  deleteQuiz() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce quiz et toutes ses questions ?')) {
+      this.quizService.deleteQuiz(this.quiz!.id!).subscribe({
+        next: () => {
+          this.success = 'Quiz supprimé avec succès';
+          this.quiz = null;
+        },
+        error: (err) => {
+          this.error = err.error?.message || 'Erreur lors de la suppression du quiz';
+        }
+      });
+    }
+  }
+
+  // Question methods
+  openQuestionForm() {
+    this.showQuestionForm = true;
+    this.editingQuestion = null;
+    this.questionForm = {
+      question: '',
+      options: ['', '', '', ''],
+      correctAnswer: '',
+      ordre: undefined
+    };
+    this.error = '';
+    this.success = '';
+  }
+
+  editQuestion(question: Question) {
+    this.showQuestionForm = true;
+    this.editingQuestion = question;
+    this.questionForm = { ...question, options: [...question.options] };
+    this.error = '';
+    this.success = '';
+  }
+
+  cancelQuestionForm() {
+    this.showQuestionForm = false;
+    this.editingQuestion = null;
+  }
+
+  addOption() {
+    this.questionForm.options.push('');
+  }
+
+  removeOption(index: number) {
+    if (this.questionForm.options.length > 2) {
+      this.questionForm.options.splice(index, 1);
+    }
+  }
+
+  saveQuestion() {
+    this.error = '';
+    this.success = '';
+
+    console.log('=== Sauvegarde de question ===');
+    console.log('Question form:', this.questionForm);
+    console.log('Options:', this.questionForm.options);
+    console.log('Réponse correcte:', this.questionForm.correctAnswer);
+
+    // Valider que toutes les options sont remplies
+    if (this.questionForm.options.some(opt => !opt.trim())) {
+      this.error = 'Toutes les options doivent être remplies';
+      return;
+    }
+
+    // Valider que la réponse correcte est dans les options
+    if (!this.questionForm.options.includes(this.questionForm.correctAnswer)) {
+      this.error = 'La réponse correcte doit être l\'une des options';
+      return;
+    }
+
+    if (this.editingQuestion) {
+      console.log('Modification de la question:', this.editingQuestion.id);
+      this.quizService.updateQuestion(this.editingQuestion.id!, this.questionForm).subscribe({
+        next: (response) => {
+          console.log('Question modifiée:', response);
+          this.success = 'Question modifiée avec succès';
+          this.loadQuiz();
+          this.cancelQuestionForm();
+        },
+        error: (err) => {
+          console.error('Erreur modification:', err);
+          this.error = err.error?.message || 'Erreur lors de la modification de la question';
+        }
+      });
+    } else {
+      // Vérifier que le quiz existe et a un ID
+      if (!this.quiz || !this.quiz.id) {
+        this.error = 'Erreur: Le quiz n\'est pas chargé correctement. Veuillez recharger la page.';
+        console.error('Quiz non chargé ou sans ID:', this.quiz);
+        return;
+      }
+      
+      console.log('Ajout de la question au quiz:', this.quiz.id);
+      this.quizService.addQuestion(this.quiz.id, this.questionForm).subscribe({
+        next: (response) => {
+          console.log('Question ajoutée:', response);
+          this.success = 'Question ajoutée avec succès';
+          this.loadQuiz();
+          this.cancelQuestionForm();
+        },
+        error: (err) => {
+          console.error('Erreur ajout:', err);
+          this.error = err.error?.message || 'Erreur lors de l\'ajout de la question';
+        }
+      });
+    }
+  }
+
+  deleteQuestion(questionId: number) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette question ?')) {
+      this.quizService.deleteQuestion(questionId).subscribe({
+        next: () => {
+          this.success = 'Question supprimée avec succès';
+          this.loadQuiz();
+        },
+        error: (err) => {
+          this.error = err.error?.message || 'Erreur lors de la suppression de la question';
+        }
+      });
+    }
   }
 
   goBack() {
