@@ -1,80 +1,292 @@
-<div class="min-h-screen bg-gray-50">
+<!-- Background animé -->
+<div class="fixed inset-0 z-0 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+  <div class="absolute inset-0 opacity-30">
+    <div class="particle w-4 h-4 top-10 left-10 bg-primary-400 rounded-full animate-move"></div>
+    <div class="particle w-6 h-6 top-1/3 left-1/4 bg-secondary-400 rounded-full animate-move" style="animation-delay: 1s;"></div>
+    <div class="particle w-8 h-8 top-2/3 right-1/4 bg-accent rounded-full animate-move" style="animation-delay: 2s;"></div>
+    <div class="particle w-5 h-5 bottom-20 left-1/2 bg-purple-400 rounded-full animate-move" style="animation-delay: 3s;"></div>
+  </div>
+</div>
+
+<div class="relative z-10">
   <!-- Header -->
-  <header class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-      <h1 class="text-3xl font-bold text-gray-900">Cours disponibles</h1>
-      <div class="flex gap-4">
-        <a *ngIf="authService.isFormateur()" routerLink="/formateur-dashboard" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          Mon Dashboard
-        </a>
-        <a routerLink="/profile" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-          Profil
-        </a>
-        <button (click)="logout()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-          Déconnexion
+  <header class="bg-gradient-to-r from-primary-500 to-primary-700 backdrop-blur-md shadow-lg sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i data-feather="award" class="text-white w-8 h-8"></i>
+        <span class="text-2xl font-bold text-white">9awiNiveau</span>
+      </div>
+      <nav class="hidden md:flex space-x-8">
+        <a routerLink="/cours" class="text-white hover:text-gray-200 font-medium nav-link active">Cours</a>
+        <a routerLink="/profile" class="text-white hover:text-gray-200 font-medium nav-link">Profil</a>
+        <a *ngIf="authService.isFormateur()" routerLink="/formateur-dashboard" class="text-white hover:text-gray-200 font-medium nav-link">Dashboard</a>
+      </nav>
+      <div class="flex items-center space-x-4">
+        <div class="relative cursor-pointer">
+          <i data-feather="bell" class="text-white hover:text-gray-200"></i>
+          <span class="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">{{ enrolledCount }}</span>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-primary-500 font-bold cursor-pointer" (click)="goToProfile()">
+          {{ userInitials }}
+        </div>
+        <button (click)="logout()" class="hidden md:block text-white hover:text-gray-200">
+          <i data-feather="log-out"></i>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-    <!-- Success Message -->
-    <div *ngIf="success" class="mb-4 p-4 bg-green-100 text-green-700 rounded">
+  <!-- Messages -->
+  <div *ngIf="success || error" class="container mx-auto px-4 pt-4">
+    <div *ngIf="success" class="mb-4 p-4 bg-green-100 text-green-700 rounded-lg shadow animate-fade-in">
       {{ success }}
     </div>
-
-    <!-- Error Message -->
-    <div *ngIf="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+    <div *ngIf="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg shadow animate-fade-in">
       {{ error }}
     </div>
+  </div>
 
-    <!-- Loading -->
-    <div *ngIf="loading" class="text-center py-8">
-      <p class="text-gray-600">Chargement...</p>
-    </div>
-
-    <!-- Cours List -->
-    <div *ngIf="!loading" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <div *ngFor="let c of cours" class="bg-white rounded-lg shadow p-6 relative">
-        <!-- Badge de progression pour les étudiants inscrits -->
-        <div *ngIf="c.isEnrolled && c.enrollment" class="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-          {{ c.enrollment.progress }}%
-        </div>
-        
-        <h3 class="text-xl font-semibold mb-2">{{ c.titre }}</h3>
-        <p class="text-gray-600 mb-2">{{ c.description }}</p>
-        <p class="text-sm text-gray-500 mb-2">Formateur: {{ c.formateurNom }}</p>
-        
-        <!-- Progression pour les étudiants inscrits -->
-        <div *ngIf="c.isEnrolled && c.enrollment" class="mb-4">
-          <div class="flex justify-between text-sm text-gray-600 mb-1">
-            <span>Progression</span>
-            <span>{{ c.enrollment.completedLecons }} / {{ c.enrollment.totalLecons }} leçons</span>
-          </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-blue-600 h-2 rounded-full" [style.width.%]="c.enrollment.progress"></div>
+  <!-- Hero Section -->
+  <section class="py-12 px-4">
+    <div class="container mx-auto max-w-7xl">
+      <div class="flex flex-col md:flex-row items-center justify-between">
+        <div class="md:w-1/2 mb-8 md:mb-0">
+          <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4 leading-tight">
+            Apprenez, Jouez, <span class="text-primary-500">Évoluez</span>
+          </h1>
+          <p class="text-lg text-gray-600 mb-6">
+            Transformez votre apprentissage en aventure avec notre plateforme gamifiée.
+          </p>
+          <div class="flex space-x-4">
+            <button (click)="scrollToCourses()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-all">
+              Explorer les cours
+            </button>
           </div>
         </div>
-        
-        <div class="flex gap-2">
-          <a [routerLink]="['/cours', c.id]" class="flex-1 text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            {{ c.isEnrolled ? 'Continuer' : 'Voir le cours' }}
-          </a>
-          
-          <!-- Bouton d'inscription pour les étudiants non inscrits -->
-          <button *ngIf="!authService.isFormateur() && !c.isEnrolled" 
-                  (click)="enrollInCourse(c.id!, $event)"
-                  class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-            S'inscrire
-          </button>
+        <div class="md:w-1/2 flex justify-end">
+          <div class="relative">
+            <div class="bg-white p-6 rounded-xl shadow-xl">
+              <div class="flex items-center">
+                <div class="relative">
+                  <svg class="w-20 h-20">
+                    <circle class="text-gray-200" stroke-width="8" stroke="currentColor" fill="transparent" r="32" cx="40" cy="40"/>
+                    <circle class="progress-ring text-accent" stroke-width="8" [attr.stroke-dasharray]="201" [attr.stroke-dashoffset]="201 - (201 * overallProgress / 100)" stroke="currentColor" fill="transparent" r="32" cx="40" cy="40" style="transition: stroke-dashoffset 0.5s ease; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
+                  </svg>
+                  <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-lg font-bold">{{ overallProgress }}%</span>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-500">Votre progression</p>
+                  <p class="font-bold text-gray-800 text-xl">Niveau {{ userLevel }}</p>
+                  <p class="text-xs text-gray-500">{{ totalPoints }} points</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Empty State -->
-    <div *ngIf="!loading && cours.length === 0" class="text-center py-12">
-      <p class="text-gray-600 text-lg">Aucun cours disponible pour le moment</p>
+  <!-- Badges Section -->
+  <section class="py-12 px-4 bg-white/80 backdrop-blur-sm">
+    <div class="container mx-auto max-w-7xl">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Vos Récompenses</h2>
+        <p class="text-gray-600">Collectionnez des badges pour marquer vos accomplissements</p>
+      </div>
+      <div class="grid grid-cols-3 md:grid-cols-6 gap-6">
+        <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer">
+          <div class="relative">
+            <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500 border-4 border-yellow-300">
+              <i data-feather="star" class="w-6 h-6 md:w-8 md:h-8"></i>
+            </div>
+            <div class="absolute -top-2 -right-2 bg-secondary-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">{{ enrolledCount }}</div>
+          </div>
+          <span class="mt-2 text-xs md:text-sm font-medium text-gray-700">Débutant</span>
+        </div>
+        <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-blue-100 flex items-center justify-center text-primary-500 border-4 border-blue-300">
+            <i data-feather="book" class="w-6 h-6 md:w-8 md:h-8"></i>
+          </div>
+          <span class="mt-2 text-xs md:text-sm font-medium text-gray-700">Lecteur</span>
+        </div>
+        <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer" [class.opacity-40]="enrolledCount < 3">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-green-100 flex items-center justify-center text-accent border-4 border-green-300">
+            <i data-feather="zap" class="w-6 h-6 md:w-8 md:h-8"></i>
+          </div>
+          <span class="mt-2 text-xs md:text-sm font-medium text-gray-700">Rapide</span>
+        </div>
+        <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer opacity-40">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 border-4 border-purple-300">
+            <i data-feather="lock" class="w-6 h-6 md:w-8 md:h-8"></i>
+          </div>
+          <span class="mt-2 text-xs md:text-sm font-medium text-gray-500">Secret</span>
+        </div>
+        <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer opacity-40">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 border-4 border-gray-300">
+            <i data-feather="trending-up" class="w-6 h-6 md:w-8 md:h-8"></i>
+          </div>
+          <span class="mt-2 text-xs md:text-sm font-medium text-gray-500">À débloquer</span>
+        </div>
+        <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer opacity-40">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 border-4 border-gray-300">
+            <i data-feather="award" class="w-6 h-6 md:w-8 md:h-8"></i>
+          </div>
+          <span class="mt-2 text-xs md:text-sm font-medium text-gray-500">À débloquer</span>
+        </div>
+      </div>
     </div>
-  </main>
+  </section>
+
+  <!-- Courses Section -->
+  <section id="courses-section" class="py-16 px-4">
+    <div class="container mx-auto max-w-7xl">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800">Cours Disponibles</h2>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <p class="text-gray-600 mt-4">Chargement des cours...</p>
+      </div>
+
+      <!-- Cours Grid -->
+      <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div *ngFor="let c of cours" class="bg-white rounded-xl shadow-md overflow-hidden course-card transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+          <div class="relative h-48 bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+            <i data-feather="book-open" class="text-white w-16 h-16 opacity-50"></i>
+            <div *ngIf="c.isEnrolled" class="absolute top-4 right-4 bg-primary-500 text-white text-xs px-2 py-1 rounded-full">Inscrit</div>
+            <div *ngIf="!c.isEnrolled" class="absolute top-4 left-4 bg-secondary-500 text-white text-xs px-2 py-1 rounded-full">Nouveau</div>
+          </div>
+          <div class="p-6">
+            <div class="flex justify-between items-start mb-3">
+              <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">Cours</span>
+              <div class="flex items-center text-yellow-400">
+                <i data-feather="star" class="w-4 h-4 fill-current"></i>
+                <span class="ml-1 text-gray-600 text-sm">4.8</span>
+              </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{{ c.titre }}</h3>
+            <p class="text-gray-600 mb-4 text-sm line-clamp-3">{{ c.description }}</p>
+            
+            <!-- Progression pour les cours inscrits -->
+            <div *ngIf="c.isEnrolled && c.enrollment" class="mb-4">
+              <div class="flex justify-between text-xs text-gray-600 mb-1">
+                <span>Progression</span>
+                <span class="font-bold text-primary-500">{{ c.enrollment.progress }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-gradient-to-r from-primary-500 to-accent h-2 rounded-full transition-all" [style.width.%]="c.enrollment.progress"></div>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">{{ c.enrollment.completedLecons }} / {{ c.enrollment.totalLecons }} leçons</p>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+              <div class="flex items-center text-gray-500">
+                <i data-feather="user" class="w-4 h-4"></i>
+                <span class="ml-2 text-sm">{{ c.formateurNom }}</span>
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <a [routerLink]="['/cours', c.id]" class="flex-1 text-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all font-medium">
+                {{ c.isEnrolled ? 'Continuer' : 'Voir détails' }}
+              </a>
+              <button *ngIf="!authService.isFormateur() && !c.isEnrolled" 
+                      (click)="enrollInCourse(c.id!, $event)"
+                      class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-600 transition-all">
+                <i data-feather="plus" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && cours.length === 0" class="text-center py-12">
+        <i data-feather="inbox" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+        <p class="text-gray-600 text-lg">Aucun cours disponible pour le moment</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Progress Section -->
+  <section class="py-16 px-4 bg-gradient-to-r from-primary-50 to-purple-50">
+    <div class="container mx-auto max-w-7xl">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Votre Progression</h2>
+        <p class="text-gray-600">Suivez votre évolution et restez motivé</p>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-8">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+          <div class="mb-6 md:mb-0">
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Niveau {{ userLevel }} - Apprenti</h3>
+            <p class="text-gray-600">{{ totalPoints }} points gagnés</p>
+            <div class="w-full md:w-96 bg-gray-200 rounded-full h-2.5 mt-4">
+              <div class="bg-gradient-to-r from-primary-500 to-accent h-2.5 rounded-full" [style.width.%]="(totalPoints % 100)"></div>
+            </div>
+          </div>
+          <div class="flex space-x-6">
+            <div class="text-center">
+              <div class="text-3xl font-bold text-primary-500">{{ enrolledCount }}</div>
+              <div class="text-sm text-gray-600">Cours</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-secondary-500">{{ completedCount }}</div>
+              <div class="text-sm text-gray-600">Complétés</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-purple-500">{{ totalPoints }}</div>
+              <div class="text-sm text-gray-600">Points</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 px-4 bg-gradient-to-r from-primary-500 to-primary-700">
+    <div class="container mx-auto text-center max-w-4xl">
+      <h2 class="text-3xl font-bold text-white mb-6">Prêt à booster votre apprentissage ?</h2>
+      <p class="text-blue-100 mb-8">Rejoignez des milliers d'apprenants et transformez votre parcours éducatif</p>
+      <button (click)="scrollToCourses()" class="bg-white hover:bg-gray-100 text-primary-500 px-8 py-3 rounded-lg font-bold shadow-lg transition-all">
+        Commencer maintenant
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12 px-4">
+    <div class="container mx-auto max-w-7xl">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-4">
+            <i data-feather="award" class="text-primary-500 w-8 h-8"></i>
+            <span class="text-2xl font-bold">9awiNiveau</span>
+          </div>
+          <p class="text-gray-400">L'apprentissage gamifié pour une expérience éducative engageante.</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold mb-4">Navigation</h3>
+          <ul class="space-y-2">
+            <li><a routerLink="/cours" class="text-gray-400 hover:text-white">Cours</a></li>
+            <li><a routerLink="/profile" class="text-gray-400 hover:text-white">Profil</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold mb-4">Contact</h3>
+          <ul class="space-y-2">
+            <li class="flex items-center text-gray-400">
+              <i data-feather="mail" class="w-4 h-4 mr-2"></i> contact@9awiniveau.com
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+        <p class="text-gray-400">© 2025 9awiNiveau Academy. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
 </div>

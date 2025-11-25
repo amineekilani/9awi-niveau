@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CoursService, Cours } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { AuthService } from '../auth';
+
+declare const feather: any;
 
 interface CoursWithEnrollment extends Cours {
   enrollment?: Enrollment;
@@ -17,20 +19,44 @@ interface CoursWithEnrollment extends Cours {
   templateUrl: './cours-list.html',
   styleUrls: ['./cours-list.css']
 })
-export class CoursListComponent implements OnInit {
+export class CoursListComponent implements OnInit, AfterViewInit {
   cours: CoursWithEnrollment[] = [];
   loading = false;
   error = '';
   success = '';
+  
+  // Statistiques gamifiées
+  enrolledCount = 0;
+  completedCount = 0;
+  totalPoints = 0;
+  userLevel = 1;
+  overallProgress = 0;
+  userInitials = 'ET';
 
   constructor(
     private coursService: CoursService,
     private enrollmentService: EnrollmentService,
-    public authService: AuthService
+    public authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit() {
     this.loadCours();
+    this.calculateUserInitials();
+  }
+
+  ngAfterViewInit() {
+    if (typeof feather !== 'undefined') {
+      setTimeout(() => feather.replace(), 100);
+    }
+  }
+
+  calculateUserInitials() {
+    const email = this.authService.getEmail();
+    if (email) {
+      const parts = email.split('@')[0].split('.');
+      this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+    }
   }
 
   loadCours() {
@@ -66,13 +92,40 @@ export class CoursListComponent implements OnInit {
             cours.isEnrolled = true;
           }
         });
+        
+        // Calculer les statistiques
+        this.calculateStats(enrollments);
         this.loading = false;
+        
+        // Rafraîchir les icônes après le chargement
+        setTimeout(() => {
+          if (typeof feather !== 'undefined') {
+            feather.replace();
+          }
+        }, 100);
       },
       error: (err) => {
         console.error('Erreur chargement enrollments:', err);
         this.loading = false;
       }
     });
+  }
+
+  calculateStats(enrollments: Enrollment[]) {
+    this.enrolledCount = enrollments.length;
+    this.completedCount = enrollments.filter(e => e.progress === 100).length;
+    
+    // Calculer la progression globale
+    if (enrollments.length > 0) {
+      const totalProgress = enrollments.reduce((sum, e) => sum + e.progress, 0);
+      this.overallProgress = Math.round(totalProgress / enrollments.length);
+    }
+    
+    // Calculer les points (10 points par % de progression)
+    this.totalPoints = enrollments.reduce((sum, e) => sum + Math.round(e.progress * 10), 0);
+    
+    // Calculer le niveau (1 niveau tous les 500 points)
+    this.userLevel = Math.floor(this.totalPoints / 500) + 1;
   }
 
   enrollInCourse(coursId: number, event: Event) {
@@ -82,7 +135,7 @@ export class CoursListComponent implements OnInit {
     if (confirm('Voulez-vous vous inscrire à ce cours ?')) {
       this.enrollmentService.enrollInCourse(coursId).subscribe({
         next: () => {
-          this.success = 'Inscription réussie !';
+          this.success = '🎉 Inscription réussie ! Vous avez gagné 50 points !';
           this.loadCours(); // Recharger pour mettre à jour l'état
           setTimeout(() => this.success = '', 3000);
         },
@@ -96,5 +149,16 @@ export class CoursListComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
+  }
+
+  scrollToCourses() {
+    const element = document.getElementById('courses-section');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 }
