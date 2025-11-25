@@ -6,6 +6,7 @@ import { CoursService, Cours } from '../cours.service';
 import { ModuleService, Module } from '../module.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { ModuleProgressService, ModuleProgress } from '../module-progress.service';
+import { ApprenantProgressionService, ApprenantProgression } from '../apprenant-progression.service';
 import { AuthService } from '../auth';
 
 @Component({
@@ -24,6 +25,8 @@ export class CoursDetailComponent implements OnInit {
   error = '';
   success = '';
   enrollment: Enrollment | null = null;
+  apprenants: ApprenantProgression[] = [];
+  showApprenants = false;
 
   // Module form
   showModuleForm = false;
@@ -39,6 +42,7 @@ export class CoursDetailComponent implements OnInit {
     private moduleService: ModuleService,
     private enrollmentService: EnrollmentService,
     private moduleProgressService: ModuleProgressService,
+    private apprenantProgressionService: ApprenantProgressionService,
     public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
@@ -50,7 +54,46 @@ export class CoursDetailComponent implements OnInit {
     this.loadModules();
     if (!this.authService.isFormateur()) {
       this.loadEnrollment();
+    } else {
+      this.loadApprenants();
     }
+  }
+
+  loadApprenants() {
+    this.apprenantProgressionService.getApprenantsProgression(this.coursId).subscribe({
+      next: (data) => {
+        this.apprenants = data;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des apprenants', err);
+      }
+    });
+  }
+
+  toggleApprenants() {
+    this.showApprenants = !this.showApprenants;
+  }
+
+  formatDate(timestamp: number): string {
+    return new Date(timestamp).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  getProgressColor(progress: number): string {
+    if (progress >= 80) return 'text-green-600';
+    if (progress >= 50) return 'text-blue-600';
+    if (progress >= 25) return 'text-yellow-600';
+    return 'text-gray-600';
+  }
+
+  getProgressBarColor(progress: number): string {
+    if (progress >= 80) return 'bg-green-600';
+    if (progress >= 50) return 'bg-blue-600';
+    if (progress >= 25) return 'bg-yellow-600';
+    return 'bg-gray-600';
   }
 
   loadEnrollment() {

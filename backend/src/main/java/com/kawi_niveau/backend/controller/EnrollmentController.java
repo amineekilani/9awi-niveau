@@ -1,5 +1,6 @@
 package com.kawi_niveau.backend.controller;
 
+import com.kawi_niveau.backend.dto.ApprenantProgressionResponse;
 import com.kawi_niveau.backend.dto.EnrollmentRequest;
 import com.kawi_niveau.backend.dto.EnrollmentResponse;
 import com.kawi_niveau.backend.dto.LeconCompletionRequest;
@@ -89,5 +90,22 @@ public class EnrollmentController {
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
         List<Long> completedIds = enrollmentService.getCompletedLeconIds(user.getId(), coursId);
         return ResponseEntity.ok(completedIds);
+    }
+
+    @GetMapping("/cours/{coursId}/apprenants")
+    public ResponseEntity<List<ApprenantProgressionResponse>> getApprenantsProgression(
+            @PathVariable Long coursId,
+            Authentication authentication) {
+        String email = authentication.getName();
+        User user = userRepository.findByEmailAndArchivedFalse(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        
+        // Vérifier que l'utilisateur est formateur
+        if (!"FORMATEUR".equals(user.getRole().name())) {
+            throw new RuntimeException("Accès non autorisé");
+        }
+        
+        List<ApprenantProgressionResponse> apprenants = enrollmentService.getApprenantsProgression(coursId);
+        return ResponseEntity.ok(apprenants);
     }
 }

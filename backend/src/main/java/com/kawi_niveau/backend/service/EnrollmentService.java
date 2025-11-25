@@ -14,6 +14,7 @@ import com.kawi_niveau.backend.repository.LeconCompletionRepository;
 import com.kawi_niveau.backend.repository.LeconRepository;
 import com.kawi_niveau.backend.repository.ModuleRepository;
 import com.kawi_niveau.backend.repository.UserRepository;
+import com.kawi_niveau.backend.repository.ResultatQuizRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,12 @@ public class EnrollmentService {
 
     @Autowired
     private ModuleRepository moduleRepository;
+
+    @Autowired
+    private ResultatQuizRepository resultatQuizRepository;
+
+    @Autowired
+    private com.kawi_niveau.backend.repository.QuizRepository quizRepository;
 
     @Transactional
     public EnrollmentResponse enrollInCourse(Long userId, EnrollmentRequest request) {
@@ -204,6 +211,129 @@ public class EnrollmentService {
                 enrollment.getLastAccessedAt(),
                 totalLecons,
                 completedLecons
+        );
+    }
+
+    public List<com.kawi_niveau.backend.dto.ApprenantProgressionResponse> getApprenantsProgression(Long coursId) {
+        Cours cours = coursRepository.findById(coursId)
+                .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
+
+        List<Enrollment> enrollments = enrollmentRepository.findByCours(cours);
+
+        return enrollments.stream()
+                .map(this::mapToApprenantProgression)
+                .collect(Collectors.toList());
+    }
+
+    private com.kawi_niveau.backend.dto.ApprenantProgressionResponse mapToApprenantProgression(Enrollment enrollment) {
+        User user = enrollment.getUser();
+        Cours cours = enrollment.getCours();
+
+        // Récupérer les modules du cours
+        List<com.kawi_niveau.backend.entity.Module> modules = moduleRepository.findByCoursOrderByOrdreAsc(cours);
+
+        // Calculer la progression globale
+        int totalLecons = modules.stream()
+                .mapToInt(module -> leconRepository.findByModuleOrderByOrdreAsc(module).size())
+                .sum();
+        int leconsCompletees = (int) leconCompletionRepository.countByEnrollment(enrollment);
+
+        // Progression par module
+        List<com.kawi_niveau.backend.dto.ApprenantProgressionResponse.ModuleProgressionDetail> modulesProgression = 
+            modules.stream().map(module -> {
+                List<Lecon> lecons = leconRepository.findByModuleOrderByOrdreAsc(module);
+                int totalLeconsModule = lecons.size();
+                long leconsCompleteesModule = lecons.stream()
+                        .filter(lecon -> leconCompletionRepository.existsByEnrollmentAndLecon(enrollment, lecon))
+                        .count();
+                
+                float progressionModule = totalLeconsModule > 0 
+                    ? (float) leconsCompleteesModule / totalLeconsModule * 100 
+                    : 0;
+
+                // Vérifier s'il y a un quiz pour ce module
+                com.kawi_niveau.backend.dto.ApprenantProgressionResponse.QuizResultatDetail quizDetail = null;
+                com.kawi_niveau.backend.entity.Quiz quiz = quizRepository.findByModule(module).orElse(null);
+                if (quiz != null) {
+                    List<com.kawi_niveau.backend.entity.ResultatQuiz> resultats = 
+                        resultatQuizRepository.findByUserAndQuizOrderByDatePassedDesc(user, quiz);
+                    
+                    if (!resultats.isEmpty()) {
+                        double meilleurScore = resultats.stream()
+                                .mapToDouble(com.kawi_niveau.backend.entity.ResultatQuiz::getScore)
+                                .max()
+                                .orElse(0.0);
+                        
+                        com.kawi_niveau.backend.entity.ResultatQuiz dernierResultat = resultats.get(0);
+                        
+                        quizDetail = new com.kawi_niveau.backend.dto.ApprenantProgressionResponse.QuizResultatDetail(
+                            quiz.getId(),
+                            quiz.getTitre(),
+                            meilleurScore,
+                            resultats.size(),
+                            dernierResultat.getDatePassed(),
+                            meilleurScore >= 50.0 // Score minimum par défaut de 50%
+                        );
+                    }
+                }
+
+                return new com.kawi_niveau.backend.dto.ApprenantProgressionResponse.ModuleProgressionDetail(
+                    module.getId(),
+                    module.getTitre(),
+                    totalLeconsModule,
+                    (int) leconsCompleteesModule,
+                    progressionModule,
+                    quizDetail
+                );
+            }).collect(Collectors.toList());
+
+        // Tous les résultats de quiz du cours
+        List<com.kawi_niveau.backend.dto.ApprenantProgressionResponse.QuizResultatDetail> quizResultats = 
+            modules.stream()
+                .map(module -> {
+                    com.kawi_niveau.backend.entity.Quiz quiz = quizRepository.findByModule(module).orElse(null);
+                    if (quiz == null) {
+                        return null;
+                    }
+                    List<com.kawi_niveau.backend.entity.ResultatQuiz> resultats = 
+                        resultatQuizRepository.findByUserAndQuizOrderByDatePassedDesc(user, quiz);
+                    
+                    if (resultats.isEmpty()) {
+                        return null;
+                    }
+
+                    double meilleurScore = resultats.stream()
+                            .mapToDouble(com.kawi_niveau.backend.entity.ResultatQuiz::getScore)
+                            .max()
+                            .orElse(0.0);
+                    
+                    com.kawi_niveau.backend.entity.ResultatQuiz dernierResultat = resultats.get(0);
+                    
+                    return new com.kawi_niveau.backend.dto.ApprenantProgressionResponse.QuizResultatDetail(
+                        quiz.getId(),
+                        quiz.getTitre(),
+                        meilleurScore,
+                        resultats.size(),
+                        dernierResultat.getDatePassed(),
+                        meilleurScore >= 50.0 // Score minimum par défaut de 50%
+                    );
+                })
+                .filter(detail -> detail != null)
+                .collect(Collectors.toList());
+
+        return new com.kawi_niveau.backend.dto.ApprenantProgressionResponse(
+            user.getId(),
+            user.getLastName(),
+            user.getFirstName(),
+            user.getEmail(),
+            user.getProfileImage(),
+            enrollment.getProgress(),
+            totalLecons,
+            leconsCompletees,
+            enrollment.getEnrolledAt(),
+            enrollment.getLastAccessedAt(),
+            modulesProgression,
+            quizResultats
         );
     }
 }
