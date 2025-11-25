@@ -43,7 +43,7 @@
         </div>
 
         <!-- Description -->
-        <div class="mb-8">
+        <div class="mb-6">
           <label for="description" class="block text-sm font-semibold text-gray-900 mb-2">
             Description du cours
           </label>
@@ -56,6 +56,31 @@
             placeholder="Décrivez le contenu du cours, les objectifs d'apprentissage, les prérequis..."
           ></textarea>
           <p class="text-xs text-gray-500 mt-1">Donnez une description détaillée pour aider les étudiants à comprendre le contenu</p>
+        </div>
+
+        <!-- Catégorie -->
+        <div class="mb-8">
+          <label for="categorie" class="block text-sm font-semibold text-gray-900 mb-2">
+            Catégorie du cours
+          </label>
+          <select
+            id="categorie"
+            name="categorie"
+            [(ngModel)]="cours.categorie"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+          >
+            <option value="">Sélectionnez une catégorie</option>
+            <option value="Programmation">Programmation</option>
+            <option value="Design">Design</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Business">Business</option>
+            <option value="Langues">Langues</option>
+            <option value="Sciences">Sciences</option>
+            <option value="Mathématiques">Mathématiques</option>
+            <option value="Développement Personnel">Développement Personnel</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1">Choisissez la catégorie qui correspond le mieux à votre cours</p>
         </div>
 
         <!-- Divider -->

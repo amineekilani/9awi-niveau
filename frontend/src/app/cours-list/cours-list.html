@@ -161,7 +161,8 @@
           </div>
           <div class="p-6">
             <div class="flex justify-between items-start mb-3">
-              <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">Cours</span>
+              <span *ngIf="c.categorie" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ c.categorie }}</span>
+              <span *ngIf="!c.categorie" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">Cours</span>
               <div class="flex items-center text-yellow-400">
                 <i data-feather="star" class="w-4 h-4 fill-current"></i>
                 <span class="ml-1 text-gray-600 text-sm">4.8</span>

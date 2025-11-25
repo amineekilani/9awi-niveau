@@ -15,7 +15,8 @@ import { AuthService } from '../auth';
 export class CoursFormComponent implements OnInit {
   cours: Cours = {
     titre: '',
-    description: ''
+    description: '',
+    categorie: ''
   };
   isEditMode = false;
   coursId?: number;

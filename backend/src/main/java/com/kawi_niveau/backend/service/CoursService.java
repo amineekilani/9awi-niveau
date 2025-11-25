@@ -33,6 +33,7 @@ public class CoursService {
         Cours cours = new Cours();
         cours.setTitre(request.getTitre());
         cours.setDescription(request.getDescription());
+        cours.setCategorie(request.getCategorie());
         cours.setFormateur(formateur);
 
         Cours savedCours = coursRepository.save(cours);
@@ -52,6 +53,7 @@ public class CoursService {
 
         cours.setTitre(request.getTitre());
         cours.setDescription(request.getDescription());
+        cours.setCategorie(request.getCategorie());
 
         Cours updatedCours = coursRepository.save(cours);
         return mapToResponse(updatedCours);
@@ -120,6 +122,7 @@ public class CoursService {
                 cours.getUpdatedAt(),
                 cours.isArchived(),
                 cours.getArchivedAt(),
+                cours.getCategorie(),
                 cours.getFormateur().getId(),
                 formateurNom
         );

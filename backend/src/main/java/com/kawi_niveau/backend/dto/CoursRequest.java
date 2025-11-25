@@ -9,4 +9,6 @@ public class CoursRequest {
     private String titre;
     
     private String description;
+    
+    private String categorie;
 }

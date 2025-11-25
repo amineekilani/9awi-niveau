@@ -11,6 +11,7 @@ export interface Cours {
   updatedAt?: number;
   archived?: boolean;
   archivedAt?: number;
+  categorie?: string;
   formateurId?: number;
   formateurNom?: string;
 }

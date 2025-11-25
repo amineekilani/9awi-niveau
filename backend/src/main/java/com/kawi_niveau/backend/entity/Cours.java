@@ -29,6 +29,9 @@ public class Cours {
     @Column(name = "archived_at")
     private Long archivedAt;
 
+    @Column(name = "categorie", length = 100)
+    private String categorie;
+
     @ManyToOne
     @JoinColumn(name = "formateur_id", nullable = false)
     private User formateur;
