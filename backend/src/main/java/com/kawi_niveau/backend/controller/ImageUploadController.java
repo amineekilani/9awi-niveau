@@ -33,7 +33,29 @@ public class ImageUploadController {
             }
 
             String filename = imageUploadService.saveProfileImage(file);
-            return ResponseEntity.ok(new ImageUploadResponse(filename));
+            return ResponseEntity.ok(new ImageUploadResponse(filename, "users"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new com.kawi_niveau.backend.dto.MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new com.kawi_niveau.backend.dto.MessageResponse("Erreur lors de l'upload: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Upload un thumbnail de cours
+     * @param file Le fichier image
+     * @return Le nom du fichier sauvegardé
+     */
+    @PostMapping("/cours/upload")
+    public ResponseEntity<?> uploadCoursThumbnail(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(new com.kawi_niveau.backend.dto.MessageResponse("Le fichier est vide"));
+            }
+
+            String filename = imageUploadService.saveCoursThumbnail(file);
+            return ResponseEntity.ok(new ImageUploadResponse(filename, "cours"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new com.kawi_niveau.backend.dto.MessageResponse(e.getMessage()));
         } catch (Exception e) {
@@ -79,6 +101,42 @@ public class ImageUploadController {
     }
 
     /**
+     * Récupère un thumbnail de cours
+     * @param filename Le nom du fichier
+     * @return Le fichier image
+     */
+    @GetMapping("/cours/{filename}")
+    public ResponseEntity<?> getCoursThumbnail(@PathVariable String filename) {
+        try {
+            // Validation de sécurité: éviter les path traversal
+            if (filename.contains("..") || filename.contains("/")) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            Path imagePath = imageUploadService.getCoursThumbnailPath(filename);
+            
+            if (!Files.exists(imagePath)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] imageBytes = Files.readAllBytes(imagePath);
+            
+            // Déterminer le type de contenu basé sur l'extension
+            String contentType = getContentType(filename);
+            
+            return ResponseEntity.ok()
+                    .header("Access-Control-Allow-Origin", "http://localhost:4200")
+                    .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+                    .header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+                    .header("Cache-Control", "public, max-age=3600")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(imageBytes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
      * Détermine le type MIME basé sur l'extension du fichier
      * @param filename Le nom du fichier
      * @return Le type MIME
@@ -101,9 +159,9 @@ public class ImageUploadController {
         public String filename;
         public String url;
 
-        public ImageUploadResponse(String filename) {
+        public ImageUploadResponse(String filename, String type) {
             this.filename = filename;
-            this.url = "/images/users/" + filename;
+            this.url = "/images/" + type + "/" + filename;
         }
 
         public String getFilename() {

@@ -85,20 +85,29 @@
     <div *ngIf="!loading && displayedCours.length > 0">
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div *ngFor="let c of displayedCours" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
-          <!-- Card Header with gradient -->
-          <div [class]="c.archived 
-            ? 'h-2 bg-gradient-to-r from-gray-400 to-gray-500' 
-            : 'h-2 bg-gradient-to-r from-blue-500 to-purple-500'"></div>
+          <!-- Thumbnail -->
+          <div class="relative h-48 bg-gradient-to-br from-blue-400 to-purple-600 overflow-hidden">
+            <img *ngIf="c.thumbnailUrl" 
+                 [src]="'http://localhost:8080/images/cours/' + c.thumbnailUrl" 
+                 [alt]="c.titre"
+                 class="w-full h-full object-cover"
+                 (error)="$any($event.target).style.display='none'" />
+            <div *ngIf="!c.thumbnailUrl" class="absolute inset-0 flex items-center justify-center">
+              <svg class="w-16 h-16 text-white opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <span *ngIf="c.archived" class="absolute top-4 right-4 px-3 py-1 bg-gray-900 bg-opacity-75 text-white rounded-full text-xs font-medium">
+              Archivé
+            </span>
+          </div>
           
           <div class="p-6">
-            <!-- Title with archived badge -->
-            <div class="flex items-start justify-between gap-2 mb-3">
-              <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 flex-1">
+            <!-- Title -->
+            <div class="mb-3">
+              <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
                 {{ c.titre }}
               </h3>
-              <span *ngIf="c.archived" class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium flex-shrink-0">
-                Archivé
-              </span>
             </div>
             
             <!-- Catégorie Badge -->

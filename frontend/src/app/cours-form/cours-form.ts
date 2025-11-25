@@ -23,6 +23,9 @@ export class CoursFormComponent implements OnInit {
   loading = false;
   error = '';
   success = '';
+  selectedFile: File | null = null;
+  thumbnailPreview: string | null = null;
+  uploadingThumbnail = false;
 
   constructor(
     private coursService: CoursService,
@@ -51,6 +54,9 @@ export class CoursFormComponent implements OnInit {
     this.coursService.getCoursById(this.coursId).subscribe({
       next: (data) => {
         this.cours = data;
+        if (this.cours.thumbnailUrl) {
+          this.thumbnailPreview = `http://localhost:8080/images/cours/${this.cours.thumbnailUrl}`;
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -60,11 +66,66 @@ export class CoursFormComponent implements OnInit {
     });
   }
 
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      // Vérifier que c'est une image
+      if (!file.type.startsWith('image/')) {
+        this.error = 'Veuillez sélectionner une image';
+        return;
+      }
+
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.error = 'L\'image ne doit pas dépasser 5MB';
+        return;
+      }
+
+      this.selectedFile = file;
+      
+      // Prévisualisation
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.thumbnailPreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeThumbnail() {
+    this.selectedFile = null;
+    this.thumbnailPreview = null;
+    this.cours.thumbnailUrl = undefined;
+  }
+
   onSubmit() {
     this.loading = true;
     this.error = '';
     this.success = '';
 
+    // Si un fichier est sélectionné, l'uploader d'abord
+    if (this.selectedFile) {
+      this.uploadingThumbnail = true;
+      this.coursService.uploadThumbnail(this.selectedFile).subscribe({
+        next: (response) => {
+          console.log('Upload response:', response);
+          this.cours.thumbnailUrl = response.filename;
+          this.uploadingThumbnail = false;
+          this.saveCours();
+        },
+        error: (err) => {
+          console.error('Upload error:', err);
+          this.error = err.error?.message || 'Erreur lors de l\'upload de l\'image';
+          this.loading = false;
+          this.uploadingThumbnail = false;
+        }
+      });
+    } else {
+      this.saveCours();
+    }
+  }
+
+  private saveCours() {
     const operation = this.isEditMode
       ? this.coursService.updateCours(this.coursId!, this.cours)
       : this.coursService.createCours(this.cours);

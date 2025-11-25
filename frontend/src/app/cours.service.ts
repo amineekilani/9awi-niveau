@@ -12,6 +12,7 @@ export interface Cours {
   archived?: boolean;
   archivedAt?: number;
   categorie?: string;
+  thumbnailUrl?: string;
   formateurId?: number;
   formateurNom?: string;
 }
@@ -50,5 +51,11 @@ export class CoursService {
 
   getCoursById(id: number): Observable<Cours> {
     return this.http.get<Cours>(`${this.apiUrl}/${id}`);
+  }
+
+  uploadThumbnail(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post('http://localhost:8080/images/cours/upload', formData);
   }
 }

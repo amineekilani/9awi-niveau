@@ -32,6 +32,9 @@ public class Cours {
     @Column(name = "categorie", length = 100)
     private String categorie;
 
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
     @ManyToOne
     @JoinColumn(name = "formateur_id", nullable = false)
     private User formateur;

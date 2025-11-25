@@ -11,4 +11,6 @@ public class CoursRequest {
     private String description;
     
     private String categorie;
+    
+    private String thumbnailUrl;
 }

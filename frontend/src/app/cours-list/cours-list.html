@@ -205,8 +205,13 @@
       <!-- Cours Grid -->
       <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div *ngFor="let c of filteredCours" class="bg-white rounded-xl shadow-md overflow-hidden course-card transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-          <div class="relative h-48 bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-            <i data-feather="book-open" class="text-white w-16 h-16 opacity-50"></i>
+          <div class="relative h-48 bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center overflow-hidden">
+            <img *ngIf="c.thumbnailUrl" 
+                 [src]="'http://localhost:8080/images/cours/' + c.thumbnailUrl" 
+                 [alt]="c.titre"
+                 class="w-full h-full object-cover"
+                 (error)="$any($event.target).style.display='none'" />
+            <i *ngIf="!c.thumbnailUrl" data-feather="book-open" class="text-white w-16 h-16 opacity-50"></i>
             <div *ngIf="c.isEnrolled" class="absolute top-4 right-4 bg-primary-500 text-white text-xs px-2 py-1 rounded-full">Inscrit</div>
             <div *ngIf="!c.isEnrolled" class="absolute top-4 left-4 bg-secondary-500 text-white text-xs px-2 py-1 rounded-full">Nouveau</div>
           </div>

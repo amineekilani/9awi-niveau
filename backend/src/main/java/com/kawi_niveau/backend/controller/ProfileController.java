@@ -127,7 +127,7 @@ public class ProfileController {
             user.setProfileImage(filename);
             userRepository.save(user);
 
-            return ResponseEntity.ok(new ImageUploadController.ImageUploadResponse(filename));
+            return ResponseEntity.ok(new ImageUploadController.ImageUploadResponse(filename, "users"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         } catch (Exception e) {
@@ -234,7 +234,7 @@ public class ProfileController {
             user.setProfileImage(filename);
             userRepository.save(user);
 
-            return ResponseEntity.ok(new ImageUploadController.ImageUploadResponse(filename));
+            return ResponseEntity.ok(new ImageUploadController.ImageUploadResponse(filename, "users"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         } catch (Exception e) {

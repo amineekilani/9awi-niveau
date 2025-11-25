@@ -16,6 +16,7 @@ public class CoursResponse {
     private boolean archived;
     private Long archivedAt;
     private String categorie;
+    private String thumbnailUrl;
     private Long formateurId;
     private String formateurNom;
 }
