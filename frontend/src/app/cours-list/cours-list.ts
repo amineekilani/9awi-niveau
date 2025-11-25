@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { CoursService, Cours } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { AuthService } from '../auth';
@@ -15,15 +16,21 @@ interface CoursWithEnrollment extends Cours {
 @Component({
   selector: 'app-cours-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './cours-list.html',
   styleUrls: ['./cours-list.css']
 })
 export class CoursListComponent implements OnInit, AfterViewInit {
   cours: CoursWithEnrollment[] = [];
+  filteredCours: CoursWithEnrollment[] = [];
   loading = false;
   error = '';
   success = '';
+  
+  // Filtres
+  searchTerm = '';
+  selectedCategorie = '';
+  categories: string[] = [];
   
   // Statistiques gamifiées
   enrolledCount = 0;
@@ -66,6 +73,8 @@ export class CoursListComponent implements OnInit, AfterViewInit {
     this.coursService.getAllCours().subscribe({
       next: (data) => {
         this.cours = data;
+        this.extractCategories();
+        this.applyFilters();
         
         // Si étudiant, charger les enrollments
         if (!this.authService.isFormateur()) {
@@ -81,6 +90,50 @@ export class CoursListComponent implements OnInit, AfterViewInit {
     });
   }
 
+  extractCategories() {
+    const categoriesSet = new Set<string>();
+    this.cours.forEach(c => {
+      if (c.categorie) {
+        categoriesSet.add(c.categorie);
+      }
+    });
+    this.categories = Array.from(categoriesSet).sort();
+  }
+
+  applyFilters() {
+    let filtered = [...this.cours];
+    
+    // Filtrer par recherche
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(c => 
+        c.titre.toLowerCase().includes(term) || 
+        c.description.toLowerCase().includes(term)
+      );
+    }
+    
+    // Filtrer par catégorie
+    if (this.selectedCategorie) {
+      filtered = filtered.filter(c => c.categorie === this.selectedCategorie);
+    }
+    
+    this.filteredCours = filtered;
+  }
+
+  onSearchChange() {
+    this.applyFilters();
+  }
+
+  onCategorieChange() {
+    this.applyFilters();
+  }
+
+  clearFilters() {
+    this.searchTerm = '';
+    this.selectedCategorie = '';
+    this.applyFilters();
+  }
+
   loadEnrollments() {
     this.enrollmentService.getUserEnrollments().subscribe({
       next: (enrollments) => {
@@ -92,6 +145,9 @@ export class CoursListComponent implements OnInit, AfterViewInit {
             cours.isEnrolled = true;
           }
         });
+        
+        // Appliquer les filtres après avoir chargé les enrollments
+        this.applyFilters();
         
         // Calculer les statistiques
         this.calculateStats(enrollments);

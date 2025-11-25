@@ -145,6 +145,57 @@
         <h2 class="text-3xl font-bold text-gray-800">Cours Disponibles</h2>
       </div>
 
+      <!-- Barre de recherche et filtres -->
+      <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4">
+          <!-- Recherche -->
+          <div class="flex-1 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i data-feather="search" class="text-gray-400 w-5 h-5"></i>
+            </div>
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange()"
+              placeholder="Rechercher un cours par nom ou description..." 
+              class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            />
+          </div>
+
+          <!-- Filtre par catégorie -->
+          <div class="md:w-64 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i data-feather="filter" class="text-gray-400 w-5 h-5"></i>
+            </div>
+            <select 
+              [(ngModel)]="selectedCategorie"
+              (ngModelChange)="onCategorieChange()"
+              class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none bg-white cursor-pointer"
+            >
+              <option value="">Toutes les catégories</option>
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+
+          <!-- Bouton réinitialiser -->
+          <button 
+            *ngIf="searchTerm || selectedCategorie"
+            (click)="clearFilters()"
+            class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-all font-medium flex items-center gap-2"
+          >
+            <i data-feather="x" class="w-5 h-5"></i>
+            Réinitialiser
+          </button>
+        </div>
+
+        <!-- Résultats de recherche -->
+        <div *ngIf="searchTerm || selectedCategorie" class="mt-4 text-sm text-gray-600">
+          <span class="font-medium">{{ filteredCours.length }}</span> cours trouvé(s)
+          <span *ngIf="searchTerm"> pour "<span class="font-medium text-primary-500">{{ searchTerm }}</span>"</span>
+          <span *ngIf="selectedCategorie"> dans la catégorie "<span class="font-medium text-primary-500">{{ selectedCategorie }}</span>"</span>
+        </div>
+      </div>
+
       <!-- Loading -->
       <div *ngIf="loading" class="text-center py-12">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
@@ -153,7 +204,7 @@
 
       <!-- Cours Grid -->
       <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div *ngFor="let c of cours" class="bg-white rounded-xl shadow-md overflow-hidden course-card transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+        <div *ngFor="let c of filteredCours" class="bg-white rounded-xl shadow-md overflow-hidden course-card transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
           <div class="relative h-48 bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
             <i data-feather="book-open" class="text-white w-16 h-16 opacity-50"></i>
             <div *ngIf="c.isEnrolled" class="absolute top-4 right-4 bg-primary-500 text-white text-xs px-2 py-1 rounded-full">Inscrit</div>
@@ -208,6 +259,16 @@
       <div *ngIf="!loading && cours.length === 0" class="text-center py-12">
         <i data-feather="inbox" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
         <p class="text-gray-600 text-lg">Aucun cours disponible pour le moment</p>
+      </div>
+
+      <!-- No Results State -->
+      <div *ngIf="!loading && cours.length > 0 && filteredCours.length === 0" class="text-center py-12">
+        <i data-feather="search" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+        <p class="text-gray-600 text-lg mb-2">Aucun cours ne correspond à votre recherche</p>
+        <p class="text-gray-500 text-sm mb-4">Essayez avec d'autres mots-clés ou catégories</p>
+        <button (click)="clearFilters()" class="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all">
+          Voir tous les cours
+        </button>
       </div>
     </div>
   </section>
