@@ -20,6 +20,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
   error = '';
   selectedFilter = 'active';
   userInitials = 'ET';
+  completedCount = 0;
 
   filterOptions = [
     { value: 'active', label: 'Défis actifs', count: 0 },
@@ -30,7 +31,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
   constructor(
     private gamificationService: UserGamificationService,
     public authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.calculateUserInitials();
@@ -55,6 +56,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
     this.gamificationService.getUserChallenges().subscribe({
       next: (challenges) => {
         this.challenges = challenges;
+        this.completedCount = challenges.filter(c => c.isCompleted).length;
         this.updateFilterCounts();
         this.applyFilter();
         this.loading = false;
@@ -63,9 +65,10 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
         console.error('Erreur chargement défis:', err);
         this.error = 'Erreur lors du chargement des défis';
         this.loading = false;
-        
+
         // Données de démonstration en cas d'erreur
         this.challenges = this.generateDemoChallenges();
+        this.completedCount = this.challenges.filter(c => c.isCompleted).length;
         this.updateFilterCounts();
         this.applyFilter();
       }

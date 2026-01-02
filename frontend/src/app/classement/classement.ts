@@ -40,7 +40,7 @@ export class ClassementComponent implements OnInit, AfterViewInit {
   constructor(
     private gamificationService: UserGamificationService,
     public authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.calculateUserInitials();
@@ -72,7 +72,7 @@ export class ClassementComponent implements OnInit, AfterViewInit {
         console.error('Erreur chargement classement:', err);
         this.error = 'Erreur lors du chargement du classement';
         this.loading = false;
-        
+
         // Données de démonstration en cas d'erreur
         this.generateDemoLeaderboard();
       }
@@ -82,7 +82,7 @@ export class ClassementComponent implements OnInit, AfterViewInit {
   generateDemoLeaderboard() {
     const currentUserEmail = this.authService.getEmail() || 'user@example.com';
     const currentUserName = currentUserEmail.split('@')[0];
-    
+
     this.leaderboard = [
       {
         rank: 1,

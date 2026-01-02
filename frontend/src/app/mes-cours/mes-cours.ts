@@ -26,7 +26,8 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
   loading = true;
   error = '';
   userInitials = 'ET';
-  
+  userName = '';
+
   // Filtres spécifiques aux cours inscrits
   selectedFilter = 'all';
   filterOptions = [
@@ -46,7 +47,7 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
     private enrollmentService: EnrollmentService,
     public authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.calculateUserInitials();
@@ -69,7 +70,7 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
 
   loadMesCours() {
     this.loading = true;
-    
+
     // Charger les enrollments de l'utilisateur
     this.enrollmentService.getUserEnrollments().subscribe({
       next: (enrollments) => {
@@ -132,7 +133,7 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
     this.totalEnrolled = this.cours.length;
     this.completedCount = this.cours.filter(c => c.enrollment?.progress === 100).length;
     this.inProgressCount = this.cours.filter(c => c.enrollment && c.enrollment.progress > 0 && c.enrollment.progress < 100).length;
-    
+
     if (this.cours.length > 0) {
       const totalProgress = this.cours.reduce((sum, c) => sum + (c.enrollment?.progress || 0), 0);
       this.averageProgress = Math.round(totalProgress / this.cours.length);
@@ -151,7 +152,7 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
   applyFilter() {
     switch (this.selectedFilter) {
       case 'in-progress':
-        this.filteredCours = this.cours.filter(c => 
+        this.filteredCours = this.cours.filter(c =>
           c.enrollment && c.enrollment.progress > 0 && c.enrollment.progress < 100
         );
         break;

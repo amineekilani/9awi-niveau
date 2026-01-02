@@ -1,33 +1,54 @@
-<!-- Header avec navigation -->
-<header class="bg-gradient-to-r from-blue-500 to-blue-700 backdrop-blur-md shadow-lg sticky top-0 z-50">
-  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-    <!-- Logo et titre -->
-    <div class="flex items-center space-x-2">
-      <i data-feather="award" class="text-white w-8 h-8"></i>
-      <img src="/Logo_9awi_Niveau.png" alt="9awi Niveau Logo" class="h-10 w-auto mr-3">
-      <span class="text-2xl font-bold text-white">9awi Niveau</span>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="hidden md:flex space-x-6">
-      <a routerLink="/home" class="text-white hover:text-gray-200 font-medium nav-link">Accueil</a>
-      <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link">Mes Cours</a>
-      <a routerLink="/mes-recompenses" class="text-white hover:text-gray-200 font-medium nav-link active">Mes
-        Récompenses</a>
-      <a routerLink="/mes-defis" class="text-white hover:text-gray-200 font-medium nav-link">Mes Défis</a>
-      <a routerLink="/classement" class="text-white hover:text-gray-200 font-medium nav-link">Classement</a>
-    </nav>
-
-    <!-- Profil utilisateur -->
-    <div class="flex items-center space-x-4">
-      <div
-        class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-500 font-bold cursor-pointer"
-        routerLink="/profile">
-        {{ userInitials }}
+<!-- Header avec navigation moderne -->
+<header class="backdrop-blur-md shadow-lg sticky top-0 z-50"
+  style="background: linear-gradient(to right, #063cdf, #0850f5);">
+  <div class="container mx-auto px-4 py-3">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <img src="/Logo_9awi_Niveau_without_name.png" alt="9awi Niveau Logo" class="h-10 w-auto">
+        <span class="text-2xl font-bold text-white hidden md:block">9awi Niveau</span>
       </div>
-      <button (click)="logout()" class="hidden md:block text-white hover:text-gray-200">
-        <i data-feather="log-out"></i>
-      </button>
+
+      <nav class="hidden lg:flex space-x-6">
+        <a routerLink="/home" class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Accueil</a>
+        <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Mes
+          Cours</a>
+        <a routerLink="/mes-recompenses"
+          class="text-white hover:text-gray-200 font-medium nav-link active transition-colors">Récompenses</a>
+        <a routerLink="/mes-defis"
+          class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Défis</a>
+        <a routerLink="/classement"
+          class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Classement</a>
+      </nav>
+
+      <div class="flex items-center space-x-4">
+        <div class="relative cursor-pointer hidden md:block">
+          <i data-feather="bell" class="text-white hover:text-gray-200 transition-colors"></i>
+        </div>
+
+        <div
+          class="hidden lg:flex items-center space-x-3 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-opacity-20 transition-all"
+          routerLink="/profile">
+          <div
+            class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold shadow-md">
+            {{ userInitials }}
+          </div>
+          <div class="text-left">
+            <div class="text-white font-semibold text-sm">Récompenses</div>
+            <div class="text-blue-100 text-xs">{{ badgesCount }} badges</div>
+          </div>
+          <i data-feather="chevron-down" class="text-white w-4 h-4"></i>
+        </div>
+
+        <div
+          class="lg:hidden w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold cursor-pointer shadow-md"
+          routerLink="/profile">
+          {{ userInitials }}
+        </div>
+
+        <button (click)="logout()" class="hidden xl:flex items-center text-white hover:text-gray-200 transition-colors">
+          <i data-feather="log-out" class="w-5 h-5"></i>
+        </button>
+      </div>
     </div>
   </div>
 </header>

@@ -20,6 +20,7 @@ export class MesRecompensesComponent implements OnInit, AfterViewInit {
   error = '';
   selectedFilter = 'all';
   userInitials = 'ET';
+  badgesCount = 0;
 
   filterOptions = [
     { value: 'all', label: 'Toutes les récompenses', count: 0 },
@@ -31,7 +32,7 @@ export class MesRecompensesComponent implements OnInit, AfterViewInit {
   constructor(
     private gamificationService: UserGamificationService,
     public authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.calculateUserInitials();
@@ -56,6 +57,7 @@ export class MesRecompensesComponent implements OnInit, AfterViewInit {
     this.gamificationService.getUserBadges().subscribe({
       next: (badges) => {
         this.badges = badges;
+        this.badgesCount = badges.filter(b => b.earnedAt > 0).length;
         this.updateFilterCounts();
         this.applyFilter();
         this.loading = false;
@@ -64,9 +66,10 @@ export class MesRecompensesComponent implements OnInit, AfterViewInit {
         console.error('Erreur chargement badges:', err);
         this.error = 'Erreur lors du chargement des récompenses';
         this.loading = false;
-        
+
         // Données de démonstration en cas d'erreur
         this.badges = this.generateDemoBadges();
+        this.badgesCount = this.badges.filter(b => b.earnedAt > 0).length;
         this.updateFilterCounts();
         this.applyFilter();
       }
