@@ -68,6 +68,15 @@ public class AuthController {
                 user.setLastFailedLogin(null);
                 user.setAccountLockedUntil(null);
                 userRepository.save(user);
+                
+                // Enregistrer la connexion pour la gamification
+                try {
+                    String ipAddress = getClientIpAddress();
+                    String userAgent = getUserAgent();
+                    gamificationService.recordLogin(user, ipAddress, userAgent);
+                } catch (Exception e) {
+                    System.err.println("Erreur lors de l'enregistrement de connexion pour gamification: " + e.getMessage());
+                }
             }
 
             return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail(), user.getRole().name()));
@@ -106,6 +115,9 @@ public class AuthController {
 
     @Autowired
     private com.kawi_niveau.backend.service.EmailService emailService;
+
+    @Autowired
+    private com.kawi_niveau.backend.service.GamificationService gamificationService;
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
@@ -148,6 +160,16 @@ public class AuthController {
         try {
             com.kawi_niveau.backend.entity.User user = oauth2Service.processGoogleUser(request.getToken());
             String jwt = jwtUtils.generateJwtToken(user.getEmail());
+            
+            // Enregistrer la connexion pour la gamification
+            try {
+                String ipAddress = getClientIpAddress();
+                String userAgent = getUserAgent();
+                gamificationService.recordLogin(user, ipAddress, userAgent);
+            } catch (Exception e) {
+                System.err.println("Erreur lors de l'enregistrement de connexion Google pour gamification: " + e.getMessage());
+            }
+            
             return ResponseEntity.ok(new JwtResponse(jwt, user.getEmail(), user.getRole().name()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Google authentication failed: " + e.getMessage()));
@@ -220,5 +242,18 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("Password reset successfully. You can now login with your new password."));
+    }
+
+    // Méthodes utilitaires pour récupérer les informations de connexion
+    private String getClientIpAddress() {
+        // Cette méthode devrait récupérer l'IP réelle du client
+        // Pour l'instant, retourner une valeur par défaut
+        return "127.0.0.1";
+    }
+
+    private String getUserAgent() {
+        // Cette méthode devrait récupérer le User-Agent du client
+        // Pour l'instant, retourner une valeur par défaut
+        return "Unknown";
     }
 }

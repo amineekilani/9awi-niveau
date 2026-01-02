@@ -72,6 +72,13 @@ public class EnrollmentService {
 
         enrollment = enrollmentRepository.save(enrollment);
 
+        // Déclencher l'événement d'inscription pour la gamification
+        try {
+            gamificationService.onCourseEnrollment(user);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la gamification d'inscription: " + e.getMessage());
+        }
+
         return mapToResponse(enrollment);
     }
 
@@ -127,6 +134,13 @@ public class EnrollmentService {
             completion.setEnrollment(enrollment);
             completion.setLecon(lecon);
             leconCompletionRepository.save(completion);
+
+            // Déclencher l'événement de leçon terminée pour la gamification
+            try {
+                gamificationService.onLessonCompleted(enrollment.getUser());
+            } catch (Exception e) {
+                System.err.println("Erreur lors de la gamification de leçon terminée: " + e.getMessage());
+            }
 
             // Recalculer la progression
             updateProgress(enrollment);

@@ -6,5 +6,8 @@ public enum ChallengeType {
     PERFECT_SCORES,        // Obtenir X scores parfaits
     DAILY_LOGIN,           // Se connecter X jours consécutifs
     EARN_BADGES,           // Gagner X badges différents
-    COMPLETE_MODULE        // Terminer X modules complets (toutes leçons + quiz)
+    COMPLETE_MODULE,       // Terminer X modules complets (toutes leçons + quiz)
+    EARN_XP,              // Gagner X points XP
+    WEEKLY_ACTIVITY,      // Activité hebdomadaire
+    MONTHLY_GOAL          // Objectif mensuel
 }

@@ -25,5 +25,8 @@ public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
     @Query("SELECT c FROM Challenge c WHERE c.isActive = true AND (c.endDate IS NULL OR c.endDate > :currentTime)")
     List<Challenge> findActiveAndNotExpired(Long currentTime);
     
+    @Query("SELECT c FROM Challenge c WHERE c.isActive = true AND c.endDate > :currentTime")
+    List<Challenge> findByIsActiveTrueAndEndDateAfter(Long currentTime);
+    
     boolean existsByName(String name);
 }
