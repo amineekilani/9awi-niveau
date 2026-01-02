@@ -1,0 +1,183 @@
+<div class="leaderboard-management">
+  <div class="header">
+    <h2>Classements</h2>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="refreshData()">
+        <i class="icon-refresh"></i>
+        Actualiser
+      </button>
+      <button class="btn btn-primary" (click)="exportLeaderboard()" [disabled]="loading">
+        <i class="icon-download"></i>
+        Exporter CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation tabs -->
+  <div class="tabs">
+    <button class="tab-button" 
+            [class.active]="activeView === 'podium'"
+            (click)="setActiveView('podium')">
+      Podium Top {{ topLimit }}
+    </button>
+    <button class="tab-button" 
+            [class.active]="activeView === 'full'"
+            (click)="setActiveView('full')">
+      Classement Complet
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement du classement...</p>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error-message">
+    <i class="icon-error"></i>
+    {{ error }}
+    <button (click)="refreshData()" class="retry-btn">Réessayer</button>
+  </div>
+
+  <!-- Podium View -->
+  <div *ngIf="!loading && !error && activeView === 'podium' && topLeaderboard" class="podium-view">
+    <!-- Top 3 Podium -->
+    <div class="podium" *ngIf="topLeaderboard.entries.length >= 3">
+      <div class="podium-place second" *ngIf="topLeaderboard.entries[1]">
+        <div class="podium-user">
+          <div class="rank-icon">🥈</div>
+          <div class="user-info">
+            <div class="name">{{ topLeaderboard.entries[1].firstName }} {{ topLeaderboard.entries[1].lastName }}</div>
+            <div class="xp">{{ formatXP(topLeaderboard.entries[1].totalXP) }} XP</div>
+            <div class="level" [style.color]="getLevelColor(topLeaderboard.entries[1].currentLevel)">
+              {{ topLeaderboard.entries[1].levelName }}
+            </div>
+            <div class="badges">{{ topLeaderboard.entries[1].badgesCount }} badges</div>
+          </div>
+        </div>
+        <div class="podium-base silver"></div>
+      </div>
+
+      <div class="podium-place first" *ngIf="topLeaderboard.entries[0]">
+        <div class="podium-user">
+          <div class="rank-icon">🥇</div>
+          <div class="user-info">
+            <div class="name">{{ topLeaderboard.entries[0].firstName }} {{ topLeaderboard.entries[0].lastName }}</div>
+            <div class="xp">{{ formatXP(topLeaderboard.entries[0].totalXP) }} XP</div>
+            <div class="level" [style.color]="getLevelColor(topLeaderboard.entries[0].currentLevel)">
+              {{ topLeaderboard.entries[0].levelName }}
+            </div>
+            <div class="badges">{{ topLeaderboard.entries[0].badgesCount }} badges</div>
+          </div>
+        </div>
+        <div class="podium-base gold"></div>
+      </div>
+
+      <div class="podium-place third" *ngIf="topLeaderboard.entries[2]">
+        <div class="podium-user">
+          <div class="rank-icon">🥉</div>
+          <div class="user-info">
+            <div class="name">{{ topLeaderboard.entries[2].firstName }} {{ topLeaderboard.entries[2].lastName }}</div>
+            <div class="xp">{{ formatXP(topLeaderboard.entries[2].totalXP) }} XP</div>
+            <div class="level" [style.color]="getLevelColor(topLeaderboard.entries[2].currentLevel)">
+              {{ topLeaderboard.entries[2].levelName }}
+            </div>
+            <div class="badges">{{ topLeaderboard.entries[2].badgesCount }} badges</div>
+          </div>
+        </div>
+        <div class="podium-base bronze"></div>
+      </div>
+    </div>
+
+    <!-- Rest of Top 10 -->
+    <div class="top-list" *ngIf="topLeaderboard.entries.length > 3">
+      <h3>Reste du Top {{ topLimit }}</h3>
+      <div class="user-card" *ngFor="let entry of topLeaderboard.entries.slice(3)">
+        <div class="rank">{{ getRankIcon(entry.rank) }}</div>
+        <div class="user-details">
+          <div class="name">{{ entry.firstName }} {{ entry.lastName }}</div>
+          <div class="email">{{ entry.email }}</div>
+        </div>
+        <div class="stats">
+          <div class="xp">{{ formatXP(entry.totalXP) }} XP</div>
+          <div class="level" [style.color]="getLevelColor(entry.currentLevel)">
+            Niveau {{ entry.currentLevel }}
+          </div>
+          <div class="badges">{{ entry.badgesCount }} badges</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Leaderboard View -->
+  <div *ngIf="!loading && !error && activeView === 'full' && fullLeaderboard" class="full-view">
+    <div class="table-container">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rang</th>
+            <th>Utilisateur</th>
+            <th>XP Total</th>
+            <th>Niveau</th>
+            <th>Badges</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of fullLeaderboard.entries" [class]="getRankClass(entry.rank)">
+            <td class="rank-cell">
+              <span class="rank-display">{{ getRankIcon(entry.rank) }}</span>
+            </td>
+            <td class="user-cell">
+              <div class="user-info">
+                <div class="name">{{ entry.firstName }} {{ entry.lastName }}</div>
+                <div class="email">{{ entry.email }}</div>
+              </div>
+            </td>
+            <td class="xp-cell">
+              <span class="xp-value">{{ formatXP(entry.totalXP) }}</span>
+              <span class="xp-label">XP</span>
+            </td>
+            <td class="level-cell">
+              <div class="level-info">
+                <span class="level-number" [style.color]="getLevelColor(entry.currentLevel)">
+                  {{ entry.currentLevel }}
+                </span>
+                <span class="level-name">{{ entry.levelName }}</span>
+              </div>
+            </td>
+            <td class="badges-cell">
+              <span class="badges-count">{{ entry.badgesCount }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination pour la vue complète -->
+    <div class="pagination">
+      <button class="btn btn-sm" 
+              [disabled]="currentPage === 0" 
+              (click)="changePage(currentPage - 1)">
+        Précédent
+      </button>
+      
+      <span class="page-info">
+        Page {{ currentPage + 1 }}
+      </span>
+      
+      <button class="btn btn-sm" 
+              [disabled]="fullLeaderboard.entries.length < pageSize" 
+              (click)="changePage(currentPage + 1)">
+        Suivant
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && !error && ((activeView === 'podium' && (!topLeaderboard || topLeaderboard.entries.length === 0)) || (activeView === 'full' && (!fullLeaderboard || fullLeaderboard.entries.length === 0)))" class="empty-state">
+    <div class="empty-icon">📊</div>
+    <h3>Aucun utilisateur dans le classement</h3>
+    <p>Les utilisateurs apparaîtront ici une fois qu'ils auront commencé à gagner des points XP.</p>
+  </div>
+</div>

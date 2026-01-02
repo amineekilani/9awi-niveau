@@ -29,6 +29,9 @@ public class QuizResultatService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private GamificationService gamificationService;
+
     @Transactional
     public ResultatQuizResponse submitQuiz(Long userId, Long quizId, QuizSubmissionRequest request) {
         User user = userRepository.findById(userId)
@@ -77,6 +80,14 @@ public class QuizResultatService {
         resultat.setTempsPasse(request.getTempsPasse());
 
         resultat = resultatQuizRepository.save(resultat);
+
+        // Déclencher les événements de gamification
+        try {
+            gamificationService.onQuizPassed(user, score);
+        } catch (Exception e) {
+            // Log l'erreur mais ne pas faire échouer la soumission du quiz
+            System.err.println("Erreur lors de la gamification: " + e.getMessage());
+        }
 
         return new ResultatQuizResponse(
             resultat.getId(),

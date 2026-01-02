@@ -1,0 +1,195 @@
+<div class="challenge-management">
+  <div class="header">
+    <h2>Gestion des Défis</h2>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="icon-plus"></i>
+      Créer un défi
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error-message">
+    <i class="icon-error"></i>
+    {{ error }}
+    <button (click)="loadChallenges()" class="retry-btn">Réessayer</button>
+  </div>
+
+  <!-- Challenges table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="challenges-table">
+      <thead>
+        <tr>
+          <th (click)="changeSort('name')" class="sortable">
+            Nom
+            <i class="sort-icon" [class.asc]="sortBy === 'name' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'name' && sortDir === 'desc'"></i>
+          </th>
+          <th>Type</th>
+          <th>Objectif</th>
+          <th>Récompense XP</th>
+          <th>Participants</th>
+          <th>Taux de réussite</th>
+          <th>Période</th>
+          <th (click)="changeSort('isActive')" class="sortable">
+            Statut
+            <i class="sort-icon" [class.asc]="sortBy === 'isActive' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'isActive' && sortDir === 'desc'"></i>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let challenge of challenges" [class]="getStatusClass(challenge)">
+          <td class="challenge-name">
+            <div class="name">{{ challenge.name }}</div>
+            <div class="description">{{ challenge.description }}</div>
+          </td>
+          <td>{{ getChallengeTypeLabel(challenge.challengeType) }}</td>
+          <td class="target-value">{{ challenge.targetValue }}</td>
+          <td class="xp-reward">{{ challenge.xpReward }} XP</td>
+          <td class="participants-count">{{ challenge.participantsCount }}</td>
+          <td class="completion-rate">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="getCompletionRate(challenge)"></div>
+            </div>
+            <span>{{ getCompletionRate(challenge) }}%</span>
+          </td>
+          <td class="period">
+            <div class="date-range">
+              <div>{{ formatDate(challenge.startDate) }}</div>
+              <div>{{ formatDate(challenge.endDate) }}</div>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge" [class]="getStatusClass(challenge)">
+              {{ getStatusLabel(challenge) }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm btn-secondary" (click)="openEditModal(challenge)" title="Modifier">
+              <i class="icon-edit"></i>
+            </button>
+            <button class="btn btn-sm" 
+                    [class.btn-warning]="challenge.isActive" 
+                    [class.btn-success]="!challenge.isActive"
+                    (click)="toggleChallengeStatus(challenge)" 
+                    [title]="challenge.isActive ? 'Désactiver' : 'Activer'">
+              <i class="icon-toggle"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" 
+                    (click)="deleteChallenge(challenge)" 
+                    [disabled]="challenge.participantsCount > 0"
+                    title="Supprimer">
+              <i class="icon-delete"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn btn-sm" 
+              [disabled]="currentPage === 0" 
+              (click)="changePage(currentPage - 1)">
+        Précédent
+      </button>
+      
+      <span class="page-info">
+        Page {{ currentPage + 1 }} sur {{ totalPages }} 
+        ({{ totalElements }} défis)
+      </span>
+      
+      <button class="btn btn-sm" 
+              [disabled]="currentPage >= totalPages - 1" 
+              (click)="changePage(currentPage + 1)">
+        Suivant
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingChallenge ? 'Modifier le défi' : 'Créer un défi' }}</h3>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <form (ngSubmit)="saveChallenge()">
+          <div class="form-group">
+            <label for="name">Nom *</label>
+            <input type="text" id="name" [(ngModel)]="challengeForm.name" name="name" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" [(ngModel)]="challengeForm.description" name="description" rows="3"></textarea>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="challengeType">Type de défi *</label>
+              <select id="challengeType" [(ngModel)]="challengeForm.challengeType" name="challengeType" required>
+                <option *ngFor="let type of challengeTypes" [value]="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="targetValue">Objectif *</label>
+              <input type="number" id="targetValue" [(ngModel)]="challengeForm.targetValue" 
+                     name="targetValue" min="1" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="xpReward">Récompense XP *</label>
+            <input type="number" id="xpReward" [(ngModel)]="challengeForm.xpReward" 
+                   name="xpReward" min="1" required>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="startDate">Date de début *</label>
+              <input type="datetime-local" id="startDate" 
+                     [ngModel]="formatDateTimeForInput(challengeForm.startDate)"
+                     (ngModelChange)="challengeForm.startDate = parseDateTime($event)"
+                     name="startDate" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="endDate">Date de fin *</label>
+              <input type="datetime-local" id="endDate" 
+                     [ngModel]="formatDateTimeForInput(challengeForm.endDate)"
+                     (ngModelChange)="challengeForm.endDate = parseDateTime($event)"
+                     name="endDate" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="challengeForm.isActive" name="isActive">
+              Défi actif
+            </label>
+          </div>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="saveChallenge()" [disabled]="loading">
+          {{ editingChallenge ? 'Modifier' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

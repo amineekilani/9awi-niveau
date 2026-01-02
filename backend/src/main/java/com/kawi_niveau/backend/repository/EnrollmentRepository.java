@@ -15,4 +15,5 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     List<Enrollment> findByUser(User user);
     List<Enrollment> findByCours(Cours cours);
     boolean existsByUserAndCours(User user, Cours cours);
+    long countByUserAndProgressGreaterThanEqual(User user, Float progress);
 }

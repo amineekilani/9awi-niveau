@@ -1,0 +1,302 @@
+<div class="admin-users">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des utilisateurs</h1>
+      <p>Gérez les comptes utilisateurs, rôles et permissions</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="exportUsers()" class="btn btn-export">
+        <span class="icon">📊</span> Exporter
+      </button>
+      <button (click)="openCreateModal()" class="btn btn-primary">
+        <span class="icon">+</span> Nouvel utilisateur
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+
+  <!-- Statistiques -->
+  <div *ngIf="stats" class="stats-overview">
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.totalUsers }}</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.activeUsers }}</div>
+      <div class="stat-label">Actifs</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.adminUsers }}</div>
+      <div class="stat-label">Admins</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.formateurUsers }}</div>
+      <div class="stat-label">Formateurs</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.etudiantUsers }}</div>
+      <div class="stat-label">Étudiants</div>
+    </div>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label for="search">Rechercher</label>
+        <input 
+          id="search"
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="onSearchChange()"
+          placeholder="Nom, prénom ou email..."
+          class="search-input">
+      </div>
+      
+      <div class="filter-group">
+        <label for="roleFilter">Rôle</label>
+        <select id="roleFilter" [(ngModel)]="roleFilter" (change)="onFilterChange()" class="filter-select">
+          <option value="">Tous les rôles</option>
+          <option value="ADMIN">Administrateur</option>
+          <option value="FORMATEUR">Formateur</option>
+          <option value="ETUDIANT">Étudiant</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="statusFilter">Statut</label>
+        <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+          <option value="">Tous les statuts</option>
+          <option value="active">Actifs</option>
+          <option value="archived">Archivés</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button (click)="clearFilters()" class="btn btn-clear">
+          <span class="icon">🗑️</span> Effacer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions groupées -->
+  <div *ngIf="getSelectedCount() > 0" class="bulk-actions">
+    <div class="bulk-info">
+      <span class="selected-count">{{ getSelectedCount() }}</span> utilisateur(s) sélectionné(s)
+    </div>
+    <div class="bulk-buttons">
+      <button (click)="bulkActivate()" class="btn btn-activate">
+        <span class="icon">✅</span> Activer
+      </button>
+      <button (click)="bulkArchive()" class="btn btn-deactivate">
+        <span class="icon">❌</span> Désactiver
+      </button>
+      <select (change)="onBulkRoleChange($event)" class="bulk-role-select">
+        <option value="">Changer le rôle...</option>
+        <option value="ETUDIANT">Étudiant</option>
+        <option value="FORMATEUR">Formateur</option>
+        <option value="ADMIN">Admin</option>
+      </select>
+      <button (click)="bulkDelete()" class="btn btn-danger">
+        <span class="icon">📦</span> Archiver
+      </button>
+    </div>
+  </div>
+
+  <!-- Tableau des utilisateurs -->
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th class="checkbox-col">
+              <input 
+                type="checkbox" 
+                [checked]="selectAll" 
+                (change)="toggleSelectAll()"
+                class="select-checkbox">
+            </th>
+            <th (click)="onSortChange('id')" class="sortable">
+              ID
+              <span class="sort-indicator" *ngIf="sortBy === 'id'">
+                {{ sortDir === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th (click)="onSortChange('firstName')" class="sortable">
+              Nom complet
+              <span class="sort-indicator" *ngIf="sortBy === 'firstName'">
+                {{ sortDir === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th (click)="onSortChange('email')" class="sortable">
+              Email
+              <span class="sort-indicator" *ngIf="sortBy === 'email'">
+                {{ sortDir === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th>Rôle</th>
+            <th>Statut</th>
+            <th (click)="onSortChange('createdAt')" class="sortable">
+              Inscription
+              <span class="sort-indicator" *ngIf="sortBy === 'createdAt'">
+                {{ sortDir === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of getFilteredUsers()" 
+              [class.archived]="user.archived" 
+              [class.selected]="isUserSelected(user.id)">
+            <td class="checkbox-col">
+              <input 
+                type="checkbox" 
+                [checked]="isUserSelected(user.id)" 
+                (change)="toggleUserSelection(user.id)"
+                class="select-checkbox">
+            </td>
+            <td class="id-col">{{ user.id }}</td>
+            <td class="name-col">
+              <div class="user-info">
+                <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                <div class="user-phone" *ngIf="user.phoneNumber">{{ user.phoneNumber }}</div>
+              </div>
+            </td>
+            <td class="email-col">
+              <div class="email-info">
+                {{ user.email }}
+                <div class="email-indicators">
+                  <span *ngIf="!user.emailVerified" class="indicator unverified" title="Email non vérifié">✉️</span>
+                  <span *ngIf="isAccountLocked(user)" class="indicator locked" title="Compte verrouillé">🔒</span>
+                </div>
+              </div>
+            </td>
+            <td class="role-col">
+              <span class="role-badge" [ngClass]="getRoleClass(user.role)">
+                {{ user.role }}
+              </span>
+            </td>
+            <td class="status-col">
+              <span class="status-badge" [ngClass]="user.archived ? 'status-archived' : 'status-active'">
+                {{ user.archived ? 'Archivé' : 'Actif' }}
+              </span>
+            </td>
+            <td class="date-col">{{ formatDate(user.createdAt) }}</td>
+            <td class="actions-col">
+              <div class="actions-container">
+                <!-- Changement de rôle -->
+                <select 
+                  [value]="user.role" 
+                  (change)="onRoleChange(user, $event)"
+                  class="role-select">
+                  <option value="ETUDIANT">Étudiant</option>
+                  <option value="FORMATEUR">Formateur</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+
+                <!-- Actions -->
+                <div class="action-buttons">
+                  <button 
+                    (click)="openEditModal(user)"
+                    class="action-btn btn-edit"
+                    title="Modifier">
+                    ✏️
+                  </button>
+
+                  <button 
+                    (click)="toggleUserStatus(user)"
+                    [class]="user.archived ? 'action-btn btn-activate' : 'action-btn btn-deactivate'"
+                    [title]="user.archived ? 'Activer' : 'Désactiver'">
+                    {{ user.archived ? '✅' : '❌' }}
+                  </button>
+
+                  <button 
+                    *ngIf="isAccountLocked(user)"
+                    (click)="unlockUser(user)"
+                    class="action-btn btn-unlock"
+                    title="Déverrouiller">
+                    🔓
+                  </button>
+
+                  <button 
+                    (click)="resetPassword(user)"
+                    class="action-btn btn-reset"
+                    title="Réinitialiser mot de passe">
+                    🔑
+                  </button>
+
+                  <button 
+                    (click)="deleteUser(user)"
+                    class="action-btn btn-delete"
+                    title="Archiver">
+                    📦
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement des utilisateurs...</p>
+    </div>
+
+    <div *ngIf="!loading && getFilteredUsers().length === 0" class="no-data">
+      <div class="no-data-icon">👥</div>
+      <h3>Aucun utilisateur trouvé</h3>
+      <p>Essayez de modifier vos critères de recherche ou créez un nouvel utilisateur.</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <div class="pagination-info">
+      Affichage de {{ (currentPage * pageSize) + 1 }} à {{ getMaxDisplayed() }} 
+      sur {{ totalElements }} utilisateurs
+    </div>
+    
+    <div class="pagination-controls">
+      <button 
+        (click)="onPageChange(currentPage - 1)"
+        [disabled]="currentPage === 0"
+        class="page-btn">
+        ← Précédent
+      </button>
+      
+      <div class="page-numbers">
+        <button 
+          *ngFor="let page of getPageNumbers(); let i = index"
+          (click)="onPageChange(i)"
+          [class.active]="i === currentPage"
+          class="page-number">
+          {{ i + 1 }}
+        </button>
+      </div>
+      
+      <button 
+        (click)="onPageChange(currentPage + 1)"
+        [disabled]="currentPage >= totalPages - 1"
+        class="page-btn">
+        Suivant →
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <app-user-modal
+    [isOpen]="isModalOpen"
+    [mode]="modalMode"
+    [user]="selectedUser"
+    (closeModal)="closeModal()"
+    (userSaved)="onUserSaved($event)">
+  </app-user-modal>
+</div>

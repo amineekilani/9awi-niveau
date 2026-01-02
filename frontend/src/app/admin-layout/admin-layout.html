@@ -1,0 +1,71 @@
+<div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <h2>Kawi Niveau</h2>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <span class="toggle-icon">{{ sidebarCollapsed ? '→' : '←' }}</span>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="nav-menu">
+        <li *ngFor="let item of menuItems" 
+            class="nav-item" 
+            [class.active]="item.active">
+          <a (click)="setActiveMenuItem(item)" class="nav-link">
+            <span class="nav-icon">{{ getIconClass(item.icon) }}</span>
+            <span class="nav-text" *ngIf="!sidebarCollapsed">{{ item.title }}</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer" *ngIf="!sidebarCollapsed">
+      <div class="user-info">
+        <div class="user-avatar">
+          <span>{{ currentUser.email?.charAt(0).toUpperCase() }}</span>
+        </div>
+        <div class="user-details">
+          <p class="user-email">{{ currentUser.email }}</p>
+          <p class="user-role">{{ currentUser.role }}</p>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()">
+        <span class="logout-icon">🚪</span>
+        Déconnexion
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="main-header">
+      <div class="header-left">
+        <button class="mobile-menu-btn" (click)="toggleSidebar()">
+          <span class="menu-icon">☰</span>
+        </button>
+        <h1 class="page-title">Administration</h1>
+      </div>
+      
+      <div class="header-right">
+        <div class="header-user">
+          <div class="user-avatar-small">
+            <span>{{ currentUser.email?.charAt(0).toUpperCase() }}</span>
+          </div>
+          <span class="user-name">{{ currentUser.email }}</span>
+          <button class="logout-btn-header" (click)="logout()">
+            <span class="logout-icon">🚪</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

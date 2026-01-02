@@ -16,11 +16,13 @@
         <i data-feather="award" class="text-white w-8 h-8"></i>
         <span class="text-2xl font-bold text-white">9awiNiveau</span>
       </div>
+      
       <nav class="hidden md:flex space-x-8">
         <a routerLink="/cours" class="text-white hover:text-gray-200 font-medium nav-link active">Cours</a>
         <a routerLink="/profile" class="text-white hover:text-gray-200 font-medium nav-link">Profil</a>
         <a *ngIf="authService.isFormateur()" routerLink="/formateur-dashboard" class="text-white hover:text-gray-200 font-medium nav-link">Dashboard</a>
       </nav>
+      
       <div class="flex items-center space-x-4">
         <div class="relative cursor-pointer">
           <i data-feather="bell" class="text-white hover:text-gray-200"></i>
@@ -94,6 +96,7 @@
         <h2 class="text-3xl font-bold text-gray-800 mb-2">Vos Récompenses</h2>
         <p class="text-gray-600">Collectionnez des badges pour marquer vos accomplissements</p>
       </div>
+      
       <div class="grid grid-cols-3 md:grid-cols-6 gap-6">
         <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer">
           <div class="relative">
@@ -104,30 +107,35 @@
           </div>
           <span class="mt-2 text-xs md:text-sm font-medium text-gray-700">Débutant</span>
         </div>
+        
         <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer">
           <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-blue-100 flex items-center justify-center text-primary-500 border-4 border-blue-300">
             <i data-feather="book" class="w-6 h-6 md:w-8 md:h-8"></i>
           </div>
           <span class="mt-2 text-xs md:text-sm font-medium text-gray-700">Lecteur</span>
         </div>
+        
         <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer" [class.opacity-40]="enrolledCount < 3">
           <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-green-100 flex items-center justify-center text-accent border-4 border-green-300">
             <i data-feather="zap" class="w-6 h-6 md:w-8 md:h-8"></i>
           </div>
           <span class="mt-2 text-xs md:text-sm font-medium text-gray-700">Rapide</span>
         </div>
+        
         <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer opacity-40">
           <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 border-4 border-purple-300">
             <i data-feather="lock" class="w-6 h-6 md:w-8 md:h-8"></i>
           </div>
           <span class="mt-2 text-xs md:text-sm font-medium text-gray-500">Secret</span>
         </div>
+        
         <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer opacity-40">
           <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 border-4 border-gray-300">
             <i data-feather="trending-up" class="w-6 h-6 md:w-8 md:h-8"></i>
           </div>
           <span class="mt-2 text-xs md:text-sm font-medium text-gray-500">À débloquer</span>
         </div>
+        
         <div class="flex flex-col items-center transition-all hover:scale-105 cursor-pointer opacity-40">
           <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 border-4 border-gray-300">
             <i data-feather="award" class="w-6 h-6 md:w-8 md:h-8"></i>
@@ -161,7 +169,7 @@
               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
             />
           </div>
-
+          
           <!-- Filtre par catégorie -->
           <div class="md:w-64 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -176,7 +184,7 @@
               <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
             </select>
           </div>
-
+          
           <!-- Bouton réinitialiser -->
           <button 
             *ngIf="searchTerm || selectedCategorie"
@@ -187,7 +195,7 @@
             Réinitialiser
           </button>
         </div>
-
+        
         <!-- Résultats de recherche -->
         <div *ngIf="searchTerm || selectedCategorie" class="mt-4 text-sm text-gray-600">
           <span class="font-medium">{{ filteredCours.length }}</span> cours trouvé(s)
@@ -206,15 +214,18 @@
       <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div *ngFor="let c of filteredCours" class="bg-white rounded-xl shadow-md overflow-hidden course-card transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
           <div class="relative h-48 bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center overflow-hidden">
-            <img *ngIf="c.thumbnailUrl" 
-                 [src]="'http://localhost:8080/images/cours/' + c.thumbnailUrl" 
-                 [alt]="c.titre"
-                 class="w-full h-full object-cover"
-                 (error)="$any($event.target).style.display='none'" />
+            <img 
+              *ngIf="c.thumbnailUrl" 
+              [src]="'http://localhost:8080/images/cours/' + c.thumbnailUrl" 
+              [alt]="c.titre"
+              class="w-full h-full object-cover"
+              (error)="$any($event.target).style.display='none'" 
+            />
             <i *ngIf="!c.thumbnailUrl" data-feather="book-open" class="text-white w-16 h-16 opacity-50"></i>
             <div *ngIf="c.isEnrolled" class="absolute top-4 right-4 bg-primary-500 text-white text-xs px-2 py-1 rounded-full">Inscrit</div>
             <div *ngIf="!c.isEnrolled" class="absolute top-4 left-4 bg-secondary-500 text-white text-xs px-2 py-1 rounded-full">Nouveau</div>
           </div>
+          
           <div class="p-6">
             <div class="flex justify-between items-start mb-3">
               <span *ngIf="c.categorie" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ c.categorie }}</span>
@@ -224,6 +235,7 @@
                 <span class="ml-1 text-gray-600 text-sm">4.8</span>
               </div>
             </div>
+            
             <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{{ c.titre }}</h3>
             <p class="text-gray-600 mb-4 text-sm line-clamp-3">{{ c.description }}</p>
             
@@ -238,21 +250,23 @@
               </div>
               <p class="text-xs text-gray-500 mt-1">{{ c.enrollment.completedLecons }} / {{ c.enrollment.totalLecons }} leçons</p>
             </div>
-
+            
             <div class="flex justify-between items-center mb-4">
               <div class="flex items-center text-gray-500">
                 <i data-feather="user" class="w-4 h-4"></i>
                 <span class="ml-2 text-sm">{{ c.formateurNom }}</span>
               </div>
             </div>
-
+            
             <div class="flex gap-2">
               <a [routerLink]="['/cours', c.id]" class="flex-1 text-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all font-medium">
                 {{ c.isEnrolled ? 'Continuer' : 'Voir détails' }}
               </a>
-              <button *ngIf="!authService.isFormateur() && !c.isEnrolled" 
-                      (click)="enrollInCourse(c.id!, $event)"
-                      class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-600 transition-all">
+              <button 
+                *ngIf="!authService.isFormateur() && !c.isEnrolled" 
+                (click)="enrollInCourse(c.id!, $event)"
+                class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-600 transition-all"
+              >
                 <i data-feather="plus" class="w-5 h-5"></i>
               </button>
             </div>
@@ -285,6 +299,7 @@
         <h2 class="text-3xl font-bold text-gray-800 mb-4">Votre Progression</h2>
         <p class="text-gray-600">Suivez votre évolution et restez motivé</p>
       </div>
+      
       <div class="bg-white rounded-xl shadow-lg p-8">
         <div class="flex flex-col md:flex-row justify-between items-center mb-8">
           <div class="mb-6 md:mb-0">
@@ -294,6 +309,7 @@
               <div class="bg-gradient-to-r from-primary-500 to-accent h-2.5 rounded-full" [style.width.%]="(totalPoints % 100)"></div>
             </div>
           </div>
+          
           <div class="flex space-x-6">
             <div class="text-center">
               <div class="text-3xl font-bold text-primary-500">{{ enrolledCount }}</div>
@@ -346,7 +362,7 @@
           <h3 class="text-lg font-bold mb-4">Contact</h3>
           <ul class="space-y-2">
             <li class="flex items-center text-gray-400">
-              <i data-feather="mail" class="w-4 h-4 mr-2"></i> contact@9awiniveau.com
+              <i data-feather="mail" class="w-4 h-4 mr-2"></i> contact&#64;9awiniveau.com
             </li>
           </ul>
         </div>

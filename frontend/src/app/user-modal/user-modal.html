@@ -1,0 +1,111 @@
+<div *ngIf="isOpen" class="modal-backdrop" (click)="onBackdropClick($event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>{{ mode === 'create' ? 'Créer un utilisateur' : 'Modifier l\'utilisateur' }}</h2>
+      <button class="close-btn" (click)="close()">&times;</button>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="modal-body">
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+      <!-- Email (seulement en création) -->
+      <div *ngIf="mode === 'create'" class="form-group">
+        <label for="email">Email *</label>
+        <input 
+          id="email"
+          type="email" 
+          [(ngModel)]="formData.email" 
+          name="email"
+          required
+          class="form-input"
+          placeholder="utilisateur@example.com">
+      </div>
+
+      <!-- Prénom -->
+      <div class="form-group">
+        <label for="firstName">Prénom *</label>
+        <input 
+          id="firstName"
+          type="text" 
+          [(ngModel)]="formData.firstName" 
+          name="firstName"
+          required
+          class="form-input"
+          placeholder="Prénom">
+      </div>
+
+      <!-- Nom -->
+      <div class="form-group">
+        <label for="lastName">Nom *</label>
+        <input 
+          id="lastName"
+          type="text" 
+          [(ngModel)]="formData.lastName" 
+          name="lastName"
+          required
+          class="form-input"
+          placeholder="Nom">
+      </div>
+
+      <!-- Rôle (seulement en création) -->
+      <div *ngIf="mode === 'create'" class="form-group">
+        <label for="role">Rôle</label>
+        <select 
+          id="role"
+          [(ngModel)]="formData.role" 
+          name="role"
+          class="form-select">
+          <option value="ETUDIANT">Étudiant</option>
+          <option value="FORMATEUR">Formateur</option>
+          <option value="ADMIN">Administrateur</option>
+        </select>
+      </div>
+
+      <!-- Téléphone -->
+      <div class="form-group">
+        <label for="phoneNumber">Téléphone</label>
+        <input 
+          id="phoneNumber"
+          type="tel" 
+          [(ngModel)]="formData.phoneNumber" 
+          name="phoneNumber"
+          class="form-input"
+          placeholder="+216 XX XXX XXX">
+      </div>
+
+      <!-- Date de naissance -->
+      <div class="form-group">
+        <label for="dateOfBirth">Date de naissance</label>
+        <input 
+          id="dateOfBirth"
+          type="date" 
+          [(ngModel)]="formData.dateOfBirth" 
+          name="dateOfBirth"
+          class="form-input">
+      </div>
+
+      <!-- Email vérifié -->
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="formData.emailVerified" 
+            name="emailVerified"
+            class="form-checkbox">
+          <span class="checkmark"></span>
+          Email vérifié
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="close()" class="btn btn-secondary" [disabled]="loading">
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          <span *ngIf="loading" class="loading-spinner"></span>
+          {{ mode === 'create' ? 'Créer' : 'Modifier' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

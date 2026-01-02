@@ -71,6 +71,10 @@ export class AuthService {
     return this.getRole() === 'FORMATEUR';
   }
 
+  isAdmin(): boolean {
+    return this.getRole() === 'ADMIN';
+  }
+
   isLoggedIn(): Observable<boolean> {
     return this.loggedIn.asObservable();
   }

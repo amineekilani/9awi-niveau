@@ -19,25 +19,35 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Obtenir le chemin absolu du répertoire uploads
+        String uploadsPath = Paths.get(uploadDir).toAbsolutePath().toUri().toString();
+        
         // Obtenir le chemin absolu du répertoire uploads/users
         String uploadsUsersPath = Paths.get(uploadDir, "users").toAbsolutePath().toUri().toString();
         
         // Obtenir le chemin absolu du répertoire uploads/lecons
         String uploadsLeconsPath = Paths.get(uploadDir, "lecons").toAbsolutePath().toUri().toString();
 
+        // Servir les fichiers spécifiques en premier (plus spécifique)
         registry
                 .addResourceHandler("/images/users/**")
                 .addResourceLocations(uploadsUsersPath + "/")
                 .setCachePeriod(3600); // Cache 1 heure
                 
         registry
-                .addResourceHandler("/files/lecons/**")
+                .addResourceHandler("/images/lecons/**")
                 .addResourceLocations(uploadsLeconsPath + "/")
                 .setCachePeriod(3600); // Cache 1 heure
                 
         registry
-                .addResourceHandler("/images/lecons/**")
+                .addResourceHandler("/files/lecons/**")
                 .addResourceLocations(uploadsLeconsPath + "/")
+                .setCachePeriod(3600); // Cache 1 heure
+
+        // Servir les fichiers du dossier uploads racine (pour le logo) - en dernier
+        registry
+                .addResourceHandler("/images/**")
+                .addResourceLocations(uploadsPath + "/")
                 .setCachePeriod(3600); // Cache 1 heure
     }
 

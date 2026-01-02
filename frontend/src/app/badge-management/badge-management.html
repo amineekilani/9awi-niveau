@@ -1,0 +1,175 @@
+<div class="badge-management">
+  <div class="header">
+    <h2>Gestion des Badges</h2>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="icon-plus"></i>
+      Créer un badge
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error-message">
+    <i class="icon-error"></i>
+    {{ error }}
+    <button (click)="loadBadges()" class="retry-btn">Réessayer</button>
+  </div>
+
+  <!-- Badges table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="badges-table">
+      <thead>
+        <tr>
+          <th (click)="changeSort('name')" class="sortable">
+            Nom
+            <i class="sort-icon" [class.asc]="sortBy === 'name' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'name' && sortDir === 'desc'"></i>
+          </th>
+          <th>Description</th>
+          <th>Critère</th>
+          <th>Valeur</th>
+          <th>Utilisateurs</th>
+          <th (click)="changeSort('isActive')" class="sortable">
+            Statut
+            <i class="sort-icon" [class.asc]="sortBy === 'isActive' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'isActive' && sortDir === 'desc'"></i>
+          </th>
+          <th (click)="changeSort('createdAt')" class="sortable">
+            Créé le
+            <i class="sort-icon" [class.asc]="sortBy === 'createdAt' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'createdAt' && sortDir === 'desc'"></i>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let badge of badges" [class.inactive]="!badge.isActive">
+          <td class="badge-name">
+            <div class="badge-info">
+              <img *ngIf="badge.iconUrl" [src]="badge.iconUrl" alt="Badge icon" class="badge-icon" 
+                   (error)="onImageError($event)">
+              <div class="badge-details">
+                <div class="name">{{ badge.name }}</div>
+                <div class="criteria">{{ getCriteriaTypeLabel(badge.criteriaType) }}: {{ badge.criteriaValue }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="description">{{ badge.description }}</td>
+          <td>{{ getCriteriaTypeLabel(badge.criteriaType) }}</td>
+          <td>{{ badge.criteriaValue }}</td>
+          <td class="users-count">{{ badge.usersCount }}</td>
+          <td>
+            <span class="status-badge" [class.active]="badge.isActive" [class.inactive]="!badge.isActive">
+              {{ badge.isActive ? 'Actif' : 'Inactif' }} ({{ badge.isActive }})
+            </span>
+          </td>
+          <td>{{ formatDate(badge.createdAt) }}</td>
+          <td class="actions">
+            <button class="btn btn-sm btn-secondary" (click)="openEditModal(badge)" title="Modifier">
+              <i class="icon-edit"></i>
+            </button>
+            <button class="btn btn-sm" 
+                    [class.btn-warning]="badge.isActive" 
+                    [class.btn-success]="!badge.isActive"
+                    (click)="toggleBadgeStatus(badge)" 
+                    [title]="badge.isActive ? 'Désactiver' : 'Activer'">
+              <i class="icon-toggle"></i>
+              {{ badge.isActive ? 'Désactiver' : 'Activer' }}
+            </button>
+            <button class="btn btn-sm btn-danger" 
+                    (click)="deleteBadge(badge)" 
+                    [disabled]="badge.usersCount > 0"
+                    title="Supprimer">
+              <i class="icon-delete"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn btn-sm" 
+              [disabled]="currentPage === 0" 
+              (click)="changePage(currentPage - 1)">
+        Précédent
+      </button>
+      
+      <span class="page-info">
+        Page {{ currentPage + 1 }} sur {{ totalPages }} 
+        ({{ totalElements }} badges)
+      </span>
+      
+      <button class="btn btn-sm" 
+              [disabled]="currentPage >= totalPages - 1" 
+              (click)="changePage(currentPage + 1)">
+        Suivant
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingBadge ? 'Modifier le badge' : 'Créer un badge' }}</h3>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <form (ngSubmit)="saveBadge()">
+          <div class="form-group">
+            <label for="name">Nom *</label>
+            <input type="text" id="name" [(ngModel)]="badgeForm.name" name="name" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" [(ngModel)]="badgeForm.description" name="description" rows="3"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="iconUrl">URL de l'icône</label>
+            <input type="url" id="iconUrl" [(ngModel)]="badgeForm.iconUrl" name="iconUrl">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="criteriaType">Type de critère *</label>
+              <select id="criteriaType" [(ngModel)]="badgeForm.criteriaType" name="criteriaType" required>
+                <option *ngFor="let type of criteriaTypes" [value]="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="criteriaValue">Valeur requise *</label>
+              <input type="number" id="criteriaValue" [(ngModel)]="badgeForm.criteriaValue" 
+                     name="criteriaValue" min="1" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="badgeForm.isActive" name="isActive">
+              Badge actif
+            </label>
+          </div>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="saveBadge()" [disabled]="loading">
+          {{ editingBadge ? 'Modifier' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

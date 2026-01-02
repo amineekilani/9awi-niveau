@@ -49,6 +49,9 @@ public class EnrollmentService {
     @Autowired
     private com.kawi_niveau.backend.repository.QuizRepository quizRepository;
 
+    @Autowired
+    private GamificationService gamificationService;
+
     @Transactional
     public EnrollmentResponse enrollInCourse(Long userId, EnrollmentRequest request) {
         User user = userRepository.findById(userId)
@@ -170,6 +173,17 @@ public class EnrollmentService {
             long completedLecons = leconCompletionRepository.countByEnrollment(enrollment);
             float progress = (float) completedLecons / totalLecons * 100;
             enrollment.setProgress(Math.round(progress * 100) / 100.0f); // Arrondir à 2 décimales
+            
+            // Vérifier si le cours est terminé (100% de progression)
+            if (progress >= 100.0f) {
+                // Déclencher l'événement de cours terminé pour la gamification
+                try {
+                    gamificationService.onCourseCompleted(enrollment.getUser());
+                } catch (Exception e) {
+                    // Log l'erreur mais ne pas faire échouer la mise à jour de progression
+                    System.err.println("Erreur lors de la gamification: " + e.getMessage());
+                }
+            }
         }
 
         enrollmentRepository.save(enrollment);

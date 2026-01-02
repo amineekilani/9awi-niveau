@@ -1,0 +1,138 @@
+<div class="admin-gamification">
+  <div class="header">
+    <div class="header-content">
+      <h1>Gestion de la Gamification</h1>
+      <p>Gérez les badges, défis, points XP et classements</p>
+    </div>
+    <div class="header-actions">
+      <a href="/admin" class="btn btn-back">
+        <i class="icon-back"></i>
+        Retour Admin
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation tabs -->
+  <div class="tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'overview'"
+      (click)="setActiveTab('overview')">
+      Vue d'ensemble
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'badges'"
+      (click)="setActiveTab('badges')">
+      Badges
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'challenges'"
+      (click)="setActiveTab('challenges')">
+      Défis
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'leaderboard'"
+      (click)="setActiveTab('leaderboard')">
+      Classements
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading" class="content">
+    
+    <!-- Vue d'ensemble -->
+    <div *ngIf="activeTab === 'overview'" class="overview-tab">
+      <!-- Error state dans l'onglet overview -->
+      <div *ngIf="error" class="error-message">
+        <i class="icon-error"></i>
+        {{ error }}
+        <div class="error-actions">
+          <button (click)="loadStats()" class="retry-btn">Réessayer</button>
+          <button (click)="initializeGamification()" class="init-btn">Initialiser les données</button>
+          <button (click)="testBackend()" class="test-btn">Tester Backend</button>
+        </div>
+      </div>
+
+      <div *ngIf="stats && !error" class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon badges-icon"></div>
+          <div class="stat-content">
+            <h3>{{ stats.totalBadges }}</h3>
+            <p>Badges totaux</p>
+            <span class="stat-detail">{{ stats.activeBadges }} actifs</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon challenges-icon"></div>
+          <div class="stat-content">
+            <h3>{{ stats.totalChallenges }}</h3>
+            <p>Défis totaux</p>
+            <span class="stat-detail">{{ stats.activeChallenges }} actifs</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon xp-icon"></div>
+          <div class="stat-content">
+            <h3>{{ formatNumber(stats.totalXPAwarded) }}</h3>
+            <p>XP distribués</p>
+            <span class="stat-detail">{{ stats.averageUserXP.toFixed(0) }} XP/utilisateur</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon achievements-icon"></div>
+          <div class="stat-content">
+            <h3>{{ stats.totalBadgesEarned }}</h3>
+            <p>Badges obtenus</p>
+            <span class="stat-detail">{{ stats.totalChallengesCompleted }} défis terminés</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!error" class="quick-actions">
+        <h2>Actions rapides</h2>
+        <div class="action-buttons">
+          <button class="action-btn primary" (click)="setActiveTab('badges')">
+            <i class="icon-badge"></i>
+            Gérer les badges
+          </button>
+          <button class="action-btn secondary" (click)="setActiveTab('challenges')">
+            <i class="icon-challenge"></i>
+            Créer un défi
+          </button>
+          <button class="action-btn tertiary" (click)="setActiveTab('leaderboard')">
+            <i class="icon-leaderboard"></i>
+            Voir les classements
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badges tab -->
+    <div *ngIf="activeTab === 'badges'" class="badges-tab">
+      <app-badge-management></app-badge-management>
+    </div>
+
+    <!-- Challenges tab -->
+    <div *ngIf="activeTab === 'challenges'" class="challenges-tab">
+      <app-challenge-management></app-challenge-management>
+    </div>
+
+    <!-- Leaderboard tab -->
+    <div *ngIf="activeTab === 'leaderboard'" class="leaderboard-tab">
+      <app-leaderboard-management></app-leaderboard-management>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,137 @@
+<div class="dashboard-overview">
+  <div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Vue d'ensemble de votre plateforme d'apprentissage</p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement des statistiques...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-error">
+    <i class="icon-error"></i>
+    {{ error }}
+  </div>
+
+  <!-- Stats Grid -->
+  <div *ngIf="!loading && !error" class="stats-container">
+    
+    <!-- User Statistics -->
+    <section class="stats-section">
+      <h2>Statistiques Utilisateurs</h2>
+      <div class="stats-grid" *ngIf="userStats">
+        <div class="stat-card primary">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <h3>{{ userStats.totalUsers }}</h3>
+            <p>Total Utilisateurs</p>
+            <span class="stat-detail">{{ userStats.activeUsers }} actifs</span>
+          </div>
+        </div>
+
+        <div class="stat-card success">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-content">
+            <h3>{{ userStats.etudiantUsers }}</h3>
+            <p>Étudiants</p>
+            <span class="stat-detail">Apprenants actifs</span>
+          </div>
+        </div>
+
+        <div class="stat-card warning">
+          <div class="stat-icon">👨‍🏫</div>
+          <div class="stat-content">
+            <h3>{{ userStats.formateurUsers }}</h3>
+            <p>Formateurs</p>
+            <span class="stat-detail">Créateurs de contenu</span>
+          </div>
+        </div>
+
+        <div class="stat-card danger">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-content">
+            <h3>{{ userStats.adminUsers }}</h3>
+            <p>Administrateurs</p>
+            <span class="stat-detail">Gestionnaires</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gamification Statistics -->
+    <section class="stats-section" *ngIf="gamificationStats">
+      <h2>Statistiques Gamification</h2>
+      <div class="stats-grid">
+        <div class="stat-card info">
+          <div class="stat-icon">🏅</div>
+          <div class="stat-content">
+            <h3>{{ gamificationStats.totalBadges }}</h3>
+            <p>Badges Créés</p>
+            <span class="stat-detail">{{ gamificationStats.activeBadges }} actifs</span>
+          </div>
+        </div>
+
+        <div class="stat-card secondary">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-content">
+            <h3>{{ gamificationStats.totalChallenges }}</h3>
+            <p>Défis Créés</p>
+            <span class="stat-detail">{{ gamificationStats.activeChallenges }} actifs</span>
+          </div>
+        </div>
+
+        <div class="stat-card purple">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h3>{{ formatNumber(gamificationStats.totalXPAwarded) }}</h3>
+            <p>XP Distribués</p>
+            <span class="stat-detail">{{ gamificationStats.averageUserXP.toFixed(0) }} XP/utilisateur</span>
+          </div>
+        </div>
+
+        <div class="stat-card teal">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-content">
+            <h3>{{ gamificationStats.totalBadgesEarned }}</h3>
+            <p>Badges Obtenus</p>
+            <span class="stat-detail">{{ gamificationStats.totalChallengesCompleted }} défis terminés</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions-section">
+      <h2>Actions Rapides</h2>
+      <div class="quick-actions-grid">
+        <a routerLink="/admin/users" class="action-card">
+          <div class="action-icon">👥</div>
+          <h3>Gérer les Utilisateurs</h3>
+          <p>Créer, modifier et gérer les comptes utilisateurs</p>
+        </a>
+
+        <a routerLink="/admin/gamification" class="action-card">
+          <div class="action-icon">🏆</div>
+          <h3>Gamification</h3>
+          <p>Gérer les badges, défis et classements</p>
+        </a>
+
+        <a routerLink="/admin/courses" class="action-card">
+          <div class="action-icon">📚</div>
+          <h3>Cours</h3>
+          <p>Superviser le contenu pédagogique</p>
+        </a>
+
+        <a routerLink="/admin/reports" class="action-card">
+          <div class="action-icon">📊</div>
+          <h3>Rapports</h3>
+          <p>Analyser les performances et l'engagement</p>
+        </a>
+      </div>
+    </section>
+
+  </div>
+</div>

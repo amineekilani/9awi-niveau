@@ -15,4 +15,5 @@ public interface ResultatQuizRepository extends JpaRepository<ResultatQuiz, Long
     List<ResultatQuiz> findByQuizOrderByDatePassedDesc(Quiz quiz);
     List<ResultatQuiz> findByUserAndQuizOrderByDatePassedDesc(User user, Quiz quiz);
     Optional<ResultatQuiz> findFirstByUserAndQuizOrderByScoreDesc(User user, Quiz quiz);
+    long countByUserAndScoreGreaterThanEqual(User user, Double score);
 }
