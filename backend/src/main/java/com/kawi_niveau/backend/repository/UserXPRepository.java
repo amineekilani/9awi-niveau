@@ -14,10 +14,13 @@ import java.util.Optional;
 
 @Repository
 public interface UserXPRepository extends JpaRepository<UserXP, Long> {
-    
+
     @Query("SELECT ux FROM UserXP ux WHERE ux.user = :user")
     List<UserXP> findAllByUser(@Param("user") User user);
-    
+
+    @Query("SELECT ux FROM UserXP ux WHERE ux.user.id = :userId ORDER BY ux.totalXP DESC")
+    List<UserXP> findByUserId(@Param("userId") Long userId);
+
     default Optional<UserXP> findByUser(User user) {
         List<UserXP> results = findAllByUser(user);
         if (results.isEmpty()) {
@@ -26,16 +29,16 @@ public interface UserXPRepository extends JpaRepository<UserXP, Long> {
         // Si plusieurs résultats, prendre le premier (ou le plus récent)
         return Optional.of(results.get(0));
     }
-    
+
     @Query("SELECT ux FROM UserXP ux JOIN ux.user u WHERE u.archived = false ORDER BY ux.totalXP DESC")
     List<UserXP> findAllOrderByTotalXPDesc();
-    
+
     @Query("SELECT ux FROM UserXP ux JOIN ux.user u WHERE u.archived = false ORDER BY ux.totalXP DESC")
     Page<UserXP> findAllOrderByTotalXPDesc(Pageable pageable);
-    
+
     @Query("SELECT AVG(ux.totalXP) FROM UserXP ux")
     Double getAverageXP();
-    
+
     @Query("SELECT SUM(ux.totalXP) FROM UserXP ux")
     Long findTotalXPAwarded();
 }

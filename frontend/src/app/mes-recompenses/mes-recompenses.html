@@ -4,22 +4,25 @@
     <!-- Logo et titre -->
     <div class="flex items-center space-x-2">
       <i data-feather="award" class="text-white w-8 h-8"></i>
-      <span class="text-2xl font-bold text-white">Kawi Niveau</span>
+      <img src="/Logo_9awi_Niveau.png" alt="9awi Niveau Logo" class="h-10 w-auto mr-3">
+      <span class="text-2xl font-bold text-white">9awi Niveau</span>
     </div>
-    
+
     <!-- Navigation -->
     <nav class="hidden md:flex space-x-6">
       <a routerLink="/home" class="text-white hover:text-gray-200 font-medium nav-link">Accueil</a>
       <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link">Mes Cours</a>
-      <a routerLink="/mes-recompenses" class="text-white hover:text-gray-200 font-medium nav-link active">Mes Récompenses</a>
+      <a routerLink="/mes-recompenses" class="text-white hover:text-gray-200 font-medium nav-link active">Mes
+        Récompenses</a>
       <a routerLink="/mes-defis" class="text-white hover:text-gray-200 font-medium nav-link">Mes Défis</a>
       <a routerLink="/classement" class="text-white hover:text-gray-200 font-medium nav-link">Classement</a>
     </nav>
-    
+
     <!-- Profil utilisateur -->
     <div class="flex items-center space-x-4">
-      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-500 font-bold cursor-pointer" 
-           routerLink="/profile">
+      <div
+        class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-500 font-bold cursor-pointer"
+        routerLink="/profile">
         {{ userInitials }}
       </div>
       <button (click)="logout()" class="hidden md:block text-white hover:text-gray-200">
@@ -36,11 +39,12 @@
 
 <!-- Contenu principal -->
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  
+
   <!-- En-tête de la page -->
   <div class="mb-8">
     <div class="flex items-center space-x-3 mb-4">
-      <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
+      <div
+        class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
         <i data-feather="award" class="w-6 h-6 text-white"></i>
       </div>
       <div>
@@ -53,12 +57,10 @@
   <!-- Filtres -->
   <div class="bg-white rounded-xl shadow-sm border p-6 mb-8">
     <div class="flex flex-wrap gap-3">
-      <button *ngFor="let option of filterOptions"
-              (click)="onFilterChange(option.value)"
-              [class]="selectedFilter === option.value ? 
+      <button *ngFor="let option of filterOptions" (click)="onFilterChange(option.value)" [class]="selectedFilter === option.value ? 
                 'bg-blue-600 text-white' : 
                 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-              class="px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2">
+        class="px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2">
         <span>{{ option.label }}</span>
         <span class="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ option.count }}</span>
       </button>
@@ -72,35 +74,32 @@
 
   <!-- Grille des badges -->
   <div *ngIf="!loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-    <div *ngFor="let badge of filteredBadges" 
-         class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-all duration-300 overflow-hidden"
-         [class.opacity-50]="badge.earnedAt === 0">
-      
+    <div *ngFor="let badge of filteredBadges"
+      class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-all duration-300 overflow-hidden"
+      [class.opacity-50]="badge.earnedAt === 0">
+
       <!-- Image du badge -->
       <div class="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-        <img *ngIf="badge.iconUrl" 
-             [src]="getBadgeImageUrl(badge.iconUrl)" 
-             [alt]="badge.name"
-             class="w-24 h-24 object-contain"
-             (error)="$any($event.target).style.display='none'">
-        
+        <img *ngIf="badge.iconUrl" [src]="getBadgeImageUrl(badge.iconUrl)" [alt]="badge.name"
+          class="w-24 h-24 object-contain" (error)="$any($event.target).style.display='none'">
+
         <!-- Fallback icon si pas d'image -->
-        <div *ngIf="!badge.iconUrl || badge.earnedAt === 0" 
-             class="w-24 h-24 rounded-full flex items-center justify-center"
-             [class]="badge.earnedAt === 0 ? 'bg-gray-300' : 'bg-gradient-to-br from-yellow-400 to-orange-500'">
-          <i data-feather="award" 
-             [class]="badge.earnedAt === 0 ? 'w-12 h-12 text-gray-500' : 'w-12 h-12 text-white'"></i>
+        <div *ngIf="!badge.iconUrl || badge.earnedAt === 0"
+          class="w-24 h-24 rounded-full flex items-center justify-center"
+          [class]="badge.earnedAt === 0 ? 'bg-gray-300' : 'bg-gradient-to-br from-yellow-400 to-orange-500'">
+          <i data-feather="award"
+            [class]="badge.earnedAt === 0 ? 'w-12 h-12 text-gray-500' : 'w-12 h-12 text-white'"></i>
         </div>
-        
+
         <!-- Badge "Nouveau" -->
-        <div *ngIf="badge.isNew && badge.earnedAt > 0" 
-             class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium animate-pulse">
+        <div *ngIf="badge.isNew && badge.earnedAt > 0"
+          class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium animate-pulse">
           NOUVEAU !
         </div>
-        
+
         <!-- Badge "Verrouillé" -->
-        <div *ngIf="badge.earnedAt === 0" 
-             class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+        <div *ngIf="badge.earnedAt === 0"
+          class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
           <i data-feather="lock" class="w-8 h-8 text-white"></i>
         </div>
       </div>
@@ -109,13 +108,13 @@
       <div class="p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ badge.name }}</h3>
         <p class="text-gray-600 text-sm mb-4">{{ badge.description }}</p>
-        
+
         <!-- Date d'obtention -->
         <div *ngIf="badge.earnedAt > 0" class="flex items-center text-sm text-green-600">
           <i data-feather="check-circle" class="w-4 h-4 mr-2"></i>
           <span>Obtenu le {{ formatDate(badge.earnedAt) }}</span>
         </div>
-        
+
         <!-- Badge verrouillé -->
         <div *ngIf="badge.earnedAt === 0" class="flex items-center text-sm text-gray-500">
           <i data-feather="lock" class="w-4 h-4 mr-2"></i>
@@ -126,8 +125,7 @@
   </div>
 
   <!-- Message si aucun badge -->
-  <div *ngIf="!loading && filteredBadges.length === 0" 
-       class="text-center py-12">
+  <div *ngIf="!loading && filteredBadges.length === 0" class="text-center py-12">
     <i data-feather="award" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
     <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune récompense trouvée</h3>
     <p class="text-gray-500 mb-4">
@@ -136,8 +134,7 @@
       <span *ngIf="selectedFilter === 'locked'">Toutes les récompenses sont débloquées !</span>
       <span *ngIf="selectedFilter === 'all'">Aucune récompense disponible.</span>
     </p>
-    <button routerLink="/home" 
-            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+    <button routerLink="/home" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
       Retour à l'accueil
     </button>
   </div>

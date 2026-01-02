@@ -1,33 +1,75 @@
-<!-- Header avec navigation -->
-<header class="bg-gradient-to-r from-blue-500 to-blue-700 backdrop-blur-md shadow-lg sticky top-0 z-50">
-  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-    <!-- Logo et titre -->
-    <div class="flex items-center space-x-2">
-      <i data-feather="award" class="text-white w-8 h-8"></i>
-      <span class="text-2xl font-bold text-white">Kawi Niveau</span>
-    </div>
-    
-    <!-- Navigation -->
-    <nav class="hidden md:flex space-x-6">
-      <a href="#dashboard" class="text-white hover:text-gray-200 font-medium nav-link active">Accueil</a>
-      <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link">Mes Cours</a>
-      <a routerLink="/mes-recompenses" class="text-white hover:text-gray-200 font-medium nav-link">Mes Récompenses</a>
-      <a routerLink="/mes-defis" class="text-white hover:text-gray-200 font-medium nav-link">Mes Défis</a>
-      <a routerLink="/classement" class="text-white hover:text-gray-200 font-medium nav-link">Classement</a>
-    </nav>
-    
-    <!-- Profil utilisateur -->
-    <div class="flex items-center space-x-4">
-      <div class="relative cursor-pointer">
-        <i data-feather="bell" class="text-white hover:text-gray-200"></i>
-        <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">{{ enrolledCount }}</span>
+<!-- Header avec navigation moderne -->
+<header class="backdrop-blur-md shadow-lg sticky top-0 z-50"
+  style="background: linear-gradient(to right, #063cdf, #0850f5);">
+  <div class="container mx-auto px-4 py-3">
+    <div class="flex justify-between items-center">
+      <!-- Logo et titre -->
+      <div class="flex items-center space-x-3">
+        <img src="/Logo_9awi_Niveau.png" alt="9awi Niveau Logo" class="h-10 w-auto">
+        <span class="text-2xl font-bold text-white hidden md:block">9awi Niveau</span>
       </div>
-      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-500 font-bold cursor-pointer" (click)="goToProfile()">
-        {{ userInitials }}
+
+      <!-- Navigation centrale -->
+      <nav class="hidden lg:flex space-x-6">
+        <a href="#dashboard"
+          class="text-white hover:text-gray-200 font-medium nav-link active transition-colors">Accueil</a>
+        <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Mes
+          Cours</a>
+        <a routerLink="/mes-recompenses"
+          class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Récompenses</a>
+        <a routerLink="/mes-defis"
+          class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Défis</a>
+        <a routerLink="/classement"
+          class="text-white hover:text-gray-200 font-medium nav-link transition-colors">Classement</a>
+      </nav>
+
+      <!-- Carte Profil Utilisateur (Moderne) -->
+      <div class="flex items-center space-x-4">
+        <!-- Notifications -->
+        <div class="relative cursor-pointer hidden md:block">
+          <i data-feather="bell" class="text-white hover:text-gray-200 transition-colors"></i>
+          <span *ngIf="enrolledCount > 0"
+            class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">{{
+            enrolledCount }}</span>
+        </div>
+
+        <!-- Carte Profil avec Stats -->
+        <div
+          class="hidden lg:flex items-center space-x-3 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-opacity-20 transition-all"
+          (click)="goToProfile()">
+          <!-- Photo de profil -->
+          <div
+            class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold shadow-md">
+            {{ userInitials }}
+          </div>
+
+          <!-- Info utilisateur -->
+          <div class="text-left">
+            <div class="text-white font-semibold text-sm">{{ (authService.getEmail() || '').split('@')[0] ||
+              'Utilisateur' }}</div>
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="text-blue-100">Niveau {{ userStats?.currentLevel || 1 }}</span>
+              <span class="text-blue-200">•</span>
+              <span class="text-blue-100">{{ userStats?.totalPoints || 0 }} XP</span>
+            </div>
+          </div>
+
+          <!-- Icône dropdown -->
+          <i data-feather="chevron-down" class="text-white w-4 h-4"></i>
+        </div>
+
+        <!-- Version mobile - Avatar simple -->
+        <div
+          class="lg:hidden w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold cursor-pointer shadow-md"
+          (click)="goToProfile()">
+          {{ userInitials }}
+        </div>
+
+        <!-- Bouton déconnexion (desktop) -->
+        <button (click)="logout()" class="hidden xl:flex items-center text-white hover:text-gray-200 transition-colors">
+          <i data-feather="log-out" class="w-5 h-5"></i>
+        </button>
       </div>
-      <button (click)="logout()" class="hidden md:block text-white hover:text-gray-200">
-        <i data-feather="log-out"></i>
-      </button>
     </div>
   </div>
 </header>
@@ -41,140 +83,213 @@
   {{ error }}
 </div>
 
-<!-- Section Hero / Bienvenue -->
-<section class="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-16">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12">
-      <!-- Logo principal de l'application -->
-      <div class="flex justify-center mb-6">
-        <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
-          <i data-feather="award" class="w-12 h-12 text-white"></i>
-        </div>
+<!-- Section Hero Moderne -->
+<section class="relative overflow-hidden py-20"
+  style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);">
+  <!-- Formes décoratives en arrière-plan -->
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+    <div class="absolute top-20 left-10 w-72 h-72 rounded-full opacity-20"
+      style="background: radial-gradient(circle, #063cdf 0%, transparent 70%);"></div>
+    <div class="absolute bottom-10 right-20 w-96 h-96 rounded-full opacity-15"
+      style="background: radial-gradient(circle, #10b981 0%, transparent 70%);"></div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="text-center">
+      <!-- Logo principal (seul, sans texte) -->
+      <div class="flex justify-center mb-6 animate-float">
+        <img src="/Logo_9awi_Niveau.png" alt="9awi Niveau" class="h-40 w-auto drop-shadow-2xl">
       </div>
-      
-      <!-- Message de bienvenue -->
-      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-        Bienvenue sur <span class="text-blue-600">Kawi Niveau</span>
+
+      <!-- Tagline accrocheur -->
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        Apprenez, Progressez, Excellez
       </h1>
-      <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-        Votre plateforme d'apprentissage gamifiée. Progressez, collectionnez des récompenses et défiez-vous dans un environnement motivant et interactif.
+      <p class="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        Transformez votre apprentissage en aventure gamifiée. Gagnez des points, débloquez des récompenses et atteignez
+        vos objectifs.
       </p>
-      
-      <!-- Bouton d'action principal -->
-      <button (click)="scrollToCourses()" 
-              class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        <i data-feather="play-circle" class="w-5 h-5 mr-2"></i>
-        Commencer l'apprentissage
+
+      <!-- Bouton d'action avec animation -->
+      <button (click)="scrollToCourses()"
+        class="group relative inline-flex items-center text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
+        style="background: linear-gradient(135deg, #063cdf 0%, #0850f5 100%);">
+        <span class="relative z-10 flex items-center">
+          <i data-feather="play-circle" class="w-5 h-5 mr-2"></i>
+          Commencer l'apprentissage
+        </span>
+        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
       </button>
     </div>
   </div>
 </section>
 
+<!-- Style pour l'animation float -->
+<style>
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+</style>
+
 <!-- Dashboard principal -->
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="dashboard">
-  
+
   <!-- Section Vue d'ensemble -->
   <div class="mb-12">
     <div class="text-center mb-8">
       <h2 class="text-3xl font-bold text-gray-900 mb-2">Vue d'Ensemble</h2>
       <p class="text-gray-600">Suivez votre progression et découvrez vos accomplissements</p>
     </div>
-    
+
     <div *ngIf="loading" class="flex justify-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     </div>
 
-    <!-- Statistiques principales -->
+    <!-- Statistiques principales avec design moderne -->
     <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      
-      <!-- DEBUG: Afficher les données brutes -->
-      <div *ngIf="userStats" class="col-span-full bg-gray-100 p-4 rounded-lg text-xs text-gray-600 mb-4">
-        <strong>DEBUG:</strong> Points: {{ userStats.totalPoints }}, Niveau: {{ userStats.currentLevel }}, Badges: {{ userStats.badgesCount }}, Défis: {{ userStats.completedChallenges }}
-      </div>
-      
-      <!-- Carte Ma Progression -->
-      <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white cursor-pointer hover:shadow-lg transition-shadow" 
-           routerLink="/home">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Ma Progression</h3>
-          <i data-feather="trending-up" class="w-6 h-6"></i>
-        </div>
-        <div class="space-y-3">
-          <div>
-            <div class="text-2xl font-bold">Niveau {{ userStats?.currentLevel || 1 }}</div>
-            <div class="text-blue-100 text-sm">{{ userStats?.levelName || 'Débutant' }}</div>
-          </div>
-          <div class="w-full bg-blue-400 rounded-full h-2">
-            <div class="bg-white rounded-full h-2 transition-all duration-300" 
-                 [style.width.%]="userStats?.progressPercent || 0"></div>
-          </div>
-          <div class="text-sm text-blue-100">
-            {{ userStats?.totalPoints || 0 }}/{{ userStats?.nextLevelPoints || 100 }} points
-            <span class="float-right">+{{ userStats?.pointsToNextLevel || 100 }} pour niveau suivant</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- Carte Mes Récompenses -->
-      <div class="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-6 text-white cursor-pointer hover:shadow-lg transition-shadow"
-           routerLink="/mes-recompenses">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Mes Récompenses</h3>
-          <i data-feather="award" class="w-6 h-6"></i>
-        </div>
-        <div class="space-y-3">
-          <div class="flex items-center space-x-2">
-            <div *ngFor="let badge of (userStats?.recentBadges || []).slice(0, 3)" class="text-2xl">🏆</div>
-            <span *ngIf="(userStats?.recentBadges?.length || 0) > 3" class="text-orange-200">+{{ (userStats?.recentBadges?.length || 0) - 3 }}</span>
-            <span *ngIf="(userStats?.recentBadges?.length || 0) === 0" class="text-orange-200 text-sm">Aucune récompense</span>
-          </div>
-          <div class="text-2xl font-bold">{{ userStats?.badgesCount || 0 }} récompenses</div>
-          <div class="text-orange-100 text-sm">
-            <span *ngIf="(userStats?.recentBadges?.length || 0) > 0" class="bg-orange-400 px-2 py-1 rounded-full text-xs">
-              NOUVEAU !
-            </span>
-            <span *ngIf="(userStats?.recentBadges?.length || 0) === 0" class="text-xs">
-              Commencez à apprendre pour gagner des récompenses
-            </span>
-          </div>
-        </div>
-      </div>
+      <!-- Carte Ma Progression (Bleu) -->
+      <div
+        class="group relative rounded-2xl p-6 text-white cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden"
+        style="background: linear-gradient(135deg, #063cdf 0%, #0850f5 100%);" routerLink="/home">
+        <!-- Effet glassmorphism au hover -->
+        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
 
-      <!-- Carte Mes Défis -->
-      <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white cursor-pointer hover:shadow-lg transition-shadow"
-           routerLink="/mes-defis">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Mes Défis</h3>
-          <i data-feather="target" class="w-6 h-6"></i>
-        </div>
-        <div class="space-y-3">
-          <div class="text-2xl font-bold">{{ userStats?.completedChallenges || 0 }} défis</div>
-          <div class="text-green-100 text-sm">réussis</div>
-          <div class="flex items-center space-x-2">
-            <div class="w-full bg-green-400 rounded-full h-2">
-              <div class="bg-white rounded-full h-2" 
-                   [style.width.%]="(userStats?.completedChallenges || 0) > 0 ? 75 : 0"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Ma Progression</h3>
+            <div
+              class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <i data-feather="trending-up" class="w-6 h-6"></i>
             </div>
-            <span class="text-xs text-green-100">{{ (userStats?.completedChallenges || 0) > 0 ? '75%' : '0%' }}</span>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <div class="text-3xl font-bold">Niveau {{ userStats?.currentLevel || 1 }}</div>
+              <div class="text-blue-100 text-sm">{{ userStats?.levelName || 'Débutant' }}</div>
+            </div>
+            <div class="w-full bg-white bg-opacity-20 rounded-full h-2.5 backdrop-blur-sm">
+              <div class="bg-white rounded-full h-2.5 transition-all duration-500 shadow-lg"
+                [style.width.%]="userStats?.progressPercent || 0"></div>
+            </div>
+            <div class="text-sm text-blue-50">
+              <span class="font-semibold">{{ userStats?.totalPoints || 0 }}</span> / {{ userStats?.nextLevelPoints ||
+              100 }} XP
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Carte Classement -->
-      <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white cursor-pointer hover:shadow-lg transition-shadow"
-           routerLink="/classement">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Mon Classement</h3>
-          <i data-feather="users" class="w-6 h-6"></i>
+      <!-- Carte Mes Récompenses (Or/Orange) -->
+      <div
+        class="group relative rounded-2xl p-6 text-white cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden"
+        style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);" routerLink="/mes-recompenses">
+        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Récompenses</h3>
+            <div
+              class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <i data-feather="award" class="w-6 h-6"></i>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center space-x-2 min-h-[32px]">
+              <div *ngFor="let badge of (userStats?.recentBadges || []).slice(0, 3)" class="text-2xl animate-bounce">🏆
+              </div>
+              <span *ngIf="(userStats?.recentBadges?.length || 0) > 3" class="text-orange-100 text-sm">+{{
+                (userStats?.recentBadges?.length || 0) - 3 }}</span>
+              <span *ngIf="(userStats?.recentBadges?.length || 0) === 0" class="text-orange-100 text-sm italic">Aucune
+                encore</span>
+            </div>
+            <div class="text-3xl font-bold">{{ userStats?.badgesCount || 0 }}</div>
+            <div class="text-sm text-orange-50">
+              <span *ngIf="(userStats?.badgesCount || 0) > 0"
+                class="bg-white bg-opacity-20 px-3 py-1 rounded-full backdrop-blur-sm">
+                Excellent ! 🎉
+              </span>
+              <span *ngIf="(userStats?.badgesCount || 0) === 0" class="opacity-75">
+                Gagnez votre première récompense
+              </span>
+            </div>
+          </div>
         </div>
-        <div class="space-y-3">
-          <div class="text-2xl font-bold">#{{ userStats?.leaderboardPosition || '∞' }}</div>
-          <div class="text-purple-100 text-sm">position</div>
-          <div class="flex items-center space-x-1">
-            <i data-feather="arrow-up" class="w-4 h-4 text-green-300"></i>
-            <span class="text-sm text-purple-100">
-              {{ (userStats?.leaderboardPosition || 0) > 0 ? 'Classé' : 'Pas encore classé' }}
-            </span>
+      </div>
+
+      <!-- Carte Mes Défis (Vert) -->
+      <div
+        class="group relative rounded-2xl p-6 text-white cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden"
+        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" routerLink="/mes-defis">
+        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Mes Défis</h3>
+            <div
+              class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <i data-feather="target" class="w-6 h-6"></i>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <div class="text-3xl font-bold">{{ userStats?.completedChallenges || 0 }}</div>
+              <div class="text-green-50 text-sm">défis réussis</div>
+            </div>
+            <div class="w-full bg-white bg-opacity-20 rounded-full h-2.5 backdrop-blur-sm">
+              <div class="bg-white rounded-full h-2.5 transition-all duration-500 shadow-lg"
+                [style.width.%]="(userStats?.completedChallenges || 0) > 0 ? 75 : 0"></div>
+            </div>
+            <div class="text-sm text-green-50">
+              <span *ngIf="(userStats?.completedChallenges || 0) > 0">Continuez comme ça ! 💪</span>
+              <span *ngIf="(userStats?.completedChallenges || 0) === 0" class="opacity-75">Relevez votre premier
+                défi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte Classement (Violet/Indigo) -->
+      <div
+        class="group relative rounded-2xl p-6 text-white cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden"
+        style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);" routerLink="/classement">
+        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Classement</h3>
+            <div
+              class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <i data-feather="users" class="w-6 h-6"></i>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <div class="text-3xl font-bold">#{{ userStats?.leaderboardPosition || '∞' }}</div>
+              <div class="text-purple-50 text-sm">position globale</div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i data-feather="arrow-up" class="w-5 h-5 text-green-300"></i>
+              <span class="text-sm text-purple-50">
+                {{ (userStats?.leaderboardPosition || 0) > 0 && (userStats?.leaderboardPosition || 0) < 999
+                  ? 'Classé parmi les meilleurs' : 'Commencez à apprendre' }} </span>
+            </div>
+            <div
+              class="text-sm text-purple-50 bg-white bg-opacity-20 px-3 py-1 rounded-full backdrop-blur-sm inline-block">
+              {{ userStats?.totalPoints || 0 }} points
+            </div>
           </div>
         </div>
       </div>
@@ -189,14 +304,14 @@
             <i data-feather="trending-up" class="w-8 h-8 text-blue-600"></i>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">Votre Progression</h3>
-          <p class="text-3xl font-bold text-blue-600 mb-1">{{ userStats?.totalPoints || 0 }}</p>
+          <p class="text-3xl font-bold mb-1" style="color: #063cdf;">{{ userStats?.totalPoints || 0 }}</p>
           <p class="text-sm text-gray-600">points gagnés</p>
           <div class="mt-3 w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-blue-600 rounded-full h-2 transition-all duration-500" 
-                 [style.width.%]="userStats?.progressPercent || 0"></div>
+            <div class="rounded-full h-2 transition-all duration-500" style="background-color: #063cdf;"
+              [style.width.%]="userStats?.progressPercent || 0"></div>
           </div>
         </div>
-        
+
         <!-- Cours -->
         <div class="text-center">
           <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -207,7 +322,7 @@
           <p class="text-sm text-gray-600">cours inscrits</p>
           <p class="text-sm text-green-600 mt-2">{{ completedCount }} terminés</p>
         </div>
-        
+
         <!-- Récompenses -->
         <div class="text-center">
           <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -222,15 +337,15 @@
     </div>
 
     <!-- Activité récente -->
-    <div *ngIf="!loading && userStats && (userStats.recentActivities?.length || 0) > 0" 
-         class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+    <div *ngIf="!loading && userStats && (userStats.recentActivities?.length || 0) > 0"
+      class="bg-white rounded-xl shadow-sm border p-6 mb-8">
       <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
         <i data-feather="clock" class="w-5 h-5 mr-2 text-gray-500"></i>
         Activité récente
       </h3>
       <div class="space-y-3">
-        <div *ngFor="let activity of userStats.recentActivities.slice(0, 3)" 
-             class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+        <div *ngFor="let activity of userStats.recentActivities.slice(0, 3)"
+          class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
           <div class="flex items-center space-x-3">
             <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               <i data-feather="check-circle" class="w-4 h-4 text-blue-600"></i>
@@ -246,15 +361,17 @@
     </div>
 
     <!-- Message de motivation si pas d'activité -->
-    <div *ngIf="!loading && (!userStats || (userStats.recentActivities?.length || 0) === 0)" 
-         class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 p-8 mb-8 text-center">
+    <div *ngIf="!loading && (!userStats || (userStats.recentActivities?.length || 0) === 0)"
+      class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 p-8 mb-8 text-center">
       <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <i data-feather="star" class="w-8 h-8 text-blue-600"></i>
       </div>
       <h3 class="text-xl font-semibold text-gray-900 mb-2">Prêt à commencer votre aventure ?</h3>
-      <p class="text-gray-600 mb-6">Inscrivez-vous à votre premier cours et commencez à gagner des points et des récompenses !</p>
-      <button (click)="scrollToCourses()" 
-              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+      <p class="text-gray-600 mb-6">Inscrivez-vous à votre premier cours et commencez à gagner des points et des
+        récompenses !</p>
+      <button (click)="scrollToCourses()" class="text-white px-6 py-3 rounded-lg font-medium transition-colors"
+        style="background-color: #063cdf;" onmouseover="this.style.backgroundColor='#0850f5'"
+        onmouseout="this.style.backgroundColor='#063cdf'">
         Découvrir les cours
       </button>
     </div>
@@ -277,34 +394,24 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
           <div class="relative">
-            <input
-              type="text"
-              [(ngModel)]="searchTerm"
-              (input)="onSearchChange()"
-              placeholder="Titre, description..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
+            <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()" placeholder="Titre, description..."
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <i data-feather="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
           </div>
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
-          <select
-            [(ngModel)]="selectedCategorie"
-            (change)="onCategorieChange()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
+          <select [(ngModel)]="selectedCategorie" (change)="onCategorieChange()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="">Toutes les catégories</option>
             <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
           </select>
         </div>
-        
+
         <div class="flex items-end">
-          <button
-            (click)="clearFilters()"
-            class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
+          <button (click)="clearFilters()"
+            class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
             <i data-feather="x" class="w-4 h-4 mr-2"></i>
             Effacer
           </button>
@@ -318,29 +425,25 @@
     </div>
 
     <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let cours of filteredCours" 
-           class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow overflow-hidden">
-        
+      <div *ngFor="let cours of filteredCours"
+        class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow overflow-hidden">
+
         <!-- Image du cours -->
         <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
-          <img *ngIf="cours.thumbnailUrl" 
-               [src]="'http://localhost:8080/images/cours/' + cours.thumbnailUrl" 
-               [alt]="cours.titre"
-               class="w-full h-full object-cover"
-               (error)="$any($event.target).style.display='none'">
-          <div *ngIf="!cours.thumbnailUrl" 
-               class="w-full h-full flex items-center justify-center text-white">
+          <img *ngIf="cours.thumbnailUrl" [src]="'http://localhost:8080/images/cours/' + cours.thumbnailUrl"
+            [alt]="cours.titre" class="w-full h-full object-cover" (error)="$any($event.target).style.display='none'">
+          <div *ngIf="!cours.thumbnailUrl" class="w-full h-full flex items-center justify-center text-white">
             <i data-feather="book-open" class="w-16 h-16 opacity-50"></i>
           </div>
-          
+
           <!-- Badge d'inscription -->
-          <div *ngIf="cours.isEnrolled" 
-               class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+          <div *ngIf="cours.isEnrolled"
+            class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
             <i data-feather="check" class="w-4 h-4 mr-1"></i>
             Inscrit
           </div>
-          <div *ngIf="!cours.isEnrolled" 
-               class="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+          <div *ngIf="!cours.isEnrolled"
+            class="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
             Nouveau
           </div>
         </div>
@@ -349,14 +452,14 @@
         <div class="p-6">
           <div class="flex items-start justify-between mb-3">
             <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">{{ cours.titre }}</h3>
-            <span *ngIf="cours.categorie" 
-                  class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full whitespace-nowrap">
+            <span *ngIf="cours.categorie" class="ml-2 px-2 py-1 text-xs rounded-full whitespace-nowrap"
+              style="background-color: #e3f2fd; color: #063cdf;">
               {{ cours.categorie }}
             </span>
           </div>
-          
+
           <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ cours.description }}</p>
-          
+
           <!-- Progression si inscrit -->
           <div *ngIf="cours.enrollment" class="mb-4">
             <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
@@ -364,29 +467,29 @@
               <span>{{ cours.enrollment.progress }}%</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-blue-600 rounded-full h-2 transition-all duration-300" 
-                   [style.width.%]="cours.enrollment.progress"></div>
+              <div class="rounded-full h-2 transition-all duration-300" style="background-color: #063cdf;"
+                [style.width.%]="cours.enrollment.progress"></div>
             </div>
           </div>
-          
+
           <!-- Actions -->
           <div class="flex items-center justify-between">
             <div class="text-sm text-gray-500">
               <i data-feather="calendar" class="w-4 h-4 mr-1"></i>
               {{ cours.createdAt | date:'shortDate' }}
             </div>
-            
+
             <div class="flex space-x-2">
-              <button *ngIf="!cours.isEnrolled && cours.id"
-                      (click)="enrollInCourse(cours.id, $event)"
-                      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+              <button *ngIf="!cours.isEnrolled && cours.id" (click)="enrollInCourse(cours.id, $event)"
+                class="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+                style="background-color: #063cdf;" onmouseover="this.style.backgroundColor='#0850f5'"
+                onmouseout="this.style.backgroundColor='#063cdf'">
                 <i data-feather="plus" class="w-4 h-4 mr-1"></i>
                 S'inscrire
               </button>
-              
-              <button *ngIf="cours.isEnrolled && cours.id"
-                      [routerLink]="['/cours', cours.id]"
-                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+
+              <button *ngIf="cours.isEnrolled && cours.id" [routerLink]="['/cours', cours.id]"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
                 <i data-feather="play" class="w-4 h-4 mr-1"></i>
                 Continuer
               </button>
@@ -397,17 +500,16 @@
     </div>
 
     <!-- Message si aucun cours -->
-    <div *ngIf="!loading && filteredCours.length === 0" 
-         class="text-center py-12">
+    <div *ngIf="!loading && filteredCours.length === 0" class="text-center py-12">
       <i data-feather="book-open" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
       <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun cours trouvé</h3>
       <p class="text-gray-500 mb-4">
         <span *ngIf="searchTerm || selectedCategorie">Essayez de modifier vos filtres.</span>
         <span *ngIf="!searchTerm && !selectedCategorie">Il n'y a pas encore de cours disponibles.</span>
       </p>
-      <button *ngIf="searchTerm || selectedCategorie"
-              (click)="clearFilters()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      <button *ngIf="searchTerm || selectedCategorie" (click)="clearFilters()"
+        class="px-4 py-2 text-white rounded-lg transition-colors" style="background-color: #063cdf;"
+        onmouseover="this.style.backgroundColor='#0850f5'" onmouseout="this.style.backgroundColor='#063cdf'">
         Voir tous les cours
       </button>
     </div>

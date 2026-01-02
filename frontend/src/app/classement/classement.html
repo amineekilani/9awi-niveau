@@ -4,9 +4,10 @@
     <!-- Logo et titre -->
     <div class="flex items-center space-x-2">
       <i data-feather="award" class="text-white w-8 h-8"></i>
-      <span class="text-2xl font-bold text-white">Kawi Niveau</span>
+      <img src="/Logo_9awi_Niveau.png" alt="9awi Niveau Logo" class="h-10 w-auto mr-3">
+      <span class="text-2xl font-bold text-white">9awi Niveau</span>
     </div>
-    
+
     <!-- Navigation -->
     <nav class="hidden md:flex space-x-6">
       <a routerLink="/home" class="text-white hover:text-gray-200 font-medium nav-link">Accueil</a>
@@ -15,11 +16,12 @@
       <a routerLink="/mes-defis" class="text-white hover:text-gray-200 font-medium nav-link">Mes Défis</a>
       <a routerLink="/classement" class="text-white hover:text-gray-200 font-medium nav-link active">Classement</a>
     </nav>
-    
+
     <!-- Profil utilisateur -->
     <div class="flex items-center space-x-4">
-      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-500 font-bold cursor-pointer" 
-           routerLink="/profile">
+      <div
+        class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-500 font-bold cursor-pointer"
+        routerLink="/profile">
         {{ userInitials }}
       </div>
       <button (click)="logout()" class="hidden md:block text-white hover:text-gray-200">
@@ -36,11 +38,12 @@
 
 <!-- Contenu principal -->
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  
+
   <!-- En-tête de la page -->
   <div class="mb-8">
     <div class="flex items-center space-x-3 mb-4">
-      <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+      <div
+        class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
         <i data-feather="users" class="w-6 h-6 text-white"></i>
       </div>
       <div>
@@ -53,26 +56,26 @@
   <!-- Filtres de période -->
   <div class="bg-white rounded-xl shadow-sm border p-6 mb-8">
     <div class="flex flex-wrap gap-3">
-      <button *ngFor="let option of periodOptions"
-              (click)="onPeriodChange(option.value)"
-              [class]="selectedPeriod === option.value ? 
+      <button *ngFor="let option of periodOptions" (click)="onPeriodChange(option.value)" [class]="selectedPeriod === option.value ? 
                 'bg-purple-600 text-white' : 
                 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-              class="px-4 py-2 rounded-lg font-medium transition-colors">
+        class="px-4 py-2 rounded-lg font-medium transition-colors">
         {{ option.label }}
       </button>
     </div>
   </div>
 
   <!-- Position de l'utilisateur -->
-  <div *ngIf="userPosition && !loading" class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 p-6 mb-8">
+  <div *ngIf="userPosition && !loading"
+    class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 p-6 mb-8">
     <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
       <i data-feather="user" class="w-5 h-5 mr-2 text-blue-600"></i>
       Votre Position
     </h2>
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-4">
-        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+        <div
+          class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
           {{ getInitials(userPosition.name) }}
         </div>
         <div>
@@ -109,10 +112,11 @@
   <div *ngIf="!loading && leaderboard.length >= 3" class="mb-8">
     <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">🏆 Podium</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      
+
       <!-- 2ème place -->
       <div class="bg-white rounded-xl shadow-lg border-2 border-gray-300 p-6 text-center order-2 md:order-1">
-        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center text-white text-2xl font-bold">
+        <div
+          class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center text-white text-2xl font-bold">
           {{ getInitials(leaderboard[1].name) }}
         </div>
         <div class="mb-2">
@@ -136,15 +140,18 @@
       </div>
 
       <!-- 1ère place -->
-      <div class="bg-white rounded-xl shadow-xl border-4 border-yellow-400 p-6 text-center transform scale-105 order-1 md:order-2">
-        <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white text-2xl font-bold relative">
+      <div
+        class="bg-white rounded-xl shadow-xl border-4 border-yellow-400 p-6 text-center transform scale-105 order-1 md:order-2">
+        <div
+          class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white text-2xl font-bold relative">
           {{ getInitials(leaderboard[0].name) }}
           <div class="absolute -top-2 -right-2 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
             <i data-feather="crown" class="w-4 h-4 text-white"></i>
           </div>
         </div>
         <div class="mb-2">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
             <i data-feather="crown" class="w-4 h-4 mr-1"></i>
             1er
           </span>
@@ -165,11 +172,13 @@
 
       <!-- 3ème place -->
       <div class="bg-white rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center order-3">
-        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-bold">
+        <div
+          class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-bold">
           {{ getInitials(leaderboard[2].name) }}
         </div>
         <div class="mb-2">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
             <i data-feather="star" class="w-4 h-4 mr-1"></i>
             3ème
           </span>
@@ -195,32 +204,30 @@
     <div class="px-6 py-4 border-b border-gray-200">
       <h2 class="text-xl font-semibold text-gray-900">Classement Complet</h2>
     </div>
-    
+
     <div class="divide-y divide-gray-200">
-      <div *ngFor="let entry of leaderboard; let i = index" 
-           class="px-6 py-4 hover:bg-gray-50 transition-colors"
-           [class.bg-blue-50]="entry.isCurrentUser"
-           [class.border-l-4]="entry.isCurrentUser"
-           [class.border-blue-500]="entry.isCurrentUser">
-        
+      <div *ngFor="let entry of leaderboard; let i = index" class="px-6 py-4 hover:bg-gray-50 transition-colors"
+        [class.bg-blue-50]="entry.isCurrentUser" [class.border-l-4]="entry.isCurrentUser"
+        [class.border-blue-500]="entry.isCurrentUser">
+
         <div class="flex items-center justify-between">
           <!-- Rang et utilisateur -->
           <div class="flex items-center space-x-4">
             <!-- Badge de rang -->
             <div class="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br"
-                 [class]="getRankColor(entry.rank)">
+              [class]="getRankColor(entry.rank)">
               <span *ngIf="entry.rank <= 3" class="text-white">
                 <i [attr.data-feather]="getRankIcon(entry.rank)" class="w-5 h-5"></i>
               </span>
               <span *ngIf="entry.rank > 3" class="text-white font-bold">{{ entry.rank }}</span>
             </div>
-            
+
             <!-- Info utilisateur -->
             <div>
               <div class="flex items-center space-x-2">
                 <h3 class="text-lg font-semibold text-gray-900">{{ entry.name }}</h3>
-                <span *ngIf="entry.isCurrentUser" 
-                      class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                <span *ngIf="entry.isCurrentUser"
+                  class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
                   C'est vous !
                 </span>
               </div>
@@ -236,7 +243,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Points -->
           <div class="text-right">
             <div class="text-2xl font-bold text-blue-600">{{ entry.totalPoints }}</div>
@@ -248,13 +255,13 @@
   </div>
 
   <!-- Message si aucune donnée -->
-  <div *ngIf="!loading && leaderboard.length === 0" 
-       class="text-center py-12">
+  <div *ngIf="!loading && leaderboard.length === 0" class="text-center py-12">
     <i data-feather="users" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
     <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun classement disponible</h3>
-    <p class="text-gray-500 mb-4">Le classement sera disponible une fois que des utilisateurs auront commencé à apprendre.</p>
-    <button routerLink="/home" 
-            class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+    <p class="text-gray-500 mb-4">Le classement sera disponible une fois que des utilisateurs auront commencé à
+      apprendre.</p>
+    <button routerLink="/home"
+      class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
       Retour à l'accueil
     </button>
   </div>

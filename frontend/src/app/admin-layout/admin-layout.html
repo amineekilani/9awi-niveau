@@ -3,7 +3,7 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo">
-        <h2>Kawi Niveau</h2>
+        <h2>9awi Niveau</h2>
         <span class="admin-badge">Admin</span>
       </div>
       <button class="sidebar-toggle" (click)="toggleSidebar()">
@@ -13,9 +13,7 @@
 
     <nav class="sidebar-nav">
       <ul class="nav-menu">
-        <li *ngFor="let item of menuItems" 
-            class="nav-item" 
-            [class.active]="item.active">
+        <li *ngFor="let item of menuItems" class="nav-item" [class.active]="item.active">
           <a (click)="setActiveMenuItem(item)" class="nav-link">
             <span class="nav-icon">{{ getIconClass(item.icon) }}</span>
             <span class="nav-text" *ngIf="!sidebarCollapsed">{{ item.title }}</span>
@@ -50,7 +48,7 @@
         </button>
         <h1 class="page-title">Administration</h1>
       </div>
-      
+
       <div class="header-right">
         <div class="header-user">
           <div class="user-avatar-small">

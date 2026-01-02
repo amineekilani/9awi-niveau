@@ -10,7 +10,7 @@ import { RouterModule } from '@angular/router';
     <div class="simple-dashboard">
       <div class="welcome-section">
         <h1>🎉 Bienvenue dans l'Administration</h1>
-        <p>Tableau de bord administrateur de Kawi Niveau</p>
+        <p>Tableau de bord administrateur de 9awi Niveau</p>
       </div>
 
       <div class="quick-actions">
@@ -152,4 +152,4 @@ import { RouterModule } from '@angular/router';
     }
   `]
 })
-export class SimpleDashboardComponent {}
+export class SimpleDashboardComponent { }

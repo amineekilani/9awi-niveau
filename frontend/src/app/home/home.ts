@@ -31,16 +31,18 @@ export class HomeComponent implements OnInit, AfterViewInit {
   // Données cours
   cours: CoursWithEnrollment[] = [];
   filteredCours: CoursWithEnrollment[] = [];
-  
+
   // Filtres
   searchTerm = '';
   selectedCategorie = '';
   categories: string[] = [];
-  
+
   // Stats calculées
   enrolledCount = 0;
   completedCount = 0;
   userInitials = 'ET';
+  userName = '';
+  userProfileImage = '';
 
   constructor(
     private router: Router,
@@ -48,7 +50,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     private userGamificationService: UserGamificationService,
     private coursService: CoursService,
     private enrollmentService: EnrollmentService
-  ) {}
+  ) { }
 
   ngOnInit() {
     // Rediriger selon le rôle
@@ -56,7 +58,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
       this.router.navigate(['/formateur-main']);
       return;
     }
-    
+
     if (this.authService.isAdmin()) {
       this.router.navigate(['/admin-main']);
       return;
@@ -83,73 +85,70 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   loadUserStats() {
+    console.log('🔄 Début du chargement des stats utilisateur...');
+    this.loading = true;
+
+    // Utiliser directement les vraies données du backend (comme le classement)
     this.userGamificationService.getUserStats().subscribe({
       next: (stats) => {
-        console.log('✅ Stats API reçues:', stats);
-        
-        // FORCER l'utilisation des données de démo pour cohérence avec autres pages
+        console.log('✅ Stats utilisateur chargées depuis le backend:', stats);
+        console.log('📊 Type de totalPoints:', typeof stats.totalPoints, 'Valeur:', stats.totalPoints);
+
+        // Vérifier si les données sont valides
+        if (!stats) {
+          console.error('❌ Stats nulles reçues du backend');
+          this.setFallbackStats();
+          return;
+        }
+
+        // Utiliser directement les données du backend (même source que le classement)
         this.userStats = {
-          totalPoints: 150,
-          currentLevel: 3,
-          levelName: 'Étudiant',
-          levelDescription: 'Vous progressez bien dans vos études',
-          pointsToNextLevel: 100,
-          nextLevelPoints: 250,
-          progressPercent: 60,
-          badgesCount: 4, // Même nombre que dans Mes Récompenses
-          completedChallenges: 2, // Même nombre que dans Mes Défis
-          leaderboardPosition: 15, // Position cohérente avec Classement
-          recentActivities: [
-            {
-              type: 'quiz',
-              description: 'Quiz "JavaScript" réussi',
-              points: 15,
-              timeAgo: 'il y a 2h',
-              icon: '✓'
-            },
-            {
-              type: 'course',
-              description: 'Cours "React" terminé',
-              points: 50,
-              timeAgo: 'il y a 1j',
-              icon: '📚'
-            }
-          ],
-          recentBadges: [
-            {
-              id: 2,
-              name: 'Lecteur Assidu',
-              description: 'Terminer 3 leçons',
-              iconUrl: 'badge-reader.png',
-              earnedAt: Date.now() - 3600000,
-              isNew: true
-            }
-          ]
+          totalPoints: stats.totalPoints || 0, // Utiliser la vraie valeur du backend
+          currentLevel: stats.currentLevel || 1,
+          levelName: stats.levelName || 'Débutant',
+          levelDescription: stats.levelDescription || 'Bienvenue !',
+          pointsToNextLevel: stats.pointsToNextLevel || 100,
+          nextLevelPoints: stats.nextLevelPoints || 100,
+          progressPercent: stats.progressPercent || 0,
+          badgesCount: stats.badgesCount || 0,
+          completedChallenges: stats.completedChallenges || 0,
+          leaderboardPosition: stats.leaderboardPosition || 0,
+          recentActivities: stats.recentActivities || [],
+          recentBadges: stats.recentBadges || []
         };
-        console.log('📊 Données de démo FORCÉES (cohérentes avec autres pages):', this.userStats);
+
+        this.loading = false;
+        console.log('📊 Stats finales assignées (même source que classement):', this.userStats);
+        console.log('🎯 Points finaux affichés:', this.userStats.totalPoints);
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement des stats:', error);
-        console.log('🔄 Utilisation des données de démonstration (comme les autres pages)');
-        
-        // Utiliser les MÊMES données de démo que les autres pages
-        this.userStats = {
-          totalPoints: 150,
-          currentLevel: 3,
-          levelName: 'Étudiant',
-          levelDescription: 'Vous progressez bien dans vos études',
-          pointsToNextLevel: 100,
-          nextLevelPoints: 250,
-          progressPercent: 60,
-          badgesCount: 4,
-          completedChallenges: 2,
-          leaderboardPosition: 15,
-          recentActivities: [],
-          recentBadges: []
-        };
-        console.log('📊 Données de démo assignées (cohérentes avec autres pages):', this.userStats);
+        console.error('📋 Détails de l\'erreur:', error.error);
+        console.error('🔍 Status:', error.status);
+
+        this.setFallbackStats();
       }
     });
+  }
+
+  private setFallbackStats() {
+    console.log('🔄 Utilisation des stats de fallback...');
+    // Fallback seulement en cas d'erreur
+    this.userStats = {
+      totalPoints: 0,
+      currentLevel: 1,
+      levelName: 'Débutant',
+      levelDescription: 'Bienvenue !',
+      pointsToNextLevel: 100,
+      nextLevelPoints: 100,
+      progressPercent: 0,
+      badgesCount: 0,
+      completedChallenges: 0,
+      leaderboardPosition: 0,
+      recentActivities: [],
+      recentBadges: []
+    };
+    this.loading = false;
   }
 
   loadCours() {
@@ -159,7 +158,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         this.cours = data;
         this.extractCategories();
         this.applyFilters();
-        
+
         // Charger les enrollments pour les étudiants
         this.loadEnrollments();
       },
@@ -182,21 +181,21 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   applyFilters() {
     let filtered = [...this.cours];
-    
+
     // Filtrer par recherche
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(c => 
-        c.titre.toLowerCase().includes(term) || 
+      filtered = filtered.filter(c =>
+        c.titre.toLowerCase().includes(term) ||
         c.description.toLowerCase().includes(term)
       );
     }
-    
+
     // Filtrer par catégorie
     if (this.selectedCategorie) {
       filtered = filtered.filter(c => c.categorie === this.selectedCategorie);
     }
-    
+
     this.filteredCours = filtered;
   }
 
@@ -225,14 +224,14 @@ export class HomeComponent implements OnInit, AfterViewInit {
             cours.isEnrolled = true;
           }
         });
-        
+
         // Appliquer les filtres après avoir chargé les enrollments
         this.applyFilters();
-        
+
         // Calculer les statistiques
         this.calculateStats(enrollments);
         this.loading = false;
-        
+
         // Rafraîchir les icônes après le chargement
         setTimeout(() => {
           if (typeof feather !== 'undefined') {
@@ -255,12 +254,12 @@ export class HomeComponent implements OnInit, AfterViewInit {
   enrollInCourse(coursId: number | undefined, event: Event) {
     event.preventDefault();
     event.stopPropagation();
-    
+
     if (!coursId) {
       this.error = 'ID du cours invalide';
       return;
     }
-    
+
     if (confirm('Voulez-vous vous inscrire à ce cours ?')) {
       this.enrollmentService.enrollInCourse(coursId).subscribe({
         next: () => {
