@@ -23,6 +23,7 @@ import { MesRecompensesComponent } from './mes-recompenses/mes-recompenses';
 import { MesDefisComponent } from './mes-defis/mes-defis';
 import { ClassementComponent } from './classement/classement';
 import { MesCoursComponent } from './mes-cours/mes-cours';
+import { RecommendationsComponent } from './recommendations/recommendations.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -36,6 +37,7 @@ export const routes: Routes = [
   { path: 'mes-cours', component: MesCoursComponent, canActivate: [authGuard] },
   { path: 'mes-recompenses', component: MesRecompensesComponent, canActivate: [authGuard] },
   { path: 'mes-defis', component: MesDefisComponent, canActivate: [authGuard] },
+  { path: 'recommandations', component: RecommendationsComponent, canActivate: [authGuard] },
   { path: 'classement', component: ClassementComponent, canActivate: [authGuard] },
   { path: 'confirm-delete', component: ConfirmDeleteComponent, canActivate: [authGuard] },
   { path: 'formateur-dashboard', component: FormateurDashboardComponent, canActivate: [authGuard] },
