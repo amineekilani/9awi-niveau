@@ -40,15 +40,73 @@ export class BadgeManagementComponent implements OnInit {
   };
 
   criteriaTypes = [
-    { value: 'COURS_COMPLETED', label: 'Cours terminés' },
-    { value: 'QUIZ_PASSED', label: 'Quiz réussis' },
-    { value: 'PERFECT_SCORE', label: 'Score parfait' },
-    { value: 'STREAK_DAYS', label: 'Jours consécutifs' },
-    { value: 'XP_EARNED', label: 'Points XP gagnés' },
-    { value: 'FIRST_COURSE', label: 'Premier cours' },
-    { value: 'FIRST_QUIZ', label: 'Premier quiz' },
-    { value: 'CHALLENGE_COMPLETED', label: 'Défi terminé' },
-    { value: 'LEVEL_REACHED', label: 'Niveau atteint' }
+    { 
+      value: 'COURS_COMPLETED', 
+      label: 'Cours terminés',
+      description: 'Nombre de cours que l\'utilisateur doit terminer',
+      defaultValue: 1,
+      minValue: 1
+    },
+    { 
+      value: 'QUIZ_PASSED', 
+      label: 'Quiz réussis',
+      description: 'Nombre de quiz que l\'utilisateur doit réussir',
+      defaultValue: 1,
+      minValue: 1
+    },
+    { 
+      value: 'PERFECT_SCORE', 
+      label: 'Score parfait (100%)',
+      description: 'Nombre de fois où l\'utilisateur doit obtenir 100% à un quiz',
+      defaultValue: 1,
+      minValue: 1
+    },
+    { 
+      value: 'STREAK_DAYS', 
+      label: 'Jours consécutifs',
+      description: 'Nombre de jours consécutifs de connexion',
+      defaultValue: 7,
+      minValue: 2
+    },
+    { 
+      value: 'XP_EARNED', 
+      label: 'Points XP gagnés',
+      description: 'Nombre total de points XP à accumuler',
+      defaultValue: 100,
+      minValue: 10
+    },
+    { 
+      value: 'FIRST_COURSE', 
+      label: 'Premier cours (automatique)',
+      description: 'Badge obtenu automatiquement au premier cours terminé',
+      defaultValue: 1,
+      minValue: 1,
+      maxValue: 1,
+      isAutomatic: true
+    },
+    { 
+      value: 'FIRST_QUIZ', 
+      label: 'Premier quiz (automatique)',
+      description: 'Badge obtenu automatiquement au premier quiz réussi',
+      defaultValue: 1,
+      minValue: 1,
+      maxValue: 1,
+      isAutomatic: true
+    },
+    { 
+      value: 'CHALLENGE_COMPLETED', 
+      label: 'Défi terminé',
+      description: 'Nombre de défis que l\'utilisateur doit terminer',
+      defaultValue: 1,
+      minValue: 1
+    },
+    { 
+      value: 'LEVEL_REACHED', 
+      label: 'Niveau atteint',
+      description: 'Niveau minimum à atteindre',
+      defaultValue: 5,
+      minValue: 2
+    }
   ];
 
   constructor(private gamificationService: GamificationService) {}
@@ -199,12 +257,74 @@ export class BadgeManagementComponent implements OnInit {
     return criteria ? criteria.label : type;
   }
 
+  getCriteriaTypeInfo(type: string) {
+    return this.criteriaTypes.find(c => c.value === type);
+  }
+
+  onCriteriaTypeChange() {
+    const criteriaInfo = this.getCriteriaTypeInfo(this.badgeForm.criteriaType);
+    if (criteriaInfo) {
+      this.badgeForm.criteriaValue = criteriaInfo.defaultValue;
+    }
+  }
+
+  isValueEditable(): boolean {
+    const criteriaInfo = this.getCriteriaTypeInfo(this.badgeForm.criteriaType);
+    return !criteriaInfo?.isAutomatic;
+  }
+
+  getValueHelpText(): string {
+    const criteriaInfo = this.getCriteriaTypeInfo(this.badgeForm.criteriaType);
+    if (!criteriaInfo) return '';
+    
+    if (criteriaInfo.isAutomatic) {
+      return 'Valeur fixe - Badge obtenu automatiquement';
+    }
+    
+    return criteriaInfo.description || '';
+  }
+
+  getMinValue(): number {
+    const criteriaInfo = this.getCriteriaTypeInfo(this.badgeForm.criteriaType);
+    return criteriaInfo?.minValue || 1;
+  }
+
+  getMaxValue(): number | null {
+    const criteriaInfo = this.getCriteriaTypeInfo(this.badgeForm.criteriaType);
+    return criteriaInfo?.maxValue || null;
+  }
+
   formatDate(timestamp: number): string {
     return new Date(timestamp).toLocaleDateString('fr-FR');
   }
 
   onImageError(event: any) {
-    (event.target as HTMLImageElement).style.display = 'none';
+    // Utiliser une image par défaut si l'image du badge ne se charge pas
+    event.target.src = '/badges/default-badge.svg';
+    event.target.style.display = 'inline';
+  }
+
+  getDefaultBadgeIcon(criteriaType: string): string {
+    const iconMap: { [key: string]: string } = {
+      'FIRST_COURSE': '/badges/first-course.svg',
+      'COURS_COMPLETED': '/badges/first-course.svg',
+      'QUIZ_PASSED': '/badges/quiz-master.svg',
+      'FIRST_QUIZ': '/badges/quiz-master.svg',
+      'PERFECT_SCORE': '/badges/perfect-score.svg',
+      'STREAK_DAYS': '/badges/streak-master.svg',
+      'XP_EARNED': '/badges/default-badge.svg',
+      'CHALLENGE_COMPLETED': '/badges/default-badge.svg',
+      'LEVEL_REACHED': '/badges/default-badge.svg'
+    };
+    
+    return iconMap[criteriaType] || '/badges/default-badge.svg';
+  }
+
+  getBadgeIconUrl(badge: BadgeResponse): string {
+    if (badge.iconUrl && badge.iconUrl.trim()) {
+      return badge.iconUrl;
+    }
+    return this.getDefaultBadgeIcon(badge.criteriaType);
   }
 
   isBadgeActive(badge: BadgeResponse): boolean {

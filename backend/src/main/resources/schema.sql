@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS levels (
     xp_required INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    reward_description VARCHAR(500),
     created_at BIGINT
 );
 

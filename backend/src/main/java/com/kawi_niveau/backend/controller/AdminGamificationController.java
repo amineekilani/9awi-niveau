@@ -3,10 +3,12 @@ package com.kawi_niveau.backend.controller;
 import com.kawi_niveau.backend.dto.*;
 import com.kawi_niveau.backend.entity.Role;
 import com.kawi_niveau.backend.entity.User;
+import com.kawi_niveau.backend.entity.UserXP;
 import com.kawi_niveau.backend.repository.UserRepository;
 import com.kawi_niveau.backend.service.BadgeService;
 import com.kawi_niveau.backend.service.ChallengeService;
 import com.kawi_niveau.backend.service.LeaderboardService;
+import com.kawi_niveau.backend.service.LevelService;
 import com.kawi_niveau.backend.repository.BadgeRepository;
 import com.kawi_niveau.backend.repository.ChallengeRepository;
 import com.kawi_niveau.backend.repository.UserBadgeRepository;
@@ -38,6 +40,9 @@ public class AdminGamificationController {
 
     @Autowired
     private LeaderboardService leaderboardService;
+
+    @Autowired
+    private LevelService levelService;
 
     @Autowired
     private UserRepository userRepository;
@@ -361,6 +366,80 @@ public class AdminGamificationController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body("Erreur lors de l'export: " + e.getMessage());
+        }
+    }
+
+    // ===== GESTION DES NIVEAUX =====
+    @GetMapping("/levels")
+    public ResponseEntity<Page<LevelResponse>> getAllLevels(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "level") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            Authentication authentication) {
+        
+        checkAdminRole(authentication);
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.by(sortBy).descending() : 
+                Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<LevelResponse> levels = levelService.getAllLevels(pageable);
+        
+        return ResponseEntity.ok(levels);
+    }
+
+    @GetMapping("/levels/all")
+    public ResponseEntity<List<LevelResponse>> getAllLevelsOrdered(Authentication authentication) {
+        checkAdminRole(authentication);
+        List<LevelResponse> levels = levelService.getAllLevelsOrdered();
+        return ResponseEntity.ok(levels);
+    }
+
+    @GetMapping("/levels/{id}")
+    public ResponseEntity<LevelResponse> getLevelById(@PathVariable Long id, Authentication authentication) {
+        checkAdminRole(authentication);
+        LevelResponse level = levelService.getLevelById(id);
+        return ResponseEntity.ok(level);
+    }
+
+    @PostMapping("/levels")
+    public ResponseEntity<?> createLevel(@RequestBody LevelRequest request, Authentication authentication) {
+        checkAdminRole(authentication);
+        
+        try {
+            LevelResponse level = levelService.createLevel(request);
+            return ResponseEntity.ok(level);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Erreur lors de la création du niveau: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/levels/{id}")
+    public ResponseEntity<?> updateLevel(@PathVariable Long id, @RequestBody LevelRequest request, Authentication authentication) {
+        checkAdminRole(authentication);
+        
+        try {
+            LevelResponse level = levelService.updateLevel(id, request);
+            return ResponseEntity.ok(level);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Erreur lors de la mise à jour du niveau: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/levels/{id}")
+    public ResponseEntity<?> deleteLevel(@PathVariable Long id, Authentication authentication) {
+        checkAdminRole(authentication);
+        
+        try {
+            levelService.deleteLevel(id);
+            return ResponseEntity.ok(new MessageResponse("Niveau supprimé avec succès"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Erreur lors de la suppression: " + e.getMessage()));
         }
     }
 }

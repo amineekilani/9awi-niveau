@@ -34,6 +34,12 @@
     </button>
     <button 
       class="tab-button" 
+      [class.active]="activeTab === 'levels'"
+      (click)="setActiveTab('levels')">
+      Niveaux
+    </button>
+    <button 
+      class="tab-button" 
       [class.active]="activeTab === 'leaderboard'"
       (click)="setActiveTab('leaderboard')">
       Classements
@@ -127,6 +133,11 @@
     <!-- Challenges tab -->
     <div *ngIf="activeTab === 'challenges'" class="challenges-tab">
       <app-challenge-management></app-challenge-management>
+    </div>
+
+    <!-- Levels tab -->
+    <div *ngIf="activeTab === 'levels'" class="levels-tab">
+      <app-level-management></app-level-management>
     </div>
 
     <!-- Leaderboard tab -->

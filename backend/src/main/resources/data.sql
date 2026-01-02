@@ -1,12 +1,12 @@
 -- Données par défaut pour la gamification (H2 Database)
 
 -- Insertion des niveaux par défaut
-INSERT INTO levels (level, xp_required, name, description, reward_description, created_at) VALUES
-(1, 0, 'Débutant', 'Bienvenue dans votre parcours d''apprentissage !', 'Accès aux cours de base', UNIX_TIMESTAMP() * 1000),
-(2, 100, 'Apprenti', 'Vous commencez à maîtriser les bases', 'Badge de progression', UNIX_TIMESTAMP() * 1000),
-(3, 250, 'Étudiant', 'Vous progressez bien dans vos études', 'Accès aux quiz avancés', UNIX_TIMESTAMP() * 1000),
-(4, 500, 'Avancé', 'Vous avez acquis de solides compétences', 'Certificat de niveau', UNIX_TIMESTAMP() * 1000),
-(5, 1000, 'Expert', 'Vous maîtrisez votre domaine', 'Accès aux cours premium', UNIX_TIMESTAMP() * 1000),
+INSERT INTO levels (level, xp_required, name, description, created_at) VALUES
+(1, 0, 'Débutant', 'Bienvenue dans votre parcours d''apprentissage !', UNIX_TIMESTAMP() * 1000),
+(2, 100, 'Apprenti', 'Vous commencez à maîtriser les bases', UNIX_TIMESTAMP() * 1000),
+(3, 250, 'Étudiant', 'Vous progressez bien dans vos études', UNIX_TIMESTAMP() * 1000),
+(4, 500, 'Avancé', 'Vous avez acquis de solides compétences', UNIX_TIMESTAMP() * 1000),
+(5, 1000, 'Expert', 'Vous maîtrisez votre domaine', UNIX_TIMESTAMP() * 1000),
 (6, 2000, 'Maître', 'Vous êtes un véritable expert', 'Badge de maître', UNIX_TIMESTAMP() * 1000),
 (7, 3500, 'Sage', 'Votre sagesse inspire les autres', 'Statut de mentor', UNIX_TIMESTAMP() * 1000),
 (8, 5500, 'Légende', 'Vous êtes une légende vivante', 'Reconnaissance spéciale', UNIX_TIMESTAMP() * 1000),

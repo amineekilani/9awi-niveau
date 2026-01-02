@@ -52,7 +52,7 @@ export class LeaderboardManagementComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading top leaderboard:', error);
-        this.error = 'Erreur lors du chargement du classement';
+        this.error = 'Erreur lors du chargement du classement: ' + (error.error?.message || error.message);
         this.loading = false;
       }
     });

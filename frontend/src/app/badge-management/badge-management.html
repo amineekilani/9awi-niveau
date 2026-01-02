@@ -51,11 +51,10 @@
         <tr *ngFor="let badge of badges" [class.inactive]="!badge.isActive">
           <td class="badge-name">
             <div class="badge-info">
-              <img *ngIf="badge.iconUrl" [src]="badge.iconUrl" alt="Badge icon" class="badge-icon" 
+              <img [src]="getBadgeIconUrl(badge)" alt="Badge icon" class="badge-icon" 
                    (error)="onImageError($event)">
               <div class="badge-details">
                 <div class="name">{{ badge.name }}</div>
-                <div class="criteria">{{ getCriteriaTypeLabel(badge.criteriaType) }}: {{ badge.criteriaValue }}</div>
               </div>
             </div>
           </td>
@@ -65,7 +64,7 @@
           <td class="users-count">{{ badge.usersCount }}</td>
           <td>
             <span class="status-badge" [class.active]="badge.isActive" [class.inactive]="!badge.isActive">
-              {{ badge.isActive ? 'Actif' : 'Inactif' }} ({{ badge.isActive }})
+              {{ badge.isActive ? 'Actif' : 'Inactif' }}
             </span>
           </td>
           <td>{{ formatDate(badge.createdAt) }}</td>
@@ -134,24 +133,63 @@
           </div>
           
           <div class="form-group">
-            <label for="iconUrl">URL de l'icône</label>
-            <input type="url" id="iconUrl" [(ngModel)]="badgeForm.iconUrl" name="iconUrl">
+            <label for="iconUrl">Icône du badge</label>
+            <div class="icon-selection">
+              <div class="predefined-icons">
+                <label>Icônes prédéfinies :</label>
+                <div class="icon-grid">
+                  <div class="icon-option" 
+                       *ngFor="let iconType of criteriaTypes" 
+                       (click)="badgeForm.iconUrl = getDefaultBadgeIcon(iconType.value)"
+                       [class.selected]="badgeForm.iconUrl === getDefaultBadgeIcon(iconType.value)">
+                    <img [src]="getDefaultBadgeIcon(iconType.value)" alt="{{ iconType.label }}" class="preview-icon">
+                    <span>{{ iconType.label }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="custom-url">
+                <label for="iconUrl">Ou URL personnalisée :</label>
+                <input type="url" id="iconUrl" [(ngModel)]="badgeForm.iconUrl" name="iconUrl" 
+                       placeholder="https://exemple.com/mon-badge.png">
+              </div>
+              <div class="icon-preview" *ngIf="badgeForm.iconUrl">
+                <label>Aperçu :</label>
+                <img [src]="badgeForm.iconUrl" alt="Aperçu" class="preview-large" (error)="onImageError($event)">
+              </div>
+            </div>
           </div>
           
           <div class="form-row">
             <div class="form-group">
               <label for="criteriaType">Type de critère *</label>
-              <select id="criteriaType" [(ngModel)]="badgeForm.criteriaType" name="criteriaType" required>
+              <select id="criteriaType" [(ngModel)]="badgeForm.criteriaType" name="criteriaType" 
+                      (change)="onCriteriaTypeChange()" required>
                 <option *ngFor="let type of criteriaTypes" [value]="type.value">
                   {{ type.label }}
                 </option>
               </select>
+              <div class="help-text" *ngIf="getCriteriaTypeInfo(badgeForm.criteriaType)?.description">
+                {{ getCriteriaTypeInfo(badgeForm.criteriaType)?.description }}
+              </div>
             </div>
             
             <div class="form-group">
-              <label for="criteriaValue">Valeur requise *</label>
-              <input type="number" id="criteriaValue" [(ngModel)]="badgeForm.criteriaValue" 
-                     name="criteriaValue" min="1" required>
+              <label for="criteriaValue">
+                Valeur requise *
+                <span *ngIf="!isValueEditable()" class="auto-badge">(Automatique)</span>
+              </label>
+              <input type="number" 
+                     id="criteriaValue" 
+                     [(ngModel)]="badgeForm.criteriaValue" 
+                     name="criteriaValue" 
+                     [min]="getMinValue()"
+                     [max]="getMaxValue()"
+                     [readonly]="!isValueEditable()"
+                     [class.readonly]="!isValueEditable()"
+                     required>
+              <div class="help-text">
+                {{ getValueHelpText() }}
+              </div>
             </div>
           </div>
           

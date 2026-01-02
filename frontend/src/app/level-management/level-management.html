@@ -1,0 +1,160 @@
+<div class="level-management">
+  <div class="header">
+    <h2>Gestion des Niveaux</h2>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="icon-plus"></i>
+      Créer un niveau
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error-message">
+    <i class="icon-error"></i>
+    {{ error }}
+    <button (click)="loadLevels()" class="retry-btn">Réessayer</button>
+  </div>
+
+  <!-- Levels table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="levels-table">
+      <thead>
+        <tr>
+          <th (click)="changeSort('level')" class="sortable">
+            Niveau
+            <i class="sort-icon" [class.asc]="sortBy === 'level' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'level' && sortDir === 'desc'"></i>
+          </th>
+          <th (click)="changeSort('xpRequired')" class="sortable">
+            XP Requis
+            <i class="sort-icon" [class.asc]="sortBy === 'xpRequired' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'xpRequired' && sortDir === 'desc'"></i>
+          </th>
+          <th (click)="changeSort('name')" class="sortable">
+            Nom
+            <i class="sort-icon" [class.asc]="sortBy === 'name' && sortDir === 'asc'" 
+               [class.desc]="sortBy === 'name' && sortDir === 'desc'"></i>
+          </th>
+          <th>Description</th>
+          <th>Progression</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let level of levels">
+          <td class="level-cell">
+            <div class="level-badge" [style.background-color]="getLevelColor(level.level)">
+              {{ level.level }}
+            </div>
+          </td>
+          <td class="xp-cell">
+            <span class="xp-value">{{ formatXP(level.xpRequired) }}</span>
+            <span class="xp-label">XP</span>
+          </td>
+          <td class="name-cell">
+            <div class="level-name">{{ level.name }}</div>
+          </td>
+          <td class="description-cell">
+            <div class="description-text">{{ level.description }}</div>
+          </td>
+          <td class="progression-cell">
+            <div class="progression-info">{{ getProgressionInfo(level) }}</div>
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm btn-secondary" (click)="openEditModal(level)" title="Modifier">
+              <i class="icon-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" 
+                    (click)="deleteLevel(level)" 
+                    title="Supprimer">
+              <i class="icon-delete"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn btn-sm" 
+              [disabled]="currentPage === 0" 
+              (click)="changePage(currentPage - 1)">
+        Précédent
+      </button>
+      
+      <span class="page-info">
+        Page {{ currentPage + 1 }} sur {{ totalPages }} 
+        ({{ totalElements }} niveaux)
+      </span>
+      
+      <button class="btn btn-sm" 
+              [disabled]="currentPage >= totalPages - 1" 
+              (click)="changePage(currentPage + 1)">
+        Suivant
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingLevel ? 'Modifier le niveau' : 'Créer un niveau' }}</h3>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <form (ngSubmit)="saveLevel()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="level">Numéro de niveau *</label>
+              <input type="number" id="level" [(ngModel)]="levelForm.level" 
+                     name="level" min="1" required>
+              <div class="help-text">
+                Numéro unique du niveau (1, 2, 3...)
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="xpRequired">XP requis *</label>
+              <input type="number" id="xpRequired" [(ngModel)]="levelForm.xpRequired" 
+                     name="xpRequired" min="0" required>
+              <div class="help-text">
+                Points XP nécessaires pour atteindre ce niveau
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="name">Nom du niveau *</label>
+            <input type="text" id="name" [(ngModel)]="levelForm.name" name="name" required>
+            <div class="help-text">
+              Nom affiché pour ce niveau (ex: "Expert", "Maître")
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" [(ngModel)]="levelForm.description" 
+                      name="description" rows="3"></textarea>
+            <div class="help-text">
+              Description du niveau et de ce qu'il représente
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="saveLevel()" [disabled]="loading">
+          {{ editingLevel ? 'Modifier' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-.badge-management {
+.level-management {
   padding: 20px;
 }
 
@@ -21,31 +21,31 @@
   overflow: hidden;
 }
 
-.badges-table {
+.levels-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.badges-table th,
-.badges-table td {
+.levels-table th,
+.levels-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #eee;
 }
 
-.badges-table th {
+.levels-table th {
   background-color: #f8f9fa;
   font-weight: 600;
   color: #555;
 }
 
-.badges-table th.sortable {
+.levels-table th.sortable {
   cursor: pointer;
   user-select: none;
   position: relative;
 }
 
-.badges-table th.sortable:hover {
+.levels-table th.sortable:hover {
   background-color: #e9ecef;
 }
 
@@ -64,64 +64,81 @@
   opacity: 1;
 }
 
-.badge-name {
-  min-width: 250px;
+.level-cell {
+  text-align: center;
 }
 
-.badge-info {
-  display: flex;
+.level-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
 }
 
-.badge-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  background-color: #f0f0f0;
-  flex-shrink: 0;
+.xp-cell {
+  text-align: center;
 }
 
-.badge-details .name {
+.xp-value {
   font-weight: 600;
+  font-size: 16px;
   color: #333;
-  margin-bottom: 2px;
 }
 
-.badge-details .criteria {
+.xp-label {
   font-size: 12px;
   color: #666;
-  font-style: italic;
+  margin-left: 4px;
 }
 
-.description {
+.name-cell {
+  min-width: 150px;
+}
+
+.level-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.description-cell {
   max-width: 200px;
+}
+
+.description-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: #666;
+  font-size: 14px;
 }
 
-.users-count {
-  text-align: center;
-  font-weight: 600;
+.reward-cell {
+  max-width: 180px;
 }
 
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
+.reward-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.progression-cell {
+  min-width: 150px;
+}
+
+.progression-info {
   font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-badge.active {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-badge.inactive {
-  background-color: #f8d7da;
-  color: #721c24;
+  color: #888;
+  font-style: italic;
 }
 
 .actions {
@@ -159,24 +176,6 @@
 
 .btn-secondary:hover:not(:disabled) {
   background-color: #545b62;
-}
-
-.btn-success {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-success:hover:not(:disabled) {
-  background-color: #1e7e34;
-}
-
-.btn-warning {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.btn-warning:hover:not(:disabled) {
-  background-color: #e0a800;
 }
 
 .btn-danger {
@@ -309,16 +308,12 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.checkbox-label {
-  display: flex !important;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: auto !important;
-  margin: 0;
+.help-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  font-style: italic;
+  line-height: 1.4;
 }
 
 .loading {
@@ -370,10 +365,6 @@
   background-color: #c82333;
 }
 
-.inactive {
-  opacity: 0.6;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .header {
@@ -386,155 +377,17 @@
     grid-template-columns: 1fr;
   }
   
-  .badges-table {
+  .levels-table {
     font-size: 12px;
   }
   
-  .badges-table th,
-  .badges-table td {
+  .levels-table th,
+  .levels-table td {
     padding: 8px;
   }
   
-  .description {
-    max-width: 150px;
+  .description-cell,
+  .reward-cell {
+    max-width: 120px;
   }
-}/* 
-Styles pour la sélection d'icônes */
-.icon-selection {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
-  background-color: #f9f9f9;
-}
-
-.predefined-icons {
-  margin-bottom: 15px;
-}
-
-.predefined-icons label {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.icon-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background-color: white;
-}
-
-.icon-option:hover {
-  border-color: #007bff;
-  background-color: #f0f8ff;
-}
-
-.icon-option.selected {
-  border-color: #007bff;
-  background-color: #e3f2fd;
-}
-
-.preview-icon {
-  width: 32px;
-  height: 32px;
-  margin-bottom: 5px;
-}
-
-.icon-option span {
-  font-size: 11px;
-  text-align: center;
-  color: #666;
-}
-
-.custom-url {
-  border-top: 1px solid #ddd;
-  padding-top: 15px;
-}
-
-.custom-url label {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.icon-preview {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #ddd;
-  text-align: center;
-}
-
-.preview-large {
-  width: 64px;
-  height: 64px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  background-color: white;
-}/* S
-tyles pour les améliorations de l'interface */
-.help-text {
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
-  font-style: italic;
-  line-height: 1.4;
-}
-
-.auto-badge {
-  background-color: #e3f2fd;
-  color: #1976d2;
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-left: 8px;
-}
-
-.form-group input.readonly {
-  background-color: #f5f5f5;
-  color: #666;
-  cursor: not-allowed;
-}
-
-.form-group input.readonly:focus {
-  box-shadow: none;
-  border-color: #ddd;
-}
-
-/* Amélioration de l'affichage des critères dans le tableau */
-.badge-details .criteria {
-  font-size: 11px;
-  color: #888;
-  font-style: italic;
-  margin-top: 2px;
-}
-
-.criteria-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.criteria-type {
-  font-weight: 600;
-  color: #333;
-}
-
-.criteria-description {
-  font-size: 11px;
-  color: #666;
-  font-style: italic;
 }

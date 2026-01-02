@@ -137,24 +137,34 @@
           <div class="form-row">
             <div class="form-group">
               <label for="challengeType">Type de défi *</label>
-              <select id="challengeType" [(ngModel)]="challengeForm.challengeType" name="challengeType" required>
+              <select id="challengeType" [(ngModel)]="challengeForm.challengeType" name="challengeType" 
+                      (change)="onChallengeTypeChange()" required>
                 <option *ngFor="let type of challengeTypes" [value]="type.value">
                   {{ type.label }}
                 </option>
               </select>
+              <div class="help-text" *ngIf="getTypeDescription()">
+                {{ getTypeDescription() }}
+              </div>
             </div>
             
             <div class="form-group">
-              <label for="targetValue">Objectif *</label>
+              <label for="targetValue">{{ getTargetLabel() }} *</label>
               <input type="number" id="targetValue" [(ngModel)]="challengeForm.targetValue" 
                      name="targetValue" min="1" required>
+              <div class="help-text">
+                Valeur que les participants doivent atteindre pour réussir le défi
+              </div>
             </div>
           </div>
           
           <div class="form-group">
             <label for="xpReward">Récompense XP *</label>
             <input type="number" id="xpReward" [(ngModel)]="challengeForm.xpReward" 
-                   name="xpReward" min="1" required>
+                   name="xpReward" min="10" max="1000" required>
+            <div class="help-text">
+              Points XP accordés aux participants qui réussissent le défi (10-1000 XP)
+            </div>
           </div>
           
           <div class="form-row">

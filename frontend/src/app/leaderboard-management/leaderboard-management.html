@@ -42,9 +42,10 @@
 
   <!-- Podium View -->
   <div *ngIf="!loading && !error && activeView === 'podium' && topLeaderboard" class="podium-view">
-    <!-- Top 3 Podium -->
-    <div class="podium" *ngIf="topLeaderboard.entries.length >= 3">
-      <div class="podium-place second" *ngIf="topLeaderboard.entries[1]">
+    <!-- Top 3 Podium - Afficher même avec moins de 3 utilisateurs -->
+    <div class="podium">
+      <!-- Deuxième place (si elle existe) -->
+      <div class="podium-place second" *ngIf="topLeaderboard.entries.length >= 2 && topLeaderboard.entries[1]">
         <div class="podium-user">
           <div class="rank-icon">🥈</div>
           <div class="user-info">
@@ -59,7 +60,8 @@
         <div class="podium-base silver"></div>
       </div>
 
-      <div class="podium-place first" *ngIf="topLeaderboard.entries[0]">
+      <!-- Première place (toujours affichée s'il y a au moins 1 utilisateur) -->
+      <div class="podium-place first" *ngIf="topLeaderboard.entries.length >= 1 && topLeaderboard.entries[0]">
         <div class="podium-user">
           <div class="rank-icon">🥇</div>
           <div class="user-info">
@@ -74,7 +76,8 @@
         <div class="podium-base gold"></div>
       </div>
 
-      <div class="podium-place third" *ngIf="topLeaderboard.entries[2]">
+      <!-- Troisième place (si elle existe) -->
+      <div class="podium-place third" *ngIf="topLeaderboard.entries.length >= 3 && topLeaderboard.entries[2]">
         <div class="podium-user">
           <div class="rank-icon">🥉</div>
           <div class="user-info">
@@ -107,6 +110,12 @@
           <div class="badges">{{ entry.badgesCount }} badges</div>
         </div>
       </div>
+    </div>
+
+    <!-- Message pour utilisateur unique -->
+    <div *ngIf="topLeaderboard.entries.length === 1" class="single-user-message" style="text-align: center; margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+      <p><strong>🎉 Félicitations !</strong></p>
+      <p>Vous êtes actuellement le seul utilisateur avec des points XP. Continuez comme ça !</p>
     </div>
   </div>
 

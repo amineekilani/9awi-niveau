@@ -36,7 +36,6 @@ public class InitController {
                 "xp_required INT NOT NULL," +
                 "name VARCHAR(255) NOT NULL," +
                 "description TEXT," +
-                "reward_description VARCHAR(500)," +
                 "created_at BIGINT" +
                 ")",
 
@@ -99,12 +98,12 @@ public class InitController {
                 "UNIQUE KEY unique_user_challenge (user_id, challenge_id)" +
                 ")",
 
-                "INSERT INTO levels (level, xp_required, name, description, reward_description) VALUES " +
-                "(1, 0, 'Débutant', 'Bienvenue dans votre parcours d\\'apprentissage !', 'Accès aux cours de base')," +
-                "(2, 100, 'Apprenti', 'Vous commencez à maîtriser les bases', 'Badge de progression')," +
-                "(3, 250, 'Étudiant', 'Vous progressez bien dans vos études', 'Accès aux quiz avancés')," +
-                "(4, 500, 'Avancé', 'Vous avez acquis de solides compétences', 'Certificat de niveau')," +
-                "(5, 1000, 'Expert', 'Vous maîtrisez votre domaine', 'Accès aux cours premium')",
+                "INSERT INTO levels (level, xp_required, name, description) VALUES " +
+                "(1, 0, 'Débutant', 'Bienvenue dans votre parcours d\\'apprentissage !')," +
+                "(2, 100, 'Apprenti', 'Vous commencez à maîtriser les bases')," +
+                "(3, 250, 'Étudiant', 'Vous progressez bien dans vos études')," +
+                "(4, 500, 'Avancé', 'Vous avez acquis de solides compétences')," +
+                "(5, 1000, 'Expert', 'Vous maîtrisez votre domaine')",
 
                 "INSERT INTO badges (name, description, icon_url, criteria_type, criteria_value, is_active) VALUES " +
                 "('Premier Quiz', 'Réussissez votre premier quiz', '/icons/first-quiz.svg', 'QUIZ_PASSED', 1, TRUE)," +

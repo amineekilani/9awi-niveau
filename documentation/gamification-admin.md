@@ -82,7 +82,6 @@ Le système inclut une protection automatique contre les erreurs de gamification
   - `xpRequired` : Integer
   - `name` : String (non null)
   - `description` : String (TEXT)
-  - `rewardDescription` : String
   - `createdAt` : Long
 
 #### Challenge

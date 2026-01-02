@@ -37,16 +37,16 @@ public class GamificationDataInitializer implements CommandLineRunner {
 
     private void initializeLevels() {
         Level[] levels = {
-            createLevel(1, 0, "Débutant", "Bienvenue dans votre parcours d'apprentissage !", "Accès aux cours de base"),
-            createLevel(2, 100, "Apprenti", "Vous commencez à maîtriser les bases", "Badge de progression"),
-            createLevel(3, 250, "Étudiant", "Vous progressez bien dans vos études", "Accès aux quiz avancés"),
-            createLevel(4, 500, "Avancé", "Vous avez acquis de solides compétences", "Certificat de niveau"),
-            createLevel(5, 1000, "Expert", "Vous maîtrisez votre domaine", "Accès aux cours premium"),
-            createLevel(6, 2000, "Maître", "Vous êtes un véritable expert", "Badge de maître"),
-            createLevel(7, 3500, "Sage", "Votre sagesse inspire les autres", "Statut de mentor"),
-            createLevel(8, 5500, "Légende", "Vous êtes une légende vivante", "Reconnaissance spéciale"),
-            createLevel(9, 8000, "Champion", "Vous êtes au sommet de votre art", "Titre de champion"),
-            createLevel(10, 12000, "Grand Maître", "Le niveau ultime d'excellence", "Statut de grand maître")
+            createLevel(1, 0, "Débutant", "Bienvenue dans votre parcours d'apprentissage !"),
+            createLevel(2, 100, "Apprenti", "Vous commencez à maîtriser les bases"),
+            createLevel(3, 250, "Étudiant", "Vous progressez bien dans vos études"),
+            createLevel(4, 500, "Avancé", "Vous avez acquis de solides compétences"),
+            createLevel(5, 1000, "Expert", "Vous maîtrisez votre domaine"),
+            createLevel(6, 2000, "Maître", "Vous êtes un véritable expert"),
+            createLevel(7, 3500, "Sage", "Votre sagesse inspire les autres"),
+            createLevel(8, 5500, "Légende", "Vous êtes une légende vivante"),
+            createLevel(9, 8000, "Champion", "Vous êtes au sommet de votre art"),
+            createLevel(10, 12000, "Grand Maître", "Le niveau ultime d'excellence")
         };
 
         for (Level level : levels) {
@@ -54,13 +54,12 @@ public class GamificationDataInitializer implements CommandLineRunner {
         }
     }
 
-    private Level createLevel(int level, int xpRequired, String name, String description, String rewardDescription) {
+    private Level createLevel(int level, int xpRequired, String name, String description) {
         Level l = new Level();
         l.setLevel(level);
         l.setXpRequired(xpRequired);
         l.setName(name);
         l.setDescription(description);
-        l.setRewardDescription(rewardDescription);
         return l;
     }
 

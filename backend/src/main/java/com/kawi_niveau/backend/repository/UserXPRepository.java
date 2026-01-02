@@ -27,10 +27,10 @@ public interface UserXPRepository extends JpaRepository<UserXP, Long> {
         return Optional.of(results.get(0));
     }
     
-    @Query("SELECT ux FROM UserXP ux ORDER BY ux.totalXP DESC")
+    @Query("SELECT ux FROM UserXP ux JOIN ux.user u WHERE u.archived = false ORDER BY ux.totalXP DESC")
     List<UserXP> findAllOrderByTotalXPDesc();
     
-    @Query("SELECT ux FROM UserXP ux ORDER BY ux.totalXP DESC")
+    @Query("SELECT ux FROM UserXP ux JOIN ux.user u WHERE u.archived = false ORDER BY ux.totalXP DESC")
     Page<UserXP> findAllOrderByTotalXPDesc(Pageable pageable);
     
     @Query("SELECT AVG(ux.totalXP) FROM UserXP ux")

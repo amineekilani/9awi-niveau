@@ -42,13 +42,54 @@ export class ChallengeManagementComponent implements OnInit {
   };
 
   challengeTypes = [
-    { value: 'COMPLETE_COURSES', label: 'Terminer des cours' },
-    { value: 'PASS_QUIZZES', label: 'Réussir des quiz' },
-    { value: 'EARN_XP', label: 'Gagner des points XP' },
-    { value: 'DAILY_LOGIN', label: 'Connexion quotidienne' },
-    { value: 'PERFECT_SCORES', label: 'Scores parfaits' },
-    { value: 'WEEKLY_ACTIVITY', label: 'Activité hebdomadaire' },
-    { value: 'MONTHLY_GOAL', label: 'Objectif mensuel' }
+    { 
+      value: 'COMPLETE_COURSES', 
+      label: 'Terminer des cours',
+      description: 'Terminer un nombre spécifique de cours (total cumulé)',
+      defaultTarget: 3,
+      defaultReward: 150,
+      targetLabel: 'Nombre de cours'
+    },
+    { 
+      value: 'PASS_QUIZZES', 
+      label: 'Réussir des quiz',
+      description: 'Réussir un nombre spécifique de quiz (total cumulé)',
+      defaultTarget: 5,
+      defaultReward: 100,
+      targetLabel: 'Nombre de quiz'
+    },
+    { 
+      value: 'PERFECT_SCORES', 
+      label: 'Scores parfaits',
+      description: 'Obtenir un nombre de scores parfaits (100%)',
+      defaultTarget: 2,
+      defaultReward: 200,
+      targetLabel: 'Nombre de scores parfaits'
+    },
+    { 
+      value: 'DAILY_LOGIN', 
+      label: 'Connexion quotidienne',
+      description: 'Se connecter pendant un nombre de jours consécutifs',
+      defaultTarget: 7,
+      defaultReward: 250,
+      targetLabel: 'Nombre de jours consécutifs'
+    },
+    { 
+      value: 'EARN_BADGES', 
+      label: 'Gagner des badges',
+      description: 'Obtenir un nombre spécifique de badges différents',
+      defaultTarget: 3,
+      defaultReward: 300,
+      targetLabel: 'Nombre de badges à obtenir'
+    },
+    { 
+      value: 'COMPLETE_MODULE', 
+      label: 'Terminer un module complet',
+      description: 'Terminer entièrement un ou plusieurs modules (toutes les leçons + quiz)',
+      defaultTarget: 1,
+      defaultReward: 400,
+      targetLabel: 'Nombre de modules complets'
+    }
   ];
 
   constructor(private gamificationService: GamificationService) {}
@@ -198,6 +239,28 @@ export class ChallengeManagementComponent implements OnInit {
   getChallengeTypeLabel(type: string): string {
     const challengeType = this.challengeTypes.find(c => c.value === type);
     return challengeType ? challengeType.label : type;
+  }
+
+  getChallengeTypeInfo(type: string) {
+    return this.challengeTypes.find(c => c.value === type);
+  }
+
+  onChallengeTypeChange() {
+    const typeInfo = this.getChallengeTypeInfo(this.challengeForm.challengeType);
+    if (typeInfo) {
+      this.challengeForm.targetValue = typeInfo.defaultTarget;
+      this.challengeForm.xpReward = typeInfo.defaultReward;
+    }
+  }
+
+  getTargetLabel(): string {
+    const typeInfo = this.getChallengeTypeInfo(this.challengeForm.challengeType);
+    return typeInfo?.targetLabel || 'Valeur cible';
+  }
+
+  getTypeDescription(): string {
+    const typeInfo = this.getChallengeTypeInfo(this.challengeForm.challengeType);
+    return typeInfo?.description || '';
   }
 
   formatDate(timestamp: number): string {

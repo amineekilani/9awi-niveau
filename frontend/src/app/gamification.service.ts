@@ -79,6 +79,22 @@ export interface LeaderboardResponse {
   entries: LeaderboardEntry[];
 }
 
+export interface LevelResponse {
+  id: number;
+  level: number;
+  xpRequired: number;
+  name: string;
+  description: string;
+  createdAt: number;
+}
+
+export interface LevelRequest {
+  level: number;
+  xpRequired: number;
+  name: string;
+  description: string;
+}
+
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;
@@ -211,5 +227,36 @@ export class GamificationService {
       responseType: 'blob',
       headers: { 'Accept': 'text/csv' }
     });
+  }
+
+  // Niveaux
+  getAllLevels(page: number = 0, size: number = 10, sortBy: string = 'level', sortDir: string = 'asc'): Observable<PageResponse<LevelResponse>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+    
+    return this.http.get<PageResponse<LevelResponse>>(`${this.baseUrl}/levels`, { params });
+  }
+
+  getAllLevelsOrdered(): Observable<LevelResponse[]> {
+    return this.http.get<LevelResponse[]>(`${this.baseUrl}/levels/all`);
+  }
+
+  getLevelById(id: number): Observable<LevelResponse> {
+    return this.http.get<LevelResponse>(`${this.baseUrl}/levels/${id}`);
+  }
+
+  createLevel(level: LevelRequest): Observable<LevelResponse> {
+    return this.http.post<LevelResponse>(`${this.baseUrl}/levels`, level);
+  }
+
+  updateLevel(id: number, level: LevelRequest): Observable<LevelResponse> {
+    return this.http.put<LevelResponse>(`${this.baseUrl}/levels/${id}`, level);
+  }
+
+  deleteLevel(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/levels/${id}`);
   }
 }

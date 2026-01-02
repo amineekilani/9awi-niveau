@@ -23,8 +23,7 @@ public class Level {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "reward_description", length = 500)
-    private String rewardDescription;
+
 
     @Column(name = "created_at")
     private Long createdAt;

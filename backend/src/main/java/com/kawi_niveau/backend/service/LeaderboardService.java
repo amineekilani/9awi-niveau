@@ -31,6 +31,7 @@ public class LeaderboardService {
     public LeaderboardResponse getLeaderboard(int limit) {
         List<UserXP> topUsers = userXPRepository.findAllOrderByTotalXPDesc();
         
+        // Si limit est 0, retourner tous les utilisateurs
         if (limit > 0 && topUsers.size() > limit) {
             topUsers = topUsers.subList(0, limit);
         }
@@ -38,7 +39,8 @@ public class LeaderboardService {
         List<LeaderboardResponse.LeaderboardEntry> entries = new ArrayList<>();
         for (int i = 0; i < topUsers.size(); i++) {
             UserXP userXP = topUsers.get(i);
-            entries.add(convertToLeaderboardEntry(userXP, i + 1));
+            LeaderboardResponse.LeaderboardEntry entry = convertToLeaderboardEntry(userXP, i + 1);
+            entries.add(entry);
         }
 
         return new LeaderboardResponse(entries);
@@ -53,7 +55,8 @@ public class LeaderboardService {
         for (int i = 0; i < content.size(); i++) {
             UserXP userXP = content.get(i);
             int rank = (int) (pageable.getOffset() + i + 1);
-            entries.add(convertToLeaderboardEntry(userXP, rank));
+            LeaderboardResponse.LeaderboardEntry entry = convertToLeaderboardEntry(userXP, rank);
+            entries.add(entry);
         }
 
         return new LeaderboardResponse(entries);

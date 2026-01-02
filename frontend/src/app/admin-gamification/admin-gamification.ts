@@ -9,11 +9,12 @@ import { Router } from '@angular/router';
 import { BadgeManagementComponent } from '../badge-management/badge-management';
 import { ChallengeManagementComponent } from '../challenge-management/challenge-management';
 import { LeaderboardManagementComponent } from '../leaderboard-management/leaderboard-management';
+import { LevelManagementComponent } from '../level-management/level-management';
 
 @Component({
   selector: 'app-admin-gamification',
   standalone: true,
-  imports: [CommonModule, FormsModule, BadgeManagementComponent, ChallengeManagementComponent, LeaderboardManagementComponent],
+  imports: [CommonModule, FormsModule, BadgeManagementComponent, ChallengeManagementComponent, LeaderboardManagementComponent, LevelManagementComponent],
   templateUrl: './admin-gamification.html',
   styleUrls: ['./admin-gamification.css']
 })
@@ -22,7 +23,7 @@ export class AdminGamificationComponent implements OnInit {
   loading = false;
   error = '';
   
-  activeTab: 'overview' | 'badges' | 'challenges' | 'leaderboard' = 'overview';
+  activeTab: 'overview' | 'badges' | 'challenges' | 'levels' | 'leaderboard' = 'overview';
 
   constructor(
     private gamificationService: GamificationService,
@@ -78,7 +79,7 @@ export class AdminGamificationComponent implements OnInit {
     });
   }
 
-  setActiveTab(tab: 'overview' | 'badges' | 'challenges' | 'leaderboard') {
+  setActiveTab(tab: 'overview' | 'badges' | 'challenges' | 'levels' | 'leaderboard') {
     this.activeTab = tab;
     // Réinitialiser l'erreur quand on change d'onglet
     if (tab !== 'overview') {

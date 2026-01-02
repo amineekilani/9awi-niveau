@@ -6,6 +6,7 @@ import com.kawi_niveau.backend.dto.QuizAttemptResponse;
 import com.kawi_niveau.backend.entity.User;
 import com.kawi_niveau.backend.repository.UserRepository;
 import com.kawi_niveau.backend.service.QuizResultatService;
+import com.kawi_niveau.backend.service.GamificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,17 +25,38 @@ public class QuizResultatController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private GamificationService gamificationService;
+
     @PostMapping("/quiz/{quizId}/submit")
     public ResponseEntity<ResultatQuizResponse> submitQuiz(
             @PathVariable Long quizId,
             @RequestBody QuizSubmissionRequest request,
             Authentication authentication) {
-        String email = authentication.getName();
-        User user = userRepository.findByEmailAndArchivedFalse(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        
-        ResultatQuizResponse resultat = quizResultatService.submitQuiz(user.getId(), quizId, request);
-        return ResponseEntity.ok(resultat);
+        try {
+            String email = authentication.getName();
+            User user = userRepository.findByEmailAndArchivedFalse(email)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            
+            ResultatQuizResponse resultat = quizResultatService.submitQuiz(user.getId(), quizId, request);
+            
+            // Attribution automatique des XP et badges
+            if (resultat.getScore() >= 50.0) { // Quiz réussi (seuil de 50%)
+                gamificationService.onQuizPassed(user, resultat.getScore());
+                System.out.println("Gamification: Quiz réussi pour " + user.getEmail() + " - Score: " + resultat.getScore());
+            }
+            
+            return ResponseEntity.ok(resultat);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la soumission du quiz: " + e.getMessage());
+            // Ne pas faire échouer la soumission à cause d'une erreur de gamification
+            String email = authentication.getName();
+            User user = userRepository.findByEmailAndArchivedFalse(email)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            
+            ResultatQuizResponse resultat = quizResultatService.submitQuiz(user.getId(), quizId, request);
+            return ResponseEntity.ok(resultat);
+        }
     }
 
     @GetMapping("/quiz/{quizId}/attempts")
