@@ -1,0 +1,341 @@
+<div id="vanta-bg" class="fixed inset-0 z-0">
+  <div class="particle w-4 h-4 top-10 left-10"></div>
+  <div class="particle w-6 h-6 top-1/3 left-1/4"></div>
+  <div class="particle w-8 h-8 top-2/3 right-1/4"></div>
+  <div class="particle w-5 h-5 bottom-20 left-1/2"></div>
+  <div class="particle w-7 h-7 bottom-10 right-10"></div>
+</div>
+
+<div class="relative z-10 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <button (click)="goBack()" class="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <i data-feather="arrow-left" class="text-primary-500" width="24" height="24"></i>
+          </button>
+          <div class="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center mr-3">
+            <i data-feather="trending-up" class="text-white" width="20" height="20"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-primary-500">Mes Réussites</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation tabs -->
+  <div class="bg-white border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex space-x-8">
+        <button 
+          class="tab-button py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+          [class.active]="activeTab === 'overview'"
+          [class.border-primary-500]="activeTab === 'overview'"
+          [class.text-primary-600]="activeTab === 'overview'"
+          [class.border-transparent]="activeTab !== 'overview'"
+          [class.text-gray-500]="activeTab !== 'overview'"
+          (click)="setActiveTab('overview')">
+          📊 Vue d'ensemble
+        </button>
+        <button 
+          class="tab-button py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+          [class.active]="activeTab === 'recompenses'"
+          [class.border-primary-500]="activeTab === 'recompenses'"
+          [class.text-primary-600]="activeTab === 'recompenses'"
+          [class.border-transparent]="activeTab !== 'recompenses'"
+          [class.text-gray-500]="activeTab !== 'recompenses'"
+          (click)="setActiveTab('recompenses')">
+          🏆 Mes Récompenses
+        </button>
+        <button 
+          class="tab-button py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+          [class.active]="activeTab === 'defis'"
+          [class.border-primary-500]="activeTab === 'defis'"
+          [class.text-primary-600]="activeTab === 'defis'"
+          [class.border-transparent]="activeTab !== 'defis'"
+          [class.text-gray-500]="activeTab !== 'defis'"
+          (click)="setActiveTab('defis')">
+          🎯 Mes Défis
+        </button>
+        <button 
+          class="tab-button py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+          [class.active]="activeTab === 'classement'"
+          [class.border-primary-500]="activeTab === 'classement'"
+          [class.text-primary-600]="activeTab === 'classement'"
+          [class.border-transparent]="activeTab !== 'classement'"
+          [class.text-gray-500]="activeTab !== 'classement'"
+          (click)="setActiveTab('classement')">
+          🏅 Classement
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      <p class="mt-4 text-gray-600">Chargement de vos réussites...</p>
+    </div>
+
+    <!-- Vue d'ensemble -->
+    <div *ngIf="!loading && activeTab === 'overview'" class="vue-ensemble">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Niveau Actuel -->
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="text-center mb-6">
+              <div class="niveau-badge-large bg-gradient-to-r from-primary-500 to-primary-700 text-white px-6 py-3 rounded-full text-2xl font-bold inline-block mb-4">
+                Niveau {{ userStats?.currentLevel }}
+              </div>
+              <h2 class="text-3xl font-bold text-gray-900">{{ userStats?.levelName }}</h2>
+              <p class="text-gray-600 mt-2">{{ userStats?.levelDescription }}</p>
+            </div>
+
+            <!-- Progression Points -->
+            <div class="mb-8">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="text-lg font-semibold text-gray-900">Progression vers le niveau suivant</h3>
+                <span class="text-sm text-gray-600">{{ userStats?.totalPoints }} / {{ userStats?.nextLevelPoints }} points</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-4">
+                <div class="bg-gradient-to-r from-primary-500 to-primary-600 h-4 rounded-full transition-all duration-1000" 
+                     [style.width.%]="userStats?.progressPercent"></div>
+              </div>
+              <p class="text-center text-gray-600 mt-2">{{ userStats?.pointsToNextLevel }} points restants</p>
+            </div>
+
+            <!-- Statistiques Rapides -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-2xl font-bold text-blue-600">{{ userStats?.totalPoints }}</div>
+                <div class="text-sm text-gray-600">Points totaux</div>
+              </div>
+              <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                <div class="text-2xl font-bold text-yellow-600">{{ userStats?.badgesCount }}</div>
+                <div class="text-sm text-gray-600">Récompenses</div>
+              </div>
+              <div class="text-center p-4 bg-purple-50 rounded-lg">
+                <div class="text-2xl font-bold text-purple-600">{{ userStats?.completedChallenges }}</div>
+                <div class="text-sm text-gray-600">Défis réussis</div>
+              </div>
+              <div class="text-center p-4 bg-red-50 rounded-lg">
+                <div class="text-2xl font-bold text-red-600">#{{ userStats?.leaderboardPosition }}</div>
+                <div class="text-sm text-gray-600">Classement</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activité Récente -->
+        <div>
+          <div class="bg-white rounded-2xl shadow-xl p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Activité récente</h3>
+            <div class="space-y-4">
+              <div *ngFor="let activity of userStats?.recentActivities" class="flex items-center space-x-3">
+                <div class="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span>{{ activity.icon }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900">{{ activity.description }}</p>
+                  <p class="text-xs text-gray-500">{{ activity.timeAgo }}</p>
+                </div>
+                <div *ngIf="activity.points > 0" class="flex-shrink-0 text-sm font-medium text-green-600">
+                  +{{ activity.points }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mes Récompenses -->
+    <div *ngIf="!loading && activeTab === 'recompenses'" class="recompenses-section">
+      <div class="bg-white rounded-2xl shadow-xl p-8">
+        
+        <!-- Filtres -->
+        <div class="flex flex-wrap gap-2 mb-6">
+          <button 
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            [class.bg-primary-500]="badgeFilter === 'all'"
+            [class.text-white]="badgeFilter === 'all'"
+            [class.bg-gray-100]="badgeFilter !== 'all'"
+            [class.text-gray-700]="badgeFilter !== 'all'"
+            (click)="setBadgeFilter('all')">
+            Toutes ({{ allBadges.length }})
+          </button>
+          <button 
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            [class.bg-primary-500]="badgeFilter === 'recent'"
+            [class.text-white]="badgeFilter === 'recent'"
+            [class.bg-gray-100]="badgeFilter !== 'recent'"
+            [class.text-gray-700]="badgeFilter !== 'recent'"
+            (click)="setBadgeFilter('recent')">
+            Récentes
+          </button>
+          <button 
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            [class.bg-primary-500]="badgeFilter === 'quiz'"
+            [class.text-white]="badgeFilter === 'quiz'"
+            [class.bg-gray-100]="badgeFilter !== 'quiz'"
+            [class.text-gray-700]="badgeFilter !== 'quiz'"
+            (click)="setBadgeFilter('quiz')">
+            Quiz
+          </button>
+          <button 
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            [class.bg-primary-500]="badgeFilter === 'cours'"
+            [class.text-white]="badgeFilter === 'cours'"
+            [class.bg-gray-100]="badgeFilter !== 'cours'"
+            [class.text-gray-700]="badgeFilter !== 'cours'"
+            (click)="setBadgeFilter('cours')">
+            Cours
+          </button>
+        </div>
+
+        <!-- Grille de Récompenses -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let badge of filteredBadges" 
+               class="recompense-card bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 relative"
+               [class.ring-2]="badge.isNew"
+               [class.ring-yellow-400]="badge.isNew">
+            
+            <div *ngIf="badge.isNew" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              Nouveau !
+            </div>
+            
+            <div class="text-center">
+              <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">🏆</span>
+              </div>
+              
+              <h4 class="text-lg font-bold text-gray-900 mb-2">{{ badge.name }}</h4>
+              <p class="text-gray-600 text-sm mb-3">{{ badge.description }}</p>
+              <span class="text-xs text-gray-500">Obtenu le {{ formatDate(badge.earnedAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- État Vide -->
+        <div *ngIf="filteredBadges.length === 0" class="text-center py-12">
+          <div class="text-6xl mb-4">🏆</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Aucune récompense pour ce filtre</h3>
+          <p class="text-gray-600">Continuez vos cours et quiz pour débloquer des récompenses !</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mes Défis -->
+    <div *ngIf="!loading && activeTab === 'defis'" class="defis-section">
+      <div class="space-y-8">
+        
+        <!-- Défis Actifs -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Défis en cours</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div *ngFor="let challenge of activeChallenges" class="defi-card border border-gray-200 rounded-xl p-6">
+              <div class="flex justify-between items-start mb-4">
+                <h3 class="text-lg font-bold text-gray-900">{{ challenge.name }}</h3>
+                <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium">
+                  {{ challenge.xpReward }} points
+                </span>
+              </div>
+              
+              <p class="text-gray-600 mb-4">{{ challenge.description }}</p>
+              
+              <div class="mb-4">
+                <div class="flex justify-between text-sm mb-1">
+                  <span>Progression</span>
+                  <span>{{ challenge.currentProgress }} / {{ challenge.targetValue }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-blue-500 h-2 rounded-full transition-all" 
+                       [style.width.%]="challenge.progressPercent"></div>
+                </div>
+              </div>
+              
+              <div *ngIf="challenge.timeRemaining" class="text-sm text-orange-600 font-medium">
+                ⏰ {{ challenge.timeRemaining }} restant
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Défis Terminés -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Défis réussis</h2>
+          <div class="space-y-4">
+            <div *ngFor="let challenge of completedChallenges" class="defi-card border border-green-200 bg-green-50 rounded-xl p-6">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="text-lg font-bold text-gray-900">{{ challenge.name }}</h3>
+                  <p class="text-gray-600">{{ challenge.description }}</p>
+                </div>
+                <div class="text-right">
+                  <div class="text-green-600 font-bold text-lg">✓ Réussi</div>
+                  <div class="text-sm text-green-600">+{{ challenge.xpReward }} points</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Classement -->
+    <div *ngIf="!loading && activeTab === 'classement'" class="classement-section">
+      <div class="bg-white rounded-2xl shadow-xl p-8">
+        
+        <!-- Ma Position -->
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Ma position</h2>
+          <div class="bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl p-6 border-2 border-primary-200">
+            <div class="flex items-center space-x-4">
+              <div class="text-3xl font-bold text-primary-600">#{{ userStats?.leaderboardPosition }}</div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Vous</h3>
+                <p class="text-gray-600">{{ userStats?.totalPoints }} points • Niveau {{ userStats?.currentLevel }} • {{ userStats?.badgesCount }} récompenses</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top 10 -->
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Top du classement</h2>
+          <div class="space-y-3">
+            <div *ngFor="let entry of topLeaderboard" 
+                 class="flex items-center space-x-4 p-4 rounded-xl"
+                 [class.bg-gradient-to-r]="entry.isCurrentUser"
+                 [class.from-primary-50]="entry.isCurrentUser"
+                 [class.to-primary-100]="entry.isCurrentUser"
+                 [class.border-2]="entry.isCurrentUser"
+                 [class.border-primary-200]="entry.isCurrentUser"
+                 [class.bg-gray-50]="!entry.isCurrentUser">
+              
+              <div class="rank-badge w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                   [ngClass]="getRankClass(entry.rank)">
+                {{ entry.rank }}
+              </div>
+              
+              <div class="flex-1">
+                <h4 class="font-bold text-gray-900">{{ entry.name }}</h4>
+                <p class="text-sm text-gray-600">Niveau {{ entry.level }} • {{ entry.totalPoints }} points</p>
+              </div>
+              
+              <div class="text-right">
+                <div class="text-sm text-gray-600">{{ entry.badgesCount }} 🏆</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>

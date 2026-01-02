@@ -1,0 +1,235 @@
+<!-- Header avec navigation -->
+<header class="bg-gradient-to-r from-blue-500 to-blue-700 backdrop-blur-md shadow-lg sticky top-0 z-50">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <!-- Logo et titre -->
+    <div class="flex items-center space-x-2">
+      <i data-feather="award" class="text-white w-8 h-8"></i>
+      <span class="text-2xl font-bold text-white">Kawi Niveau</span>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="hidden md:flex space-x-6">
+      <a routerLink="/home" class="text-white hover:text-gray-200 font-medium nav-link">Accueil</a>
+      <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link active">Mes Cours</a>
+      <a routerLink="/mes-recompenses" class="text-white hover:text-gray-200 font-medium nav-link">Mes Récompenses</a>
+      <a routerLink="/mes-defis" class="text-white hover:text-gray-200 font-medium nav-link">Mes Défis</a>
+      <a routerLink="/classement" class="text-white hover:text-gray-200 font-medium nav-link">Classement</a>
+    </nav>
+    
+    <!-- Profil utilisateur -->
+    <div class="flex items-center space-x-4">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-500 font-bold cursor-pointer" 
+           routerLink="/profile">
+        {{ userInitials }}
+      </div>
+      <button (click)="logout()" class="hidden md:block text-white hover:text-gray-200">
+        <i data-feather="log-out"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Messages d'erreur -->
+<div *ngIf="error" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6 mx-4">
+  {{ error }}
+</div>
+
+<!-- Contenu principal -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  
+  <!-- En-tête de la page -->
+  <div class="mb-8">
+    <div class="flex items-center space-x-3 mb-4">
+      <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+        <i data-feather="book-open" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Mes Cours</h1>
+        <p class="text-gray-600">Suivez votre progression dans vos cours inscrits</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques rapides -->
+  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total inscrit</p>
+          <p class="text-2xl font-bold text-blue-600">{{ totalEnrolled }}</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+          <i data-feather="book" class="w-6 h-6 text-blue-600"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">En cours</p>
+          <p class="text-2xl font-bold text-yellow-600">{{ inProgressCount }}</p>
+        </div>
+        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+          <i data-feather="play-circle" class="w-6 h-6 text-yellow-600"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Terminés</p>
+          <p class="text-2xl font-bold text-green-600">{{ completedCount }}</p>
+        </div>
+        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+          <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Progression moyenne</p>
+          <p class="text-2xl font-bold text-purple-600">{{ averageProgress }}%</p>
+        </div>
+        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+          <i data-feather="trending-up" class="w-6 h-6 text-purple-600"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+    <div class="flex flex-wrap gap-3">
+      <button *ngFor="let option of filterOptions"
+              (click)="onFilterChange(option.value)"
+              [class]="selectedFilter === option.value ? 
+                'bg-blue-600 text-white' : 
+                'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+              class="px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2">
+        <span>{{ option.label }}</span>
+        <span class="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ option.count }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex justify-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+
+  <!-- Liste des cours inscrits -->
+  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let cours of filteredCours" 
+         class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow overflow-hidden">
+      
+      <!-- Image du cours -->
+      <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
+        <img *ngIf="cours.thumbnailUrl" 
+             [src]="'http://localhost:8080/images/cours/' + cours.thumbnailUrl" 
+             [alt]="cours.titre"
+             class="w-full h-full object-cover"
+             (error)="$any($event.target).style.display='none'">
+        <div *ngIf="!cours.thumbnailUrl" 
+             class="w-full h-full flex items-center justify-center text-white">
+          <i data-feather="book-open" class="w-16 h-16 opacity-50"></i>
+        </div>
+        
+        <!-- Badge de statut -->
+        <div class="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium"
+             [class]="cours.enrollment?.progress === 100 ? 
+               'bg-green-500 text-white' : 
+               cours.enrollment && cours.enrollment.progress > 0 ? 
+                 'bg-yellow-500 text-white' : 
+                 'bg-gray-500 text-white'">
+          {{ getProgressText(cours.enrollment?.progress || 0) }}
+        </div>
+      </div>
+
+      <!-- Contenu du cours -->
+      <div class="p-6">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">{{ cours.titre }}</h3>
+          <span *ngIf="cours.categorie" 
+                class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full whitespace-nowrap">
+            {{ cours.categorie }}
+          </span>
+        </div>
+        
+        <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ cours.description }}</p>
+        
+        <!-- Progression détaillée -->
+        <div *ngIf="cours.enrollment" class="mb-4">
+          <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <span>Progression</span>
+            <span class="font-semibold">{{ cours.enrollment.progress }}%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="rounded-full h-3 transition-all duration-300" 
+                 [class]="getProgressColor(cours.enrollment.progress)"
+                 [style.width.%]="cours.enrollment.progress"></div>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
+            <span>{{ cours.enrollment.completedLecons || 0 }} / {{ cours.enrollment.totalLecons || 0 }} leçons</span>
+            <span *ngIf="cours.enrollment.progress === 100" class="text-green-600 font-medium">
+              <i data-feather="check" class="w-3 h-3 mr-1"></i>
+              Terminé !
+            </span>
+          </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-500">
+            <i data-feather="calendar" class="w-4 h-4 mr-1"></i>
+            {{ cours.createdAt | date:'shortDate' }}
+          </div>
+          
+          <div class="flex space-x-2">
+            <button [routerLink]="['/cours', cours.id]"
+                    class="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+                    [class]="cours.enrollment?.progress === 100 ? 
+                      'bg-green-600 hover:bg-green-700' : 
+                      'bg-blue-600 hover:bg-blue-700'">
+              <i [attr.data-feather]="cours.enrollment?.progress === 100 ? 'refresh-cw' : 'play'" 
+                 class="w-4 h-4 mr-1"></i>
+              {{ cours.enrollment?.progress === 100 ? 'Revoir' : 'Continuer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message si aucun cours inscrit -->
+  <div *ngIf="!loading && cours.length === 0" 
+       class="text-center py-12">
+    <i data-feather="book-open" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun cours inscrit</h3>
+    <p class="text-gray-500 mb-6">Vous n'êtes inscrit à aucun cours pour le moment. Découvrez notre catalogue et commencez votre apprentissage !</p>
+    <button routerLink="/home" 
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+      <i data-feather="search" class="w-4 h-4 mr-2"></i>
+      Découvrir les cours
+    </button>
+  </div>
+
+  <!-- Message si aucun résultat de filtre -->
+  <div *ngIf="!loading && cours.length > 0 && filteredCours.length === 0" 
+       class="text-center py-12">
+    <i data-feather="filter" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun cours dans cette catégorie</h3>
+    <p class="text-gray-500 mb-4">
+      <span *ngIf="selectedFilter === 'in-progress'">Vous n'avez pas de cours en cours.</span>
+      <span *ngIf="selectedFilter === 'completed'">Vous n'avez pas encore terminé de cours.</span>
+    </p>
+    <button (click)="onFilterChange('all')" 
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+      Voir tous mes cours
+    </button>
+  </div>
+
+</main>

@@ -19,6 +19,10 @@ import { AdminMainComponent } from './admin-main/admin-main';
 import { AdminDashboardMainComponent } from './admin-dashboard-main/admin-dashboard-main';
 import { AdminUsersComponent } from './admin-users/admin-users';
 import { AdminGamificationComponent } from './admin-gamification/admin-gamification';
+import { MesRecompensesComponent } from './mes-recompenses/mes-recompenses';
+import { MesDefisComponent } from './mes-defis/mes-defis';
+import { ClassementComponent } from './classement/classement';
+import { MesCoursComponent } from './mes-cours/mes-cours';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -29,12 +33,16 @@ export const routes: Routes = [
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'home', component: HomeComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
+  { path: 'mes-cours', component: MesCoursComponent, canActivate: [authGuard] },
+  { path: 'mes-recompenses', component: MesRecompensesComponent, canActivate: [authGuard] },
+  { path: 'mes-defis', component: MesDefisComponent, canActivate: [authGuard] },
+  { path: 'classement', component: ClassementComponent, canActivate: [authGuard] },
   { path: 'confirm-delete', component: ConfirmDeleteComponent, canActivate: [authGuard] },
   { path: 'formateur-dashboard', component: FormateurDashboardComponent, canActivate: [authGuard] },
   { path: 'cours/nouveau', component: CoursFormComponent, canActivate: [authGuard] },
   { path: 'cours/modifier/:id', component: CoursFormComponent, canActivate: [authGuard] },
+  { path: 'cours', redirectTo: '/home', pathMatch: 'full' }, // Rediriger vers home
   { path: 'cours/:id', component: CoursDetailComponent, canActivate: [authGuard] },
-  { path: 'cours', component: CoursListComponent, canActivate: [authGuard] },
   { path: 'module/:id', component: ModuleDetailComponent, canActivate: [authGuard] },
   { path: 'quiz/:quizId/module/:moduleId', component: QuizViewerComponent, canActivate: [authGuard] },
   

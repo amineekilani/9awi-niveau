@@ -1,0 +1,121 @@
+/* Styles pour la page Mes Réussites */
+
+.niveau-badge-large {
+  box-shadow: 0 4px 14px 0 rgba(0, 118, 255, 0.39);
+}
+
+.recompense-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.recompense-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.defi-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.defi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.rank-badge {
+  font-size: 14px;
+}
+
+.rank-gold {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+}
+
+.rank-silver {
+  background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+}
+
+.rank-bronze {
+  background: linear-gradient(135deg, #CD7F32, #B87333);
+}
+
+.rank-default {
+  background: linear-gradient(135deg, #6B7280, #4B5563);
+}
+
+.tab-button:hover {
+  color: #4F46E5;
+}
+
+.tab-button.active {
+  color: #4F46E5;
+  border-color: #4F46E5;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vue-ensemble > div,
+.recompenses-section > div,
+.defis-section > div,
+.classement-section > div {
+  animation: slideIn 0.5s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .flex {
+    flex-direction: column;
+  }
+  
+  .space-x-4 > * + * {
+    margin-left: 0;
+    margin-top: 1rem;
+  }
+}
+
+/* Particules d'arrière-plan */
+.particle {
+  position: absolute;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+}
+
+.particle:nth-child(2) {
+  animation-delay: -2s;
+}
+
+.particle:nth-child(3) {
+  animation-delay: -4s;
+}
+
+.particle:nth-child(4) {
+  animation-delay: -1s;
+}
+
+.particle:nth-child(5) {
+  animation-delay: -3s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}

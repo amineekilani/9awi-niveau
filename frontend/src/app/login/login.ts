@@ -29,8 +29,10 @@ export class LoginComponent {
         // Rediriger selon le rôle
         if (this.authService.isFormateur()) {
           this.router.navigate(['/formateur-dashboard']);
+        } else if (this.authService.isAdmin()) {
+          this.router.navigate(['/admin']);
         } else {
-          this.router.navigate(['/cours']);
+          this.router.navigate(['/home']);
         }
       },
       error: (err) => {
@@ -88,8 +90,10 @@ export class LoginComponent {
         // Rediriger selon le rôle
         if (this.authService.isFormateur()) {
           this.router.navigate(['/formateur-dashboard']);
+        } else if (this.authService.isAdmin()) {
+          this.router.navigate(['/admin']);
         } else {
-          this.router.navigate(['/cours']);
+          this.router.navigate(['/home']);
         }
       },
       error: (err) => {

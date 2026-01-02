@@ -1,0 +1,165 @@
+/* Styles pour la page Mes Défis */
+
+.nav-link {
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+
+.nav-link.active {
+  font-weight: 600;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+
+/* Styles pour les cartes de défis */
+.challenge-card {
+  transition: all 0.3s ease;
+}
+
+.challenge-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Animation pour les barres de progression */
+.progress-bar {
+  transition: width 0.8s ease-in-out;
+}
+
+/* Styles pour les types de défis */
+.challenge-type-daily {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.challenge-type-weekly {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.challenge-type-monthly {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
+
+.challenge-type-achievement {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+/* Animation pour les défis terminés */
+.completed-challenge {
+  position: relative;
+  overflow: hidden;
+}
+
+.completed-challenge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Styles pour les filtres */
+.filter-button {
+  transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Animation de chargement */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Styles pour les alertes de progression */
+.progress-alert {
+  animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Styles responsifs */
+@media (max-width: 768px) {
+  .nav-link {
+    display: none;
+  }
+  
+  .challenge-card {
+    margin-bottom: 1rem;
+  }
+  
+  .flex.items-start.space-x-4 {
+    flex-direction: column;
+    space-x: 0;
+    gap: 1rem;
+  }
+}
+
+/* Styles pour les icônes Feather */
+[data-feather] {
+  stroke-width: 2;
+}
+
+/* Styles pour les badges de statut */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+/* Hover effects pour les cartes */
+.hover\:shadow-md:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}

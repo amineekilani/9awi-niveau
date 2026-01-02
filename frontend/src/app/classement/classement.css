@@ -1,0 +1,209 @@
+/* Styles pour la page Classement */
+
+.nav-link {
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+
+.nav-link.active {
+  font-weight: 600;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+
+/* Styles pour le podium */
+.podium-card {
+  transition: all 0.3s ease;
+}
+
+.podium-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Animation pour la première place */
+.first-place {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.6);
+  }
+}
+
+/* Styles pour les rangs */
+.rank-1 {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.rank-2 {
+  background: linear-gradient(135deg, #d1d5db, #9ca3af);
+}
+
+.rank-3 {
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+}
+
+.rank-default {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+/* Styles pour les entrées du classement */
+.leaderboard-entry {
+  transition: all 0.2s ease;
+}
+
+.leaderboard-entry:hover {
+  background-color: #f9fafb;
+  transform: translateX(4px);
+}
+
+.current-user-entry {
+  background: linear-gradient(90deg, #dbeafe, #bfdbfe);
+  border-left: 4px solid #3b82f6;
+}
+
+/* Animation pour l'utilisateur actuel */
+.current-user-highlight {
+  animation: highlight 3s ease-in-out;
+}
+
+@keyframes highlight {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Styles pour les badges de rang */
+.rank-badge {
+  transition: transform 0.2s ease;
+}
+
+.rank-badge:hover {
+  transform: scale(1.1);
+}
+
+/* Styles pour les avatars */
+.avatar {
+  transition: transform 0.3s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.05);
+}
+
+/* Animation de chargement */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Styles pour les filtres de période */
+.period-filter {
+  transition: all 0.2s ease;
+}
+
+.period-filter:hover {
+  transform: translateY(-1px);
+}
+
+/* Styles pour les statistiques */
+.stat-item {
+  transition: color 0.2s ease;
+}
+
+.stat-item:hover {
+  color: #3b82f6;
+}
+
+/* Styles responsifs */
+@media (max-width: 768px) {
+  .nav-link {
+    display: none;
+  }
+  
+  .podium-card {
+    margin-bottom: 1rem;
+  }
+  
+  .grid-cols-1.md\:grid-cols-3 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  
+  .leaderboard-entry {
+    padding: 1rem;
+  }
+  
+  .flex.items-center.space-x-4 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .grid-cols-1.md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Styles pour les icônes Feather */
+[data-feather] {
+  stroke-width: 2;
+}
+
+/* Styles pour les effets de survol */
+.hover\:bg-gray-50:hover {
+  background-color: #f9fafb;
+}
+
+.hover\:shadow-md:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Styles pour les transitions */
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
