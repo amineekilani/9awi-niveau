@@ -13,6 +13,7 @@ export interface Cours {
   archivedAt?: number;
   categorie?: string;
   thumbnailUrl?: string;
+  keywords?: string;
   formateurId?: number;
   formateurNom?: string;
 }

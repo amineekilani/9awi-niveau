@@ -77,6 +77,37 @@
           <p class="text-xs text-gray-500 mt-1">Choisissez la catégorie qui correspond le mieux à votre cours</p>
         </div>
 
+        <!-- Mots clés -->
+        <div class="mb-6">
+          <label class="block text-sm font-semibold text-gray-900 mb-2">
+            Mots clés
+          </label>
+          <div class="flex gap-2 mb-2">
+            <input type="text" [(ngModel)]="keywordInput" name="keywordInput"
+              (keydown.enter)="$event.preventDefault(); addKeyword()"
+              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="Ajouter un mot clé (ex: java, web, débutant)" />
+            <button type="button" (click)="addKeyword()"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              Ajouter
+            </button>
+          </div>
+
+          <!-- Liste des mots clés -->
+          <div class="flex flex-wrap gap-2">
+            <div *ngFor="let keyword of keywordsList; let i = index"
+              class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+              <span>{{ keyword }}</span>
+              <button type="button" (click)="removeKeyword(i)" class="text-blue-600 hover:text-blue-800">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Ajoutez des mots clés pour faciliter la recherche de votre cours</p>
+        </div>
+
         <!-- Thumbnail -->
         <div class="mb-8">
           <label class="block text-sm font-semibold text-gray-900 mb-2">

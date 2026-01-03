@@ -42,6 +42,10 @@ export class CoursFormComponent implements OnInit {
   isCustomCategory = false;
   customCategory = '';
 
+  // Keywords
+  keywordInput = '';
+  keywordsList: string[] = [];
+
   constructor(
     private coursService: CoursService,
     public authService: AuthService,
@@ -108,7 +112,13 @@ export class CoursFormComponent implements OnInit {
           if (!this.categories.includes(this.cours.categorie)) {
             this.categories.push(this.cours.categorie);
             this.categories.sort();
+            this.categories.sort();
           }
+        }
+
+        // Charger les mots clés
+        if (this.cours.keywords) {
+          this.keywordsList = this.cours.keywords.split(',').map(k => k.trim()).filter(k => k);
         }
 
         this.loading = false;
@@ -167,6 +177,13 @@ export class CoursFormComponent implements OnInit {
       this.cours.categorie = this.customCategory.trim();
     }
 
+    // Préparer les mots clés
+    if (this.keywordsList.length > 0) {
+      this.cours.keywords = this.keywordsList.join(',');
+    } else {
+      this.cours.keywords = '';
+    }
+
     // Si un fichier est sélectionné, l'uploader d'abord
     if (this.selectedFile) {
       this.uploadingThumbnail = true;
@@ -196,6 +213,20 @@ export class CoursFormComponent implements OnInit {
     } else {
       this.isCustomCategory = false;
     }
+  }
+
+  addKeyword() {
+    if (this.keywordInput && this.keywordInput.trim()) {
+      const keyword = this.keywordInput.trim();
+      if (!this.keywordsList.includes(keyword)) {
+        this.keywordsList.push(keyword);
+      }
+      this.keywordInput = '';
+    }
+  }
+
+  removeKeyword(index: number) {
+    this.keywordsList.splice(index, 1);
   }
 
   private saveCours() {

@@ -26,12 +26,12 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   loading = false;
   error = '';
   success = '';
-  
+
   // Filtres
   searchTerm = '';
   selectedCategorie = '';
   categories: string[] = [];
-  
+
   // Statistiques gamifiées
   enrolledCount = 0;
   completedCount = 0;
@@ -45,7 +45,7 @@ export class CoursListComponent implements OnInit, AfterViewInit {
     private enrollmentService: EnrollmentService,
     public authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadCours();
@@ -68,14 +68,14 @@ export class CoursListComponent implements OnInit, AfterViewInit {
 
   loadCours() {
     this.loading = true;
-    
+
     // Charger tous les cours
     this.coursService.getAllCours().subscribe({
       next: (data) => {
         this.cours = data;
         this.extractCategories();
         this.applyFilters();
-        
+
         // Si étudiant, charger les enrollments
         if (!this.authService.isFormateur()) {
           this.loadEnrollments();
@@ -102,21 +102,22 @@ export class CoursListComponent implements OnInit, AfterViewInit {
 
   applyFilters() {
     let filtered = [...this.cours];
-    
+
     // Filtrer par recherche
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(c => 
-        c.titre.toLowerCase().includes(term) || 
-        c.description.toLowerCase().includes(term)
+      filtered = filtered.filter(c =>
+        c.titre.toLowerCase().includes(term) ||
+        c.description.toLowerCase().includes(term) ||
+        (c.keywords && c.keywords.toLowerCase().includes(term))
       );
     }
-    
+
     // Filtrer par catégorie
     if (this.selectedCategorie) {
       filtered = filtered.filter(c => c.categorie === this.selectedCategorie);
     }
-    
+
     this.filteredCours = filtered;
   }
 
@@ -145,14 +146,14 @@ export class CoursListComponent implements OnInit, AfterViewInit {
             cours.isEnrolled = true;
           }
         });
-        
+
         // Appliquer les filtres après avoir chargé les enrollments
         this.applyFilters();
-        
+
         // Calculer les statistiques
         this.calculateStats(enrollments);
         this.loading = false;
-        
+
         // Rafraîchir les icônes après le chargement
         setTimeout(() => {
           if (typeof feather !== 'undefined') {
@@ -170,16 +171,16 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   calculateStats(enrollments: Enrollment[]) {
     this.enrolledCount = enrollments.length;
     this.completedCount = enrollments.filter(e => e.progress === 100).length;
-    
+
     // Calculer la progression globale
     if (enrollments.length > 0) {
       const totalProgress = enrollments.reduce((sum, e) => sum + e.progress, 0);
       this.overallProgress = Math.round(totalProgress / enrollments.length);
     }
-    
+
     // Calculer les points (10 points par % de progression)
     this.totalPoints = enrollments.reduce((sum, e) => sum + Math.round(e.progress * 10), 0);
-    
+
     // Calculer le niveau (1 niveau tous les 500 points)
     this.userLevel = Math.floor(this.totalPoints / 500) + 1;
   }
@@ -187,7 +188,7 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   enrollInCourse(coursId: number, event: Event) {
     event.preventDefault();
     event.stopPropagation();
-    
+
     if (confirm('Voulez-vous vous inscrire à ce cours ?')) {
       this.enrollmentService.enrollInCourse(coursId).subscribe({
         next: () => {

@@ -7,10 +7,12 @@ import lombok.Data;
 public class CoursRequest {
     @NotBlank(message = "Le titre est obligatoire")
     private String titre;
-    
+
     private String description;
-    
+
     private String categorie;
-    
+
     private String thumbnailUrl;
+
+    private String keywords;
 }
