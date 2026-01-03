@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { NavbarComponent } from '../navbar/navbar.component';
 import { ModuleService, Module } from '../module.service';
 import { LeconService, Lecon } from '../lecon.service';
 import { QuizService, Quiz, Question } from '../quiz.service';
@@ -13,7 +14,7 @@ declare const feather: any;
 @Component({
   selector: 'app-module-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
   templateUrl: './module-detail.html',
   styleUrls: ['./module-detail.css']
 })
@@ -345,34 +346,7 @@ export class ModuleDetailComponent implements OnInit {
   }
 
   private initHeaderData() {
-    this.authService.userProfile$.subscribe(profile => {
-      if (profile) {
-        this.userProfileImage = profile.profileImage || '';
-        const firstName = profile.firstName || '';
-        const lastName = profile.lastName || '';
-        if (firstName && lastName) {
-          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-        } else if (profile.email) {
-          const namePart = profile.email.split('@')[0];
-          this.userInitials = namePart.split('.').map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
-        }
-      }
-    });
-
-    if (this.authService.getToken() && !this.userProfileImage) {
-      this.authService.loadUserProfile();
-    }
-
-    this.gamificationService.getRecentActivity(5).subscribe({
-      next: (activities) => {
-        this.recentActivity = activities;
-        setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
-      }
-    });
-
-    this.gamificationService.getUserStats().subscribe({
-      next: (stats) => this.userStats = stats
-    });
+    // Redundant now
   }
 
   toggleNotifications() {

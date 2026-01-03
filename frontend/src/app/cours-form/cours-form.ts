@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { NavbarComponent } from '../navbar/navbar.component';
 import { CoursService, Cours } from '../cours.service';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
@@ -11,7 +12,7 @@ declare const feather: any;
 @Component({
   selector: 'app-cours-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
   templateUrl: './cours-form.html',
   styleUrls: ['./cours-form.css']
 })
@@ -159,34 +160,7 @@ export class CoursFormComponent implements OnInit {
   }
 
   private initHeaderData() {
-    this.authService.userProfile$.subscribe(profile => {
-      if (profile) {
-        this.userProfileImage = profile.profileImage || '';
-        const firstName = profile.firstName || '';
-        const lastName = profile.lastName || '';
-        if (firstName && lastName) {
-          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-        } else if (profile.email) {
-          const namePart = profile.email.split('@')[0];
-          this.userInitials = namePart.split('.').map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
-        }
-      }
-    });
-
-    if (this.authService.getToken() && !this.userProfileImage) {
-      this.authService.loadUserProfile();
-    }
-
-    this.userGamificationService.getRecentActivity(5).subscribe({
-      next: (activities) => {
-        this.recentActivity = activities;
-        setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
-      }
-    });
-
-    this.userGamificationService.getUserStats().subscribe({
-      next: (stats) => this.userStats = stats
-    });
+    // Redundant now
   }
 
   toggleNotifications() {

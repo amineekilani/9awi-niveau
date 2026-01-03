@@ -44,12 +44,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   // Stats calculées
   enrolledCount = 0;
   completedCount = 0;
-  userInitials = 'ET';
-  userName = '';
-  userProfileImage = '';
-
   // Notifications
-  showNotifications = false;
   recentActivity: RecentActivity[] = [];
 
   constructor(
@@ -62,42 +57,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
   ) { }
 
   ngOnInit() {
-    // S'assurer que le profil est chargé si on est déjà connecté
-    if (this.authService.getToken()) {
-      this.authService.loadUserProfile();
-    }
-
-    this.authService.userProfile$.subscribe(profile => {
-      if (profile) {
-        this.userProfileImage = profile.profileImage || '';
-        const firstName = profile.firstName || '';
-        const lastName = profile.lastName || '';
-
-        if (firstName && lastName) {
-          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-        } else if (profile.email) {
-          const parts = profile.email.split('@')[0].split('.');
-          this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
-        }
-      }
-    });
-
-    this.loadUserStats();
-    this.loadCours();
-
     // Check for new badges (SweetAlert)
     this.notificationService.checkForNewAchievements();
 
-    // Load notifications for dropdown
-    this.loadNotifications();
-
-    // Close notifications on click outside
-    document.addEventListener('click', (event: any) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.notification-container')) {
-        this.showNotifications = false;
-      }
-    });
+    this.loadUserStats();
+    this.loadCours();
   }
 
   ngAfterViewInit() {
@@ -288,20 +252,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     document.getElementById('courses-section')?.scrollIntoView({ behavior: 'smooth' });
   }
 
-  // --- Notifications Logic ---
-
-  loadNotifications() {
-    this.userGamificationService.getRecentActivity(5).subscribe({
-      next: (activities) => {
-        this.recentActivity = activities;
-      }
-    });
-  }
-
   toggleNotifications() {
-    this.showNotifications = !this.showNotifications;
-    if (this.showNotifications) {
-      setTimeout(() => feather.replace(), 100);
-    }
+    // Handled by Navbar
   }
 }

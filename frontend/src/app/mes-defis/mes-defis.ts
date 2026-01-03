@@ -4,30 +4,27 @@ import { RouterModule, Router } from '@angular/router';
 import { UserGamificationService, UserChallenge, RecentActivity } from '../user-gamification.service';
 import { GamificationNotificationService } from '../gamification-notification.service';
 import { AuthService } from '../auth';
+import { NavbarComponent } from '../navbar/navbar.component';
 
 declare const feather: any;
 
 @Component({
   selector: 'app-mes-defis',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NavbarComponent],
   templateUrl: './mes-defis.html',
   styleUrls: ['./mes-defis.css']
 })
 export class MesDefisComponent implements OnInit, AfterViewInit {
   challenges: UserChallenge[] = [];
-  filteredChallenges: UserChallenge[] = [];
   loading = true;
   error = '';
   selectedFilter = 'active';
-
-  userInitials = 'ET';
-  userProfileImage = '';
   completedCount = 0;
 
   // Notifications
-  showNotifications = false;
   recentActivity: RecentActivity[] = [];
+  filteredChallenges: UserChallenge[] = [];
 
   filterOptions = [
     { value: 'active', label: 'Défis actifs', count: 0 },
@@ -43,36 +40,10 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
   ) { }
 
   ngOnInit() {
-    this.authService.userProfile$.subscribe(profile => {
-      if (profile) {
-        this.userProfileImage = profile.profileImage || '';
-        const firstName = profile.firstName || '';
-        const lastName = profile.lastName || '';
-        if (firstName && lastName) {
-          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-        } else if (profile.email) {
-          const parts = profile.email.split('@')[0].split('.');
-          this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
-        }
-      }
-    });
-
-    if (this.authService.getToken() && !this.userProfileImage) {
-      this.authService.loadUserProfile();
-    }
-
     this.loadChallenges();
 
     // Notifications logic
     this.notificationService.checkForNewAchievements();
-    this.loadNotifications();
-
-    document.addEventListener('click', (event: any) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.notification-container')) {
-        this.showNotifications = false;
-      }
-    });
   }
   ngAfterViewInit() {
     if (typeof feather !== 'undefined') {
@@ -80,13 +51,6 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
     }
   }
 
-  calculateUserInitials() {
-    const email = this.authService.getEmail();
-    if (email) {
-      const parts = email.split('@')[0].split('.');
-      this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
-    }
-  }
 
   loadChallenges() {
     this.gamificationService.getUserChallenges().subscribe({
@@ -245,24 +209,8 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
     this.authService.logout();
   }
 
-  goToProfile() {
-    this.router.navigate(['/profile']);
-  }
-
-  // --- Notifications Logic ---
-
-  loadNotifications() {
-    this.gamificationService.getRecentActivity(5).subscribe({
-      next: (activities) => {
-        this.recentActivity = activities;
-      }
-    });
-  }
 
   toggleNotifications() {
-    this.showNotifications = !this.showNotifications;
-    if (this.showNotifications) {
-      setTimeout(() => feather.replace(), 100);
-    }
+    // Handled by Navbar
   }
 }
