@@ -21,5 +21,6 @@ public class UserChallengeResponse {
     private Long joinedAt;
     private Long endDate;
     private String timeRemaining;
+    private Boolean isNew;
     private Boolean isActive;
 }

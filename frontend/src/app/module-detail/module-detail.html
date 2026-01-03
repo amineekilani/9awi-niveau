@@ -1,29 +1,149 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-  <!-- Header -->
-  <header class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <button (click)="goBack()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex items-center gap-2 text-gray-600 hover:text-gray-900">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span class="hidden sm:inline">Retour au cours</span>
+<!-- Header avec navigation moderne -->
+<header class="backdrop-blur-md shadow-lg sticky top-0 z-50"
+  style="background: linear-gradient(to right, #063cdf, #0850f5);">
+  <div class="container mx-auto px-4 py-3">
+    <div class="flex justify-between items-center">
+      <!-- Logo et titre -->
+      <a [routerLink]="authService.isFormateur() ? '/formateur-dashboard' : '/home'"
+        class="flex items-center space-x-3">
+        <img src="/Logo_9awi_Niveau_without_name.png" alt="9awi Niveau Logo" class="h-10 w-auto">
+        <span class="text-2xl font-bold text-white hidden md:block">9awi Niveau</span>
+      </a>
+
+      <!-- Navigation centrale -->
+      <nav class="hidden lg:flex space-x-6">
+        <a routerLink="/home" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+          *ngIf="!authService.isFormateur()">Accueil</a>
+        <a routerLink="/formateur-dashboard"
+          class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+          *ngIf="authService.isFormateur()">Tableau de Bord</a>
+        <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+          *ngIf="!authService.isFormateur()">Mes Cours</a>
+        <a routerLink="/mes-defis" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+          *ngIf="!authService.isFormateur()">Défis</a>
+        <a routerLink="/classement" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+          *ngIf="!authService.isFormateur()">Classement</a>
+        <a routerLink="/mes-recompenses" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+          *ngIf="!authService.isFormateur()">Récompenses</a>
+      </nav>
+
+      <!-- Carte Profil Utilisateur -->
+      <div class="flex items-center space-x-4">
+        <!-- Notifications Dropdown -->
+        <div class="relative notification-container hidden md:block" *ngIf="!authService.isFormateur()">
+          <button (click)="toggleNotifications()"
+            class="p-2 text-white hover:text-gray-200 relative focus:outline-none transition-colors">
+            <span class="sr-only">Notifications</span>
+            <i data-feather="bell" class="h-6 w-6"></i>
+            <span *ngIf="recentActivity.length > 0"
+              class="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-blue-600 bg-red-500 animate-pulse"></span>
           </button>
-          <div class="h-8 w-px bg-gray-300"></div>
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ module?.titre }}</h1>
-            <p class="text-gray-600 mt-1 line-clamp-2">{{ module?.contenu }}</p>
+
+          <!-- Dropdown Panel -->
+          <div *ngIf="showNotifications"
+            class="origin-top-right absolute right-0 mt-2 w-80 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transform transition-all duration-200 ease-out text-left text-gray-800">
+            <div class="py-1" role="menu" aria-orientation="vertical">
+              <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h3 class="text-sm font-bold text-gray-900">Activité Récente</h3>
+              </div>
+              <div class="max-h-96 overflow-y-auto">
+                <div *ngFor="let activity of recentActivity"
+                  class="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer">
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 mt-1">
+                      <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                        <i data-feather="star" class="w-4 h-4"></i>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                        {{ activity.description }}
+                      </p>
+                      <p class="text-xs text-gray-500 mt-0.5 flex items-center">
+                        <span class="font-bold text-green-600 mr-2" *ngIf="activity.points > 0">+{{ activity.points }}
+                          XP</span>
+                        <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                        {{ activity.timeAgo }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="recentActivity.length === 0" class="px-4 py-8 text-center text-gray-500">
+                  <i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
+                  <p class="text-sm">Aucune nouvelle activité</p>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <!-- Carte Profil -->
+        <div
+          class="hidden lg:flex items-center space-x-3 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-opacity-20 transition-all"
+          (click)="goToProfile()">
+          <div *ngIf="!userProfileImage"
+            class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold shadow-md">
+            {{ userInitials }}
+          </div>
+          <img *ngIf="userProfileImage" [src]="userProfileImage" alt="Profile"
+            class="w-10 h-10 rounded-full object-cover shadow-md border-2 border-white">
+
+          <div class="text-left">
+            <div class="text-white font-semibold text-sm">{{ (authService.getEmail() || '').split('@')[0] || 'Formateur'
+              }}</div>
+
+            <!-- Étudiant : Niveau & XP -->
+            <div class="flex items-center space-x-2 text-xs" *ngIf="!authService.isFormateur()">
+              <span class="text-blue-100">Niveau {{ userStats?.currentLevel || 1 }}</span>
+              <span class="text-blue-200">•</span>
+              <span class="text-blue-100">{{ userStats?.totalPoints || 0 }} XP</span>
+            </div>
+
+            <!-- Formateur : Badge & Domaine -->
+            <div class="flex items-center mt-0.5" *ngIf="authService.isFormateur()">
+              <span
+                class="bg-white bg-opacity-20 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider mr-2">Formateur</span>
+              <span class="text-blue-100 text-[10px] opacity-80">Expert Digital</span>
+            </div>
+          </div>
+          <i data-feather="chevron-down" class="text-white w-4 h-4"></i>
+        </div>
+
+        <button (click)="logout()" class="hidden xl:flex items-center text-white hover:text-gray-200 transition-colors">
+          <i data-feather="log-out" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="min-h-screen bg-gray-50 text-gray-900">
+  <!-- Sub-Header with Back Button and Module Info -->
+  <div class="bg-white border-b border-gray-200 sticky top-[64px] z-40">
+    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-4">
+        <button (click)="goBack()"
+          class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex items-center gap-2 text-gray-600 hover:text-gray-900">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span class="hidden sm:inline font-medium">Retour au cours</span>
+        </button>
+        <div class="h-6 w-px bg-gray-300"></div>
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate">{{ module?.titre }}</h1>
+          <p class="text-sm text-gray-500 truncate" *ngIf="module?.contenu">{{ module?.contenu | slice:0:100 }}{{
+            (module?.contenu?.length || 0) > 100 ? '...' : '' }}</p>
         </div>
       </div>
     </div>
-  </header>
+  </div>
 
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
     <!-- Messages -->
-    <div *ngIf="success" class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg animate-fade-in">
+    <div *ngIf="success"
+      class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg animate-fade-in">
       {{ success }}
     </div>
 
@@ -39,7 +159,8 @@
 
     <!-- Add Lecon Button (Formateur only) -->
     <div *ngIf="authService.isFormateur() && !showLeconForm" class="mb-6">
-      <button (click)="openLeconForm()" class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+      <button (click)="openLeconForm()"
+        class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -58,29 +179,18 @@
           <label for="titre" class="block text-sm font-semibold text-gray-900 mb-2">
             Titre de la leçon <span class="text-red-500">*</span>
           </label>
-          <input
-            type="text"
-            id="titre"
-            name="titre"
-            [(ngModel)]="leconForm.titre"
-            required
+          <input type="text" id="titre" name="titre" [(ngModel)]="leconForm.titre" required
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            placeholder="Ex: Introduction aux variables"
-          />
+            placeholder="Ex: Introduction aux variables" />
         </div>
 
         <div class="mb-5">
           <label for="typeContenu" class="block text-sm font-semibold text-gray-900 mb-2">
             Type de contenu <span class="text-red-500">*</span>
           </label>
-          <select
-            id="typeContenu"
-            name="typeContenu"
-            [(ngModel)]="leconForm.typeContenu"
-            required
+          <select id="typeContenu" name="typeContenu" [(ngModel)]="leconForm.typeContenu" required
             [disabled]="editingLecon !== null"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100"
-          >
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100">
             <option value="TEXTE">Texte</option>
             <option value="PDF">Document PDF</option>
             <option value="IMAGE">Image</option>
@@ -94,14 +204,9 @@
           <label for="contenuTexte" class="block text-sm font-semibold text-gray-900 mb-2">
             Contenu de la leçon
           </label>
-          <textarea
-            id="contenuTexte"
-            name="contenuTexte"
-            [(ngModel)]="leconForm.contenuTexte"
-            rows="12"
+          <textarea id="contenuTexte" name="contenuTexte" [(ngModel)]="leconForm.contenuTexte" rows="12"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none font-mono text-sm"
-            placeholder="Rédigez le contenu de votre leçon ici..."
-          ></textarea>
+            placeholder="Rédigez le contenu de votre leçon ici..."></textarea>
         </div>
 
         <!-- File Upload -->
@@ -109,18 +214,15 @@
           <label for="file" class="block text-sm font-semibold text-gray-900 mb-2">
             Fichier <span class="text-red-500">*</span>
           </label>
-          <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors duration-200">
-            <input
-              type="file"
-              id="file"
-              (change)="onFileSelected($event)"
+          <div
+            class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors duration-200">
+            <input type="file" id="file" (change)="onFileSelected($event)"
               [accept]="leconForm.typeContenu === 'PDF' ? '.pdf' : leconForm.typeContenu === 'IMAGE' ? 'image/*' : 'video/*'"
-              class="w-full"
-            />
+              class="w-full" />
             <p class="text-xs text-gray-500 mt-2">
-              {{ leconForm.typeContenu === 'PDF' ? 'Formats acceptés: PDF' : 
-                 leconForm.typeContenu === 'IMAGE' ? 'Formats acceptés: JPG, PNG, GIF' : 
-                 'Formats acceptés: MP4, AVI, MOV' }}
+              {{ leconForm.typeContenu === 'PDF' ? 'Formats acceptés: PDF' :
+              leconForm.typeContenu === 'IMAGE' ? 'Formats acceptés: JPG, PNG, GIF' :
+              'Formats acceptés: MP4, AVI, MOV' }}
             </p>
           </div>
         </div>
@@ -130,46 +232,28 @@
             <label for="ordre" class="block text-sm font-semibold text-gray-900 mb-2">
               Ordre d'affichage
             </label>
-            <input
-              type="number"
-              id="ordre"
-              name="ordre"
-              [(ngModel)]="leconForm.ordre"
-              min="1"
+            <input type="number" id="ordre" name="ordre" [(ngModel)]="leconForm.ordre" min="1"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              placeholder="1, 2, 3..."
-            />
+              placeholder="1, 2, 3..." />
           </div>
 
           <div>
             <label for="duree" class="block text-sm font-semibold text-gray-900 mb-2">
               Durée estimée (minutes)
             </label>
-            <input
-              type="number"
-              id="duree"
-              name="duree"
-              [(ngModel)]="leconForm.duree"
-              min="1"
+            <input type="number" id="duree" name="duree" [(ngModel)]="leconForm.duree" min="1"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              placeholder="Ex: 30"
-            />
+              placeholder="Ex: 30" />
           </div>
         </div>
 
         <div class="border-t border-gray-200 pt-4 flex flex-col sm:flex-row gap-3">
-          <button
-            type="submit"
-            [disabled]="!leconFormRef.form.valid"
-            class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium"
-          >
+          <button type="submit" [disabled]="!leconFormRef.form.valid"
+            class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium">
             {{ editingLecon ? 'Enregistrer' : 'Ajouter la leçon' }}
           </button>
-          <button
-            type="button"
-            (click)="cancelLeconForm()"
-            class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
-          >
+          <button type="button" (click)="cancelLeconForm()"
+            class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
             Annuler
           </button>
         </div>
@@ -180,7 +264,8 @@
     <div class="space-y-4">
       <div class="flex items-center gap-3 mb-6">
         <svg class="w-7 h-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
         <h2 class="text-2xl font-bold text-gray-900">Leçons du module</h2>
         <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">{{ lecons.length }}</span>
@@ -188,11 +273,13 @@
 
       <div *ngIf="lecons.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
         <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
         <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucune leçon pour ce module</h3>
         <p class="text-gray-600 mb-4">Ajoutez des leçons pour enrichir le contenu de ce module</p>
-        <button *ngIf="authService.isFormateur()" (click)="openLeconForm()" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+        <button *ngIf="authService.isFormateur()" (click)="openLeconForm()"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -200,13 +287,15 @@
         </button>
       </div>
 
-      <div *ngFor="let lecon of lecons; let i = index" class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200 overflow-hidden">
+      <div *ngFor="let lecon of lecons; let i = index"
+        class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200 overflow-hidden">
         <!-- Lecon Header -->
         <div class="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 border-b border-gray-200">
           <div class="flex justify-between items-start">
             <div class="flex-1">
               <div class="flex items-center gap-3 flex-wrap">
-                <span class="flex items-center justify-center w-8 h-8 bg-indigo-600 text-white rounded-full text-sm font-bold">
+                <span
+                  class="flex items-center justify-center w-8 h-8 bg-indigo-600 text-white rounded-full text-sm font-bold">
                   {{ lecon.ordre || i + 1 }}
                 </span>
                 <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
@@ -221,23 +310,21 @@
               </div>
             </div>
             <div *ngIf="authService.isFormateur()" class="flex gap-2 ml-4">
-              <button
-                (click)="editLecon(lecon)"
+              <button (click)="editLecon(lecon)"
                 class="px-3 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
-                title="Modifier"
-              >
+                title="Modifier">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 <span>Modifier</span>
               </button>
-              <button
-                (click)="deleteLecon(lecon.id!)"
+              <button (click)="deleteLecon(lecon.id!)"
                 class="px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
-                title="Supprimer"
-              >
+                title="Supprimer">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 <span>Supprimer</span>
               </button>
@@ -249,7 +336,8 @@
         <div class="p-6">
           <!-- Texte -->
           <div *ngIf="lecon.typeContenu === 'TEXTE'" class="prose max-w-none">
-            <div class="text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div
+              class="text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-200">
               {{ lecon.contenuTexte || 'Aucun contenu disponible' }}
             </div>
           </div>
@@ -257,11 +345,14 @@
           <!-- PDF -->
           <div *ngIf="lecon.typeContenu === 'PDF' && lecon.fichierUrl" class="flex flex-col items-center gap-4">
             <svg class="h-24 w-24 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
-            <a [href]="getFileUrl(lecon.fichierUrl, lecon.typeContenu)" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+            <a [href]="getFileUrl(lecon.fichierUrl, lecon.typeContenu)" target="_blank"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
               <span>Ouvrir le document PDF</span>
             </a>
@@ -269,7 +360,8 @@
 
           <!-- Image -->
           <div *ngIf="lecon.typeContenu === 'IMAGE' && lecon.fichierUrl" class="flex justify-center">
-            <img [src]="getFileUrl(lecon.fichierUrl, lecon.typeContenu)" [alt]="lecon.titre" class="max-w-full h-auto rounded-lg shadow-lg border border-gray-200" (error)="onImageError($event)" />
+            <img [src]="getFileUrl(lecon.fichierUrl, lecon.typeContenu)" [alt]="lecon.titre"
+              class="max-w-full h-auto rounded-lg shadow-lg border border-gray-200" (error)="onImageError($event)" />
           </div>
 
           <!-- Video -->
@@ -282,8 +374,7 @@
 
           <!-- Bouton de complétion pour les étudiants -->
           <div *ngIf="!authService.isFormateur()" class="mt-6 pt-6 border-t border-gray-200">
-            <button 
-              (click)="toggleLeconCompletion(lecon)"
+            <button (click)="toggleLeconCompletion(lecon)"
               [class]="lecon.completed ? 
                 'w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center justify-center gap-2' : 
                 'w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center justify-center gap-2'">
@@ -291,7 +382,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
               <svg *ngIf="!lecon.completed" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>{{ lecon.completed ? '✓ Leçon complétée' : 'Marquer comme complétée' }}</span>
             </button>
@@ -305,11 +397,13 @@
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           <svg class="w-7 h-7 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
           </svg>
           <h2 class="text-2xl font-bold text-gray-900">Quiz du module</h2>
         </div>
-        <button *ngIf="authService.isFormateur() && !quiz && !showQuizForm" (click)="openQuizForm()" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+        <button *ngIf="authService.isFormateur() && !quiz && !showQuizForm" (click)="openQuizForm()"
+          class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -328,44 +422,27 @@
             <label for="quizTitre" class="block text-sm font-semibold text-gray-900 mb-2">
               Titre du quiz <span class="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              id="quizTitre"
-              name="quizTitre"
-              [(ngModel)]="quizForm.titre"
-              required
+            <input type="text" id="quizTitre" name="quizTitre" [(ngModel)]="quizForm.titre" required
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-              placeholder="Ex: Quiz de validation des connaissances"
-            />
+              placeholder="Ex: Quiz de validation des connaissances" />
           </div>
 
           <div class="mb-6">
             <label for="quizDescription" class="block text-sm font-semibold text-gray-900 mb-2">
               Description
             </label>
-            <textarea
-              id="quizDescription"
-              name="quizDescription"
-              [(ngModel)]="quizForm.description"
-              rows="4"
+            <textarea id="quizDescription" name="quizDescription" [(ngModel)]="quizForm.description" rows="4"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none"
-              placeholder="Décrivez l'objectif de ce quiz..."
-            ></textarea>
+              placeholder="Décrivez l'objectif de ce quiz..."></textarea>
           </div>
 
           <div class="border-t border-gray-200 pt-4 flex flex-col sm:flex-row gap-3">
-            <button
-              type="submit"
-              [disabled]="!quizFormRef.form.valid"
-              class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium"
-            >
+            <button type="submit" [disabled]="!quizFormRef.form.valid"
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium">
               {{ editingQuiz ? 'Enregistrer' : 'Créer le quiz' }}
             </button>
-            <button
-              type="button"
-              (click)="cancelQuizForm()"
-              class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
-            >
+            <button type="button" (click)="cancelQuizForm()"
+              class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
               Annuler
             </button>
           </div>
@@ -385,20 +462,20 @@
                 </span>
                 <!-- Bouton Passer le quiz pour les étudiants -->
                 <div *ngIf="!authService.isFormateur() && quiz.questions && quiz.questions.length > 0">
-                  <a *ngIf="allLeconsCompleted()" 
-                     [routerLink]="['/quiz', quiz.id, 'module', moduleId]"
-                     class="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+                  <a *ngIf="allLeconsCompleted()" [routerLink]="['/quiz', quiz.id, 'module', moduleId]"
+                    class="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     <span>Passer le quiz</span>
                   </a>
-                  <button *ngIf="!allLeconsCompleted()" 
-                          disabled
-                          class="px-6 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed inline-flex items-center gap-2 font-medium opacity-60"
-                          title="Complétez toutes les leçons pour débloquer le quiz">
+                  <button *ngIf="!allLeconsCompleted()" disabled
+                    class="px-6 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed inline-flex items-center gap-2 font-medium opacity-60"
+                    title="Complétez toutes les leçons pour débloquer le quiz">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <span>Quiz verrouillé</span>
                   </button>
@@ -409,23 +486,21 @@
               </div>
             </div>
             <div *ngIf="authService.isFormateur()" class="flex gap-2 ml-4">
-              <button
-                (click)="openQuizForm()"
+              <button (click)="openQuizForm()"
                 class="px-3 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
-                title="Modifier le quiz"
-              >
+                title="Modifier le quiz">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 <span>Modifier</span>
               </button>
-              <button
-                (click)="deleteQuiz()"
+              <button (click)="deleteQuiz()"
                 class="px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
-                title="Supprimer le quiz"
-              >
+                title="Supprimer le quiz">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 <span>Supprimer</span>
               </button>
@@ -436,7 +511,8 @@
         <div class="p-6">
           <!-- Add Question Button -->
           <div *ngIf="authService.isFormateur() && !showQuestionForm" class="mb-6">
-            <button (click)="openQuestionForm()" class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+            <button (click)="openQuestionForm()"
+              class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -455,15 +531,9 @@
                 <label for="questionText" class="block text-sm font-semibold text-gray-900 mb-2">
                   Question <span class="text-red-500">*</span>
                 </label>
-                <textarea
-                  id="questionText"
-                  name="questionText"
-                  [(ngModel)]="questionForm.question"
-                  required
-                  rows="3"
+                <textarea id="questionText" name="questionText" [(ngModel)]="questionForm.question" required rows="3"
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none"
-                  placeholder="Posez votre question..."
-                ></textarea>
+                  placeholder="Posez votre question..."></textarea>
               </div>
 
               <div class="mb-5">
@@ -471,34 +541,24 @@
                   Options de réponse <span class="text-red-500">*</span>
                 </label>
                 <div class="space-y-3">
-                  <div *ngFor="let option of questionForm.options; let i = index; trackBy: trackByIndex" class="flex gap-2">
-                    <input
-                      type="text"
-                      [(ngModel)]="questionForm.options[i]"
-                      [name]="'option_' + i"
-                      [id]="'option_' + i"
+                  <div *ngFor="let option of questionForm.options; let i = index; trackBy: trackByIndex"
+                    class="flex gap-2">
+                    <input type="text" [(ngModel)]="questionForm.options[i]" [name]="'option_' + i" [id]="'option_' + i"
                       required
                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                      [placeholder]="'Option ' + (i + 1)"
-                    />
-                    <button
-                      type="button"
-                      *ngIf="questionForm.options.length > 2"
-                      (click)="removeOption(i)"
+                      [placeholder]="'Option ' + (i + 1)" />
+                    <button type="button" *ngIf="questionForm.options.length > 2" (click)="removeOption(i)"
                       class="px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
-                      title="Supprimer cette option"
-                    >
+                      title="Supprimer cette option">
                       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  (click)="addOption()"
-                  class="mt-3 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
-                >
+                <button type="button" (click)="addOption()"
+                  class="mt-3 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
@@ -510,13 +570,8 @@
                 <label for="correctAnswer" class="block text-sm font-semibold text-gray-900 mb-2">
                   Réponse correcte <span class="text-red-500">*</span>
                 </label>
-                <select
-                  id="correctAnswer"
-                  name="correctAnswer"
-                  [(ngModel)]="questionForm.correctAnswer"
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                >
+                <select id="correctAnswer" name="correctAnswer" [(ngModel)]="questionForm.correctAnswer" required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
                   <option value="">Sélectionnez la bonne réponse</option>
                   <option *ngFor="let option of questionForm.options" [value]="option">{{ option }}</option>
                 </select>
@@ -526,30 +581,18 @@
                 <label for="questionOrdre" class="block text-sm font-semibold text-gray-900 mb-2">
                   Ordre d'affichage
                 </label>
-                <input
-                  type="number"
-                  id="questionOrdre"
-                  name="questionOrdre"
-                  [(ngModel)]="questionForm.ordre"
-                  min="1"
+                <input type="number" id="questionOrdre" name="questionOrdre" [(ngModel)]="questionForm.ordre" min="1"
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                  placeholder="1, 2, 3..."
-                />
+                  placeholder="1, 2, 3..." />
               </div>
 
               <div class="border-t border-gray-200 pt-4 flex flex-col sm:flex-row gap-3">
-                <button
-                  type="submit"
-                  [disabled]="!questionFormRef.form.valid"
-                  class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium"
-                >
+                <button type="submit" [disabled]="!questionFormRef.form.valid"
+                  class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium">
                   {{ editingQuestion ? 'Enregistrer' : 'Ajouter la question' }}
                 </button>
-                <button
-                  type="button"
-                  (click)="cancelQuestionForm()"
-                  class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
-                >
+                <button type="button" (click)="cancelQuestionForm()"
+                  class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
                   Annuler
                 </button>
               </div>
@@ -558,10 +601,12 @@
 
           <!-- Questions List (Formateur seulement) -->
           <div *ngIf="authService.isFormateur() && quiz.questions && quiz.questions.length > 0" class="space-y-4">
-            <div *ngFor="let question of quiz.questions; let i = index" class="bg-gray-50 rounded-lg border border-gray-200 p-5">
+            <div *ngFor="let question of quiz.questions; let i = index"
+              class="bg-gray-50 rounded-lg border border-gray-200 p-5">
               <div class="flex justify-between items-start mb-3">
                 <div class="flex items-start gap-3 flex-1">
-                  <span class="flex items-center justify-center w-8 h-8 bg-purple-600 text-white rounded-full text-sm font-bold flex-shrink-0">
+                  <span
+                    class="flex items-center justify-center w-8 h-8 bg-purple-600 text-white rounded-full text-sm font-bold flex-shrink-0">
                     {{ question.ordre || i + 1 }}
                   </span>
                   <div class="flex-1">
@@ -571,11 +616,15 @@
                         <span [class]="option === question.correctAnswer 
                           ? 'w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0'
                           : 'w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0'">
-                          <svg *ngIf="option === question.correctAnswer" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                          <svg *ngIf="option === question.correctAnswer" class="w-3 h-3 text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clip-rule="evenodd" />
                           </svg>
                         </span>
-                        <span [class]="option === question.correctAnswer ? 'text-green-700 font-medium' : 'text-gray-700'">
+                        <span
+                          [class]="option === question.correctAnswer ? 'text-green-700 font-medium' : 'text-gray-700'">
                           {{ option }}
                         </span>
                       </div>
@@ -583,22 +632,20 @@
                   </div>
                 </div>
                 <div *ngIf="authService.isFormateur()" class="flex gap-2 ml-4">
-                  <button
-                    (click)="editQuestion(question)"
+                  <button (click)="editQuestion(question)"
                     class="px-3 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium"
-                    title="Modifier"
-                  >
+                    title="Modifier">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
-                  <button
-                    (click)="deleteQuestion(question.id!)"
+                  <button (click)="deleteQuestion(question.id!)"
                     class="px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium"
-                    title="Supprimer"
-                  >
+                    title="Supprimer">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
@@ -615,7 +662,8 @@
       <!-- No Quiz State -->
       <div *ngIf="!quiz && !showQuizForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
         <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
         <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun quiz pour ce module</h3>
         <p class="text-gray-600 mb-4">Créez un quiz pour évaluer les connaissances des étudiants</p>

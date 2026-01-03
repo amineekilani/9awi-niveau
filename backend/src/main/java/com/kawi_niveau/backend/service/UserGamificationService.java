@@ -1,14 +1,24 @@
 package com.kawi_niveau.backend.service;
 
 import com.kawi_niveau.backend.dto.*;
-import com.kawi_niveau.backend.entity.*;
+import com.kawi_niveau.backend.entity.Badge;
+import com.kawi_niveau.backend.entity.BadgeCriteriaType;
+import com.kawi_niveau.backend.entity.Challenge;
+import com.kawi_niveau.backend.entity.Level;
+import com.kawi_niveau.backend.entity.User;
+import com.kawi_niveau.backend.entity.UserBadge;
+import com.kawi_niveau.backend.entity.UserChallenge;
+import com.kawi_niveau.backend.entity.UserXP;
 import com.kawi_niveau.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map; // Added import for Map
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +35,9 @@ public class UserGamificationService {
 
     @Autowired
     private UserBadgeRepository userBadgeRepository;
+
+    @Autowired
+    private BadgeRepository badgeRepository;
 
     @Autowired
     private UserChallengeRepository userChallengeRepository;
@@ -90,14 +103,73 @@ public class UserGamificationService {
         }
     }
 
+    @Transactional
+    public void markChallengeAsViewed(User user, Long challengeId) {
+        UserChallenge userChallenge = userChallengeRepository.findByUserId(user.getId()).stream()
+                .filter(uc -> uc.getChallenge().getId().equals(challengeId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Défi non trouvé pour cet utilisateur"));
+
+        userChallenge.setIsNew(false);
+        userChallengeRepository.save(userChallenge);
+    }
+
+    @Transactional
+    public void markBadgeAsViewed(User user, Long badgeId) {
+        UserBadge userBadge = userBadgeRepository.findByUserId(user.getId()).stream()
+                .filter(ub -> ub.getBadge().getId().equals(badgeId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Badge non trouvé pour cet utilisateur"));
+
+        userBadge.setIsNew(false);
+        userBadgeRepository.save(userBadge);
+    }
+
     public List<UserGamificationStatsResponse.UserBadgeResponse> getUserBadges(User user, String filter) {
         try {
-            List<UserBadge> userBadges = userBadgeRepository.findByUserId(user.getId());
+            // 1. Récupérer tous les badges actifs du système
+            List<Badge> allActiveBadges = badgeRepository.findByIsActiveTrue();
 
-            return userBadges.stream()
-                    .filter(ub -> filterBadge(ub, filter))
-                    .map(this::convertToUserBadgeResponse)
+            // 2. Récupérer les badges déjà obtenus par l'utilisateur
+            List<UserBadge> userEarnedBadges = userBadgeRepository.findByUserId(user.getId());
+
+            // Créer une map pour une recherche rapide par ID de badge
+            Map<Long, UserBadge> earnedBadgesMap = userEarnedBadges.stream()
+                    .collect(Collectors.toMap(ub -> ub.getBadge().getId(), ub -> ub));
+
+            // 3. Fusionner les résultats
+            return allActiveBadges.stream()
+                    .map(badge -> {
+                        UserBadge earnedBadge = earnedBadgesMap.get(badge.getId());
+
+                        // Si le badge est obtenu, on utilise ses infos (date, new, etc.)
+                        if (earnedBadge != null) {
+                            return convertToUserBadgeResponse(earnedBadge);
+                        }
+
+                        // Sinon, on crée une réponse "badge verrouillé"
+                        return new UserGamificationStatsResponse.UserBadgeResponse(
+                                badge.getId(),
+                                badge.getName(),
+                                badge.getDescription(),
+                                badge.getCriteriaType().toString(), // Added criteriaType
+                                badge.getIconUrl(),
+                                0L, // earnedAt = 0 signifie non obtenu
+                                false // isNew = false
+                        );
+                    })
+                    // Appliquer le filtre si nécessaire (pour l'instant 'all' renvoie tout)
+                    .filter(response -> {
+                        if ("earned".equals(filter))
+                            return response.getEarnedAt() > 0;
+                        if ("new".equals(filter))
+                            return response.getIsNew();
+                        if ("locked".equals(filter))
+                            return response.getEarnedAt() == 0;
+                        return true;
+                    })
                     .collect(Collectors.toList());
+
         } catch (Exception e) {
             System.err.println(
                     "Erreur lors de la récupération des badges pour " + user.getEmail() + ": " + e.getMessage());
@@ -107,11 +179,48 @@ public class UserGamificationService {
 
     public List<UserChallengeResponse> getUserChallenges(User user) {
         try {
-            List<UserChallenge> userChallenges = userChallengeRepository.findByUserId(user.getId());
+            // 1. Récupérer tous les défis actifs du système
+            List<Challenge> allActiveChallenges = challengeRepository.findByIsActiveTrue();
+            System.out.println("DEBUG: Challenges actifs trouvés: " + allActiveChallenges.size());
 
-            return userChallenges.stream()
-                    .map(this::convertToUserChallengeResponse)
+            // 2. Récupérer les défis déjà rejoints/complétés par l'utilisateur
+            List<UserChallenge> userChallenges = userChallengeRepository.findByUserId(user.getId());
+            System.out.println("DEBUG: Challenges utilisateur trouvés: " + userChallenges.size());
+
+            // Map pour recherche rapide
+            Map<Long, UserChallenge> userChallengesMap = userChallenges.stream()
+                    .collect(Collectors.toMap(uc -> uc.getChallenge().getId(), uc -> uc));
+
+            // 3. Fusionner
+            return allActiveChallenges.stream()
+                    .map(challenge -> {
+                        UserChallenge userChallenge = userChallengesMap.get(challenge.getId());
+
+                        if (userChallenge != null) {
+                            return convertToUserChallengeResponse(userChallenge);
+                        }
+
+                        // Défi disponible mais non commencé
+                        return new UserChallengeResponse(
+                                challenge.getId(),
+                                challenge.getName(),
+                                challenge.getDescription(),
+                                challenge.getChallengeType().toString(),
+                                challenge.getTargetValue(),
+                                0, // currentProgress
+                                0.0, // progressPercent (Double)
+                                challenge.getXpReward(),
+                                false, // isCompleted
+                                0L, // completedAt (Long)
+                                0L, // joinedAt (Long)
+                                challenge.getEndDate() != null ? challenge.getEndDate() : 0L,
+                                formatTimeRemaining(challenge.getEndDate()),
+                                false, // isNew
+                                true // isActive
+                        );
+                    })
                     .collect(Collectors.toList());
+
         } catch (Exception e) {
             System.err.println(
                     "Erreur lors de la récupération des défis pour " + user.getEmail() + ": " + e.getMessage());
@@ -165,23 +274,30 @@ public class UserGamificationService {
                         "🏆"));
             }
 
-            // Ajouter des activités simulées pour l'exemple
-            if (activities.size() < limit) {
+            // Récupérer les défis récents complétés
+            List<UserChallenge> recentChallenges = userChallengeRepository.findByUserId(user.getId()).stream()
+                    .filter(UserChallenge::isCompleted)
+                    .sorted((a, b) -> Long.compare(b.getCompletedAt(), a.getCompletedAt()))
+                    .limit(limit / 2)
+                    .collect(Collectors.toList());
+
+            for (UserChallenge challenge : recentChallenges) {
                 activities.add(new UserGamificationStatsResponse.RecentActivityResponse(
-                        "quiz",
-                        "Quiz réussi avec succès",
-                        15,
-                        "il y a 2h",
-                        "✓"));
-                activities.add(new UserGamificationStatsResponse.RecentActivityResponse(
-                        "course",
-                        "Cours terminé",
-                        50,
-                        "il y a 1j",
-                        "📚"));
+                        "challenge",
+                        "Défi \"" + challenge.getChallenge().getName() + "\" réussi",
+                        challenge.getChallenge().getXpReward(),
+                        formatTimeAgo(challenge.getCompletedAt()),
+                        "🎯"));
             }
 
-            return activities.stream().limit(limit).collect(Collectors.toList());
+            // Trier toutes les activités par date (décroissant)
+            // Note: Comme nous n'avons pas une table unique d'activité, on trie la liste
+            // combinée
+            // Pour l'instant, c'est déjà pas mal.
+
+            return activities.stream()
+                    .limit(limit)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             System.err.println("Erreur lors de la récupération de l'activité récente pour " + user.getEmail() + ": "
                     + e.getMessage());
@@ -189,6 +305,23 @@ public class UserGamificationService {
         }
     }
     // Méthodes utilitaires privées
+
+    private String formatTimeRemaining(Long endDate) {
+        if (endDate == null || endDate == 0)
+            return null;
+        long now = System.currentTimeMillis();
+        long diff = endDate - now;
+        if (diff <= 0)
+            return "Terminé";
+        long days = TimeUnit.MILLISECONDS.toDays(diff);
+        if (days > 0)
+            return days + " jours";
+        long hours = TimeUnit.MILLISECONDS.toHours(diff);
+        if (hours > 0)
+            return hours + " heures";
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
+        return minutes + " minutes";
+    }
 
     private Level createDefaultLevel(int levelNumber) {
         Level level = new Level();
@@ -247,13 +380,14 @@ public class UserGamificationService {
     }
 
     private UserGamificationStatsResponse.UserBadgeResponse convertToUserBadgeResponse(UserBadge userBadge) {
-        long weekAgo = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000L);
-        boolean isNew = userBadge.getEarnedAt() > weekAgo;
+        // Utiliser le champ isNew de l'entité (mis à jour quand l'utilisateur le voit)
+        boolean isNew = userBadge.getIsNew() != null && userBadge.getIsNew();
 
         return new UserGamificationStatsResponse.UserBadgeResponse(
                 userBadge.getBadge().getId(),
                 userBadge.getBadge().getName(),
                 userBadge.getBadge().getDescription(),
+                userBadge.getBadge().getCriteriaType().toString(), // Added criteriaType
                 userBadge.getBadge().getIconUrl(),
                 userBadge.getEarnedAt(),
                 isNew);
@@ -291,6 +425,7 @@ public class UserGamificationService {
                 userChallenge.getJoinedAt(),
                 challenge.getEndDate(),
                 timeRemaining,
+                userChallenge.getIsNew() != null && userChallenge.getIsNew(),
                 challenge.getIsActive());
     }
 

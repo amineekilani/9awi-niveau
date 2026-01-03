@@ -465,6 +465,7 @@ public class GamificationService {
             if (newProgress >= challenge.getTargetValue()) {
                 userChallenge.setCompleted(true);
                 userChallenge.setCompletedAt(System.currentTimeMillis());
+                userChallenge.setIsNew(true); // Flag for notification
 
                 // Déclencher l'événement de défi terminé
                 onChallengeCompleted(user, challenge);

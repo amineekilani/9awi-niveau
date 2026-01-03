@@ -25,12 +25,61 @@
 
       <!-- Carte Profil Utilisateur (Moderne) -->
       <div class="flex items-center space-x-4">
-        <!-- Notifications -->
-        <div class="relative cursor-pointer hidden md:block">
-          <i data-feather="bell" class="text-white hover:text-gray-200 transition-colors"></i>
-          <span *ngIf="enrolledCount > 0"
-            class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">{{
-            enrolledCount }}</span>
+        <!-- Notifications Dropdown -->
+        <div class="relative notification-container hidden md:block">
+          <button (click)="toggleNotifications()"
+            class="p-2 text-white hover:text-gray-200 relative focus:outline-none transition-colors">
+            <span class="sr-only">Notifications</span>
+            <i data-feather="bell" class="h-6 w-6"></i>
+            <span *ngIf="recentActivity.length > 0"
+              class="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-blue-600 bg-red-500 animate-pulse"></span>
+          </button>
+
+          <!-- Dropdown Panel -->
+          <div *ngIf="showNotifications"
+            class="origin-top-right absolute right-0 mt-2 w-80 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transform transition-all duration-200 ease-out text-left text-gray-800">
+            <div class="py-1" role="menu" aria-orientation="vertical">
+              <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h3 class="text-sm font-bold text-gray-900">Activité Récente</h3>
+              </div>
+
+              <div class="max-h-96 overflow-y-auto">
+                <div *ngFor="let activity of recentActivity"
+                  class="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer">
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 mt-1">
+                      <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                        <i data-feather="star" class="w-4 h-4"></i>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                        {{ activity.description }}
+                      </p>
+                      <p class="text-xs text-gray-500 mt-0.5 flex items-center">
+                        <span class="font-bold text-green-600 mr-2" *ngIf="activity.points > 0">+{{ activity.points }}
+                          XP</span>
+                        <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                        {{ activity.timeAgo }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="recentActivity.length === 0" class="px-4 py-8 text-center text-gray-500">
+                  <i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
+                  <p class="text-sm">Aucune nouvelle activité</p>
+                </div>
+              </div>
+
+              <div class="border-t border-gray-100 p-2 bg-gray-50 rounded-b-xl text-center">
+                <a routerLink="/mes-recompenses"
+                  class="block w-full text-xs font-medium text-blue-600 hover:text-blue-800 py-1 hover:bg-blue-50 rounded transition-colors">
+                  Voir tout l'historique
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Carte Profil avec Stats -->
@@ -38,10 +87,12 @@
           class="hidden lg:flex items-center space-x-3 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-opacity-20 transition-all"
           (click)="goToProfile()">
           <!-- Photo de profil -->
-          <div
+          <div *ngIf="!userProfileImage"
             class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold shadow-md">
             {{ userInitials }}
           </div>
+          <img *ngIf="userProfileImage" [src]="userProfileImage" alt="Profile"
+            class="w-10 h-10 rounded-full object-cover shadow-md border-2 border-white">
 
           <!-- Info utilisateur -->
           <div class="text-left">

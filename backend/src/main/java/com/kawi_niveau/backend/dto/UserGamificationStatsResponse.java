@@ -22,7 +22,7 @@ public class UserGamificationStatsResponse {
     private Integer leaderboardPosition;
     private List<RecentActivityResponse> recentActivities;
     private List<UserBadgeResponse> recentBadges;
-    
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -33,7 +33,7 @@ public class UserGamificationStatsResponse {
         private String timeAgo;
         private String icon;
     }
-    
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -41,6 +41,7 @@ public class UserGamificationStatsResponse {
         private Long id;
         private String name;
         private String description;
+        private String criteriaType; // Added field
         private String iconUrl;
         private Long earnedAt;
         private Boolean isNew;

@@ -8,6 +8,9 @@ import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { ModuleProgressService, ModuleProgress } from '../module-progress.service';
 import { ApprenantProgressionService, ApprenantProgression } from '../apprenant-progression.service';
 import { AuthService } from '../auth';
+import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
+
+declare const feather: any;
 
 @Component({
   selector: 'app-cours-detail',
@@ -28,6 +31,13 @@ export class CoursDetailComponent implements OnInit {
   apprenants: ApprenantProgression[] = [];
   showApprenants = false;
 
+  // Données pour le header unifié
+  userInitials = 'ET';
+  userProfileImage = '';
+  showNotifications = false;
+  recentActivity: RecentActivity[] = [];
+  userStats: UserGamificationStats | null = null;
+
   // Module form
   showModuleForm = false;
   editingModule: Module | null = null;
@@ -45,10 +55,14 @@ export class CoursDetailComponent implements OnInit {
     private apprenantProgressionService: ApprenantProgressionService,
     public authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
-  ) {}
+    private route: ActivatedRoute,
+    private gamificationService: UserGamificationService
+  ) { }
 
   ngOnInit() {
+    // Initialiser les données du header
+    this.initHeaderData();
+
     this.coursId = Number(this.route.snapshot.paramMap.get('id'));
     this.loadCours();
     this.loadModules();
@@ -255,7 +269,53 @@ export class CoursDetailComponent implements OnInit {
     if (this.authService.isFormateur()) {
       this.router.navigate(['/formateur-dashboard']);
     } else {
-      this.router.navigate(['/cours']);
+      this.router.navigate(['/mes-cours']);
     }
+  }
+
+  private initHeaderData() {
+    this.authService.userProfile$.subscribe(profile => {
+      if (profile) {
+        this.userProfileImage = profile.profileImage || '';
+        const firstName = profile.firstName || '';
+        const lastName = profile.lastName || '';
+        if (firstName && lastName) {
+          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (profile.email) {
+          const namePart = profile.email.split('@')[0];
+          this.userInitials = namePart.split('.').map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+        }
+      }
+    });
+
+    if (this.authService.getToken() && !this.userProfileImage) {
+      this.authService.loadUserProfile();
+    }
+
+    this.gamificationService.getRecentActivity(5).subscribe({
+      next: (activities) => {
+        this.recentActivity = activities;
+        setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
+      }
+    });
+
+    this.gamificationService.getUserStats().subscribe({
+      next: (stats) => this.userStats = stats
+    });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
+    }
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }

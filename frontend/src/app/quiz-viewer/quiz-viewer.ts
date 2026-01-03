@@ -1,14 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { QuizService, Quiz, Question } from '../quiz.service';
 import { QuizResultatService, QuizSubmission, ResultatQuiz, QuizAttempt } from '../quiz-resultat.service';
+import { AuthService } from '../auth';
+import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
+
+declare const feather: any;
 
 @Component({
   selector: 'app-quiz-viewer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './quiz-viewer.html',
   styleUrls: ['./quiz-viewer.css']
 })
@@ -17,34 +21,44 @@ export class QuizViewerComponent implements OnInit {
   moduleId!: number;
   quiz: Quiz | null = null;
   questions: Question[] = [];
-  
+
   // État du quiz
   quizStarted = false;
   quizFinished = false;
   currentQuestionIndex = 0;
   reponses: { [questionId: number]: string } = {};
   startTime: number = 0;
-  
+
   // Résultat
   resultat: ResultatQuiz | null = null;
   previousAttempts: QuizAttempt[] = [];
   bestScore: QuizAttempt | null = null;
-  
+
   loading = false;
   error = '';
+
+  // Données pour le header unifié
+  userInitials = 'ET';
+  userProfileImage = '';
+  showNotifications = false;
+  recentActivity: RecentActivity[] = [];
+  userStats: UserGamificationStats | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private quizService: QuizService,
-    private quizResultatService: QuizResultatService
-  ) {}
+    private quizResultatService: QuizResultatService,
+    public authService: AuthService,
+    private gamificationService: UserGamificationService
+  ) { }
 
   ngOnInit() {
     this.quizId = Number(this.route.snapshot.paramMap.get('quizId'));
     this.moduleId = Number(this.route.snapshot.paramMap.get('moduleId'));
     this.loadQuiz();
     this.loadPreviousAttempts();
+    this.initHeaderData();
   }
 
   loadQuiz() {
@@ -125,7 +139,7 @@ export class QuizViewerComponent implements OnInit {
     }
 
     const tempsPasse = Math.floor((Date.now() - this.startTime) / 1000);
-    
+
     const submission: QuizSubmission = {
       reponses: this.reponses,
       tempsPasse: tempsPasse
@@ -175,13 +189,57 @@ export class QuizViewerComponent implements OnInit {
 
   formatDate(timestamp: number): string {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('fr-FR', {
+    return new Date(timestamp).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
+  }
+
+  private initHeaderData() {
+    this.authService.userProfile$.subscribe(profile => {
+      if (profile) {
+        this.userProfileImage = profile.profileImage || '';
+        const firstName = profile.firstName || '';
+        const lastName = profile.lastName || '';
+        if (firstName && lastName) {
+          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (profile.email) {
+          const namePart = profile.email.split('@')[0];
+          this.userInitials = namePart.split('.').map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+        }
+      }
+    });
+
+    if (this.authService.getToken() && !this.userProfileImage) {
+      this.authService.loadUserProfile();
+    }
+
+    this.gamificationService.getRecentActivity(5).subscribe({
+      next: (activities) => {
+        this.recentActivity = activities;
+        setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
+      }
+    });
+
+    this.gamificationService.getUserStats().subscribe({
+      next: (stats) => this.userStats = stats
+    });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
+    }
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
+  }
+
+  logout() {
+    this.authService.logout();
   }
 
   getScoreColor(score: number): string {

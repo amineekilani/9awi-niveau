@@ -7,22 +7,128 @@
 </div>
 
 <div class="relative z-10 min-h-screen">
-  <!-- Header -->
-  <header class="bg-white shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  <!-- Header avec navigation moderne -->
+  <header class="backdrop-blur-md shadow-lg sticky top-0 z-50 overflow-visible"
+    style="background: linear-gradient(to right, #063cdf, #0850f5);">
+    <div class="container mx-auto px-4 py-3">
       <div class="flex justify-between items-center">
-        <div class="flex items-center">
-          <button (click)="goBack()" class="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <i data-feather="arrow-left" class="text-primary-500" width="24" height="24"></i>
-          </button>
-          <div class="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center mr-3">
-            <i data-feather="user" class="text-white" width="20" height="20"></i>
+        <!-- Logo et titre -->
+        <a [routerLink]="authService.isFormateur() ? '/formateur-dashboard' : '/home'"
+          class="flex items-center space-x-3">
+          <img src="/Logo_9awi_Niveau_without_name.png" alt="9awi Niveau Logo" class="h-10 w-auto">
+          <span class="text-2xl font-bold text-white hidden md:block">9awi Niveau</span>
+        </a>
+
+        <!-- Navigation centrale -->
+        <nav class="hidden lg:flex space-x-6">
+          <a routerLink="/home" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+            *ngIf="!authService.isFormateur()">Accueil</a>
+          <a routerLink="/formateur-dashboard"
+            class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+            *ngIf="authService.isFormateur()">Tableau de Bord</a>
+          <a routerLink="/mes-cours" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+            *ngIf="!authService.isFormateur()">Mes Cours</a>
+          <a routerLink="/mes-defis" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+            *ngIf="!authService.isFormateur()">Défis</a>
+          <a routerLink="/classement" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+            *ngIf="!authService.isFormateur()">Classement</a>
+          <a routerLink="/mes-recompenses" class="text-white hover:text-gray-200 font-medium nav-link transition-colors"
+            *ngIf="!authService.isFormateur()">Récompenses</a>
+        </nav>
+
+        <!-- Carte Profil Utilisateur -->
+        <div class="flex items-center space-x-4">
+          <!-- Notifications Dropdown -->
+          <div class="relative notification-container hidden md:block" *ngIf="!authService.isFormateur()">
+            <button (click)="toggleNotifications()"
+              class="p-2 text-white hover:text-gray-200 relative focus:outline-none transition-colors">
+              <span class="sr-only">Notifications</span>
+              <i data-feather="bell" class="h-6 w-6"></i>
+              <span *ngIf="recentActivity.length > 0"
+                class="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-blue-600 bg-red-500 animate-pulse"></span>
+            </button>
+
+            <!-- Dropdown Panel -->
+            <div *ngIf="showNotifications"
+              class="origin-top-right absolute right-0 mt-2 w-80 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transform transition-all duration-200 ease-out text-left text-gray-800">
+              <div class="py-1" role="menu" aria-orientation="vertical">
+                <div
+                  class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                  <h3 class="text-sm font-bold text-gray-900">Activité Récente</h3>
+                </div>
+                <div class="max-h-96 overflow-y-auto">
+                  <div *ngFor="let activity of recentActivity"
+                    class="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer">
+                    <div class="flex items-start space-x-3">
+                      <div class="flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                          <i data-feather="star" class="w-4 h-4"></i>
+                        </div>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p
+                          class="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                          {{ activity.description }}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-0.5 flex items-center">
+                          <span class="font-bold text-green-600 mr-2" *ngIf="activity.points > 0">+{{ activity.points }}
+                            XP</span>
+                          <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                          {{ activity.timeAgo }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div *ngIf="recentActivity.length === 0" class="px-4 py-8 text-center text-gray-500">
+                    <i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
+                    <p class="text-sm">Aucune nouvelle activité</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <h1 class="text-2xl font-bold text-primary-500">Gestion du Profil</h1>
+
+          <!-- Carte Profil -->
+          <div
+            class="hidden lg:flex items-center space-x-3 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-opacity-20 transition-all">
+            <div *ngIf="!profile?.profileImage"
+              class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold shadow-md">
+              {{ userInitials }}
+            </div>
+            <img *ngIf="profile?.profileImage" [src]="'http://localhost:8080/images/users/' + profile?.profileImage"
+              alt="Profile" class="w-10 h-10 rounded-full object-cover shadow-md border-2 border-white">
+
+            <div class="text-left">
+              <div class="text-white font-semibold text-sm">{{ (authService.getEmail() || '').split('@')[0] ||
+                'Formateur' }}</div>
+
+              <!-- Étudiant : Niveau & XP -->
+              <div class="flex items-center space-x-2 text-xs" *ngIf="!authService.isFormateur()">
+                <span class="text-blue-100">Niveau {{ userStats?.currentLevel || 1 }}</span>
+                <span class="text-blue-200">•</span>
+                <span class="text-blue-100">{{ userStats?.totalPoints || 0 }} XP</span>
+              </div>
+
+              <!-- Formateur : Badge & Domaine -->
+              <div class="flex items-center mt-0.5" *ngIf="authService.isFormateur()">
+                <span
+                  class="bg-white bg-opacity-20 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider mr-2">Formateur</span>
+                <span class="text-blue-100 text-[10px] opacity-80">Expert Digital</span>
+              </div>
+            </div>
+            <i data-feather="chevron-down" class="text-white w-4 h-4"></i>
+          </div>
+
+          <button (click)="logout()"
+            class="hidden xl:flex items-center text-white hover:text-gray-200 transition-colors">
+            <i data-feather="log-out" class="w-5 h-5"></i>
+          </button>
         </div>
       </div>
     </div>
   </header>
+
+
 
   <!-- Main Content -->
   <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -52,9 +158,11 @@
       <div *ngIf="profile && !loading && !editMode">
         <div class="flex items-center mb-8">
           <div *ngIf="profile.profileImage" class="w-20 h-20 rounded-full overflow-hidden mr-4 shadow-lg">
-            <img [src]="'http://localhost:8080/images/users/' + profile.profileImage" alt="Photo de profil" class="w-full h-full object-cover" />
+            <img [src]="'http://localhost:8080/images/users/' + profile.profileImage" alt="Photo de profil"
+              class="w-full h-full object-cover" />
           </div>
-          <div *ngIf="!profile.profileImage" class="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mr-4">
+          <div *ngIf="!profile.profileImage"
+            class="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mr-4">
             <i data-feather="user" class="text-white" width="40" height="40"></i>
           </div>
           <div>
@@ -80,11 +188,13 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 <div class="flex items-center">
                   <p class="text-lg text-gray-900 mr-2">{{ profile.email }}</p>
-                  <span *ngIf="profile.emailVerified" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <span *ngIf="profile.emailVerified"
+                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     <i data-feather="check" width="12" height="12" class="mr-1"></i>
                     Vérifié
                   </span>
-                  <span *ngIf="!profile.emailVerified" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  <span *ngIf="!profile.emailVerified"
+                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                     <i data-feather="alert-triangle" width="12" height="12" class="mr-1"></i>
                     Non vérifié
                   </span>
@@ -99,7 +209,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Numéro de téléphone</label>
                 <p class="text-lg text-gray-900">
-                  <span class="inline-flex items-center px-2 py-1 bg-gray-100 rounded-md text-sm font-medium">+216</span>
+                  <span
+                    class="inline-flex items-center px-2 py-1 bg-gray-100 rounded-md text-sm font-medium">+216</span>
                   <span class="ml-2">{{ formatPhoneSuffix(profile) }}</span>
                 </p>
               </div>
@@ -112,15 +223,18 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Rôle</label>
                 <p class="text-lg text-gray-900">
-                  <span *ngIf="profile.role === 'ADMIN'" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                  <span *ngIf="profile.role === 'ADMIN'"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
                     <i data-feather="shield" width="16" height="16" class="mr-1"></i>
                     Administrateur
                   </span>
-                  <span *ngIf="profile.role === 'FORMATEUR'" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  <span *ngIf="profile.role === 'FORMATEUR'"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                     <i data-feather="briefcase" width="16" height="16" class="mr-1"></i>
                     Formateur
                   </span>
-                  <span *ngIf="profile.role === 'ETUDIANT'" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                  <span *ngIf="profile.role === 'ETUDIANT'"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
                     <i data-feather="book" width="16" height="16" class="mr-1"></i>
                     Étudiant
                   </span>
@@ -131,9 +245,10 @@
         </div>
 
         <!-- Change Role Section - Removed -->
-        
+
         <div class="flex gap-4">
-          <button (click)="enableEditMode()" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all">
+          <button (click)="enableEditMode()"
+            class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all">
             <i data-feather="edit-2" width="18" height="18"></i>
             Modifier le profil
           </button>
@@ -143,42 +258,42 @@
       <!-- Edit Mode -->
       <div *ngIf="editMode && !loading">
         <h3 class="text-2xl font-bold text-gray-900 mb-6">Modifier le profil</h3>
-        
+
         <form (ngSubmit)="updateProfile()" class="space-y-6">
           <!-- Image de profil -->
           <div class="border-t border-gray-200 pt-6">
             <h4 class="text-lg font-semibold text-gray-900 mb-4">Photo de profil</h4>
-            
+
             <div class="flex items-start gap-6">
               <!-- Affichage actuel -->
               <div class="flex-shrink-0">
                 <div *ngIf="profile?.profileImage" class="w-24 h-24 rounded-full overflow-hidden shadow-lg">
-                  <img [src]="'http://localhost:8080/images/users/' + (profile?.profileImage || '')" alt="Photo de profil" class="w-full h-full object-cover" />
+                  <img [src]="'http://localhost:8080/images/users/' + (profile?.profileImage || '')"
+                    alt="Photo de profil" class="w-full h-full object-cover" />
                 </div>
-                <div *ngIf="!profile?.profileImage" class="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg">
+                <div *ngIf="!profile?.profileImage"
+                  class="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg">
                   <i data-feather="user" class="text-white" width="40" height="40"></i>
                 </div>
               </div>
 
               <div class="flex-1">
-                <div class="text-sm text-gray-500">Inscrit le: <span>{{ formatDateFrench(profile?.createdAt) || '' }}</span></div>
+                <div class="text-sm text-gray-500">Inscrit le: <span>{{ formatDateFrench(profile?.createdAt) || ''
+                    }}</span></div>
                 <div class="text-sm text-gray-500">Téléphone: <span>
-                  <span class="inline-flex items-center px-2 py-1 bg-gray-100 rounded-md text-sm font-medium">+216</span>
-                  <span class="ml-2">{{ formatPhoneSuffix(profile) }}</span>
-                </span></div>
+                    <span
+                      class="inline-flex items-center px-2 py-1 bg-gray-100 rounded-md text-sm font-medium">+216</span>
+                    <span class="ml-2">{{ formatPhoneSuffix(profile) }}</span>
+                  </span></div>
               </div>
 
               <!-- Zone d'upload -->
               <div class="flex-1">
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer" (click)="fileInput.click()">
-                  <input
-                    #fileInput
-                    type="file"
-                    class="hidden"
-                    accept="image/*"
-                    (change)="onProfileImageSelected($event)"
-                    name="profileImage"
-                  />
+                <div
+                  class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer"
+                  (click)="fileInput.click()">
+                  <input #fileInput type="file" class="hidden" accept="image/*"
+                    (change)="onProfileImageSelected($event)" name="profileImage" />
                   <div *ngIf="!profileImagePreview" class="flex flex-col items-center">
                     <i data-feather="image" class="text-gray-400 mb-2" width="32" height="32"></i>
                     <p class="text-sm text-gray-600">Cliquez ou glissez une image</p>
@@ -187,17 +302,14 @@
                   <div *ngIf="profileImagePreview" class="flex flex-col items-center">
                     <img [src]="profileImagePreview" class="h-16 w-16 object-cover rounded-lg mb-2" />
                     <p class="text-sm text-gray-600">{{ selectedImageFile?.name }}</p>
-                    <p class="text-xs text-primary-500 cursor-pointer mt-1" (click)="clearProfileImage($event)">Supprimer</p>
+                    <p class="text-xs text-primary-500 cursor-pointer mt-1" (click)="clearProfileImage($event)">
+                      Supprimer</p>
                   </div>
                 </div>
 
                 <!-- Bouton d'upload d'image -->
-                <button 
-                  *ngIf="selectedImageFile && !uploadingImage"
-                  type="button"
-                  (click)="uploadProfileImage()"
-                  class="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all"
-                >
+                <button *ngIf="selectedImageFile && !uploadingImage" type="button" (click)="uploadProfileImage()"
+                  class="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all">
                   <i data-feather="upload" width="18" height="18"></i>
                   Uploader la photo
                 </button>
@@ -212,106 +324,75 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input 
-              type="email" 
-              [(ngModel)]="editEmail" 
-              name="email"
+            <input type="email" [(ngModel)]="editEmail" name="email"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              required
-            />
+              required />
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
-              <input 
-                type="text" 
-                [(ngModel)]="editFirstName" 
-                name="firstName"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
+              <input type="text" [(ngModel)]="editFirstName" name="firstName"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
-              <input 
-                type="text" 
-                [(ngModel)]="editLastName" 
-                name="lastName"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
+              <input type="text" [(ngModel)]="editLastName" name="lastName"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
             </div>
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Date de naissance</label>
-            <input 
-              type="date" 
-              [(ngModel)]="editDateOfBirth" 
-              name="dateOfBirth"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
+            <input type="date" [(ngModel)]="editDateOfBirth" name="dateOfBirth"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Numéro de téléphone</label>
             <div class="flex items-center gap-2">
               <span class="inline-flex items-center px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium">+216</span>
-              <input
-                type="text"
-                [(ngModel)]="editPhoneNumberSuffix"
-                name="phoneNumberSuffix"
-                placeholder="12345678"
+              <input type="text" [(ngModel)]="editPhoneNumberSuffix" name="phoneNumberSuffix" placeholder="12345678"
                 pattern="^\d{8}$"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
             </div>
             <p class="text-xs text-gray-500">Entrez 8 chiffres (ex: 12345678)</p>
           </div>
 
           <div *ngIf="profile?.provider === 'local'" class="border-t border-gray-200 pt-6">
             <h4 class="text-lg font-semibold text-gray-900 mb-4">Changer le mot de passe (optionnel)</h4>
-            
+
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe actuel</label>
-                <input 
-                  type="password" 
-                  [(ngModel)]="currentPassword" 
-                  name="currentPassword"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                <input type="password" [(ngModel)]="currentPassword" name="currentPassword"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
-                <input 
-                  type="password" 
-                  [(ngModel)]="newPassword" 
-                  name="newPassword"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                <input type="password" [(ngModel)]="newPassword" name="newPassword"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
-                <input 
-                  type="password" 
-                  [(ngModel)]="confirmPassword" 
-                  name="confirmPassword"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
               </div>
             </div>
           </div>
 
           <div class="flex gap-4">
-            <button type="submit" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all">
+            <button type="submit"
+              class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all">
               <i data-feather="save" width="18" height="18"></i>
               Enregistrer
             </button>
-            
-            <button type="button" (click)="cancelEdit()" class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+
+            <button type="button" (click)="cancelEdit()"
+              class="btn-hover-effect flex items-center gap-2 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
               <i data-feather="x" width="18" height="18"></i>
               Annuler
             </button>

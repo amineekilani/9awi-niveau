@@ -22,6 +22,9 @@ public class UserBadge {
     @Column(name = "earned_at")
     private Long earnedAt;
 
+    @Column(name = "is_new", columnDefinition = "TINYINT(1) DEFAULT 1")
+    private Boolean isNew = true;
+
     @PrePersist
     protected void onCreate() {
         earnedAt = System.currentTimeMillis();

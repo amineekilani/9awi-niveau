@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { CoursService, Cours } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { AuthService } from '../auth';
+import { UserGamificationService, RecentActivity } from '../user-gamification.service';
+import { GamificationNotificationService } from '../gamification-notification.service';
 
 declare const feather: any;
 
@@ -21,12 +23,22 @@ interface CoursWithEnrollment extends Cours {
   styleUrls: ['./mes-cours.css']
 })
 export class MesCoursComponent implements OnInit, AfterViewInit {
+  user: any = null;
+  sidebarOpen = false;
+
+  // Données utilisateur
+  userInitials = 'ET';
+  userProfileImage = '';
+
+  // Notifications
+  showNotifications = false;
+  recentActivity: RecentActivity[] = [];
+
+  // Cours Data
   cours: CoursWithEnrollment[] = [];
   filteredCours: CoursWithEnrollment[] = [];
   loading = true;
   error = '';
-  userInitials = 'ET';
-  userName = '';
 
   // Filtres spécifiques aux cours inscrits
   selectedFilter = 'all';
@@ -43,15 +55,48 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
   averageProgress = 0;
 
   constructor(
+    private router: Router,
+    public authService: AuthService,
     private coursService: CoursService,
     private enrollmentService: EnrollmentService,
-    public authService: AuthService,
-    private router: Router
+    private userGamificationService: UserGamificationService,
+    private notificationService: GamificationNotificationService
   ) { }
 
   ngOnInit() {
-    this.calculateUserInitials();
+    // this.authService.currentUser n'existe pas, on utilise userProfile$ plus bas
+
+
+    // Charger le profil pour l'image
+    if (this.authService.getToken()) {
+      this.authService.loadUserProfile();
+    }
+    this.authService.userProfile$.subscribe(profile => {
+      if (profile) {
+        this.userProfileImage = profile.profileImage || '';
+        const firstName = profile.firstName || '';
+        const lastName = profile.lastName || '';
+        if (firstName && lastName) {
+          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (profile.email) {
+          const parts = profile.email.split('@')[0].split('.');
+          this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+        }
+      }
+    });
+
     this.loadMesCours();
+
+    // Notifications logic
+    this.notificationService.checkForNewAchievements();
+    this.loadNotifications();
+
+    document.addEventListener('click', (event: any) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.notification-container')) {
+        this.showNotifications = false;
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -60,120 +105,112 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
     }
   }
 
-  calculateUserInitials() {
-    const email = this.authService.getEmail();
-    if (email) {
-      const parts = email.split('@')[0].split('.');
-      this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
-    }
-  }
-
   loadMesCours() {
-    this.loading = true;
-
-    // Charger les enrollments de l'utilisateur
-    this.enrollmentService.getUserEnrollments().subscribe({
-      next: (enrollments) => {
-        if (enrollments.length === 0) {
-          this.cours = [];
-          this.filteredCours = [];
-          this.loading = false;
-          return;
-        }
-
-        // Charger les détails des cours inscrits
-        const coursIds = enrollments.map(e => e.coursId);
-        this.loadCoursDetails(coursIds, enrollments);
-      },
-      error: (err) => {
-        console.error('Erreur chargement enrollments:', err);
-        this.error = 'Erreur lors du chargement de vos cours';
-        this.loading = false;
-      }
-    });
-  }
-
-  loadCoursDetails(coursIds: number[], enrollments: Enrollment[]) {
-    // Charger tous les cours pour filtrer ceux inscrits
     this.coursService.getAllCours().subscribe({
       next: (allCours) => {
-        // Filtrer seulement les cours inscrits
-        this.cours = allCours
-          .filter(cours => coursIds.includes(cours.id!))
-          .map(cours => {
-            const enrollment = enrollments.find(e => e.coursId === cours.id);
-            return {
-              ...cours,
-              enrollment,
-              isEnrolled: true
-            };
-          });
+        this.enrollmentService.getUserEnrollments().subscribe({
+          next: (enrollments) => {
+            // Filtrer uniquement les cours inscrits
+            this.cours = allCours
+              .filter(c => enrollments.some(e => e.coursId === c.id))
+              .map(c => {
+                const enrollment = enrollments.find(e => e.coursId === c.id);
+                return {
+                  ...c,
+                  enrollment: enrollment,
+                  isEnrolled: true
+                };
+              });
 
-        this.calculateStatistics();
-        this.updateFilterCounts();
-        this.applyFilter();
-        this.loading = false;
+            this.updateStats();
+            this.updateFilterCounts();
+            this.applyFilter();
+            this.loading = false;
 
-        // Rafraîchir les icônes
-        setTimeout(() => {
-          if (typeof feather !== 'undefined') {
-            feather.replace();
+            setTimeout(() => {
+              if (typeof feather !== 'undefined') feather.replace();
+            }, 100);
+          },
+          error: (err) => {
+            this.error = 'Erreur lors du chargement des inscriptions';
+            this.loading = false;
           }
-        }, 100);
+        });
       },
       error: (err) => {
-        console.error('Erreur chargement cours:', err);
-        this.error = 'Erreur lors du chargement des détails des cours';
+        this.error = 'Erreur lors du chargement des cours';
         this.loading = false;
       }
     });
   }
 
-  calculateStatistics() {
+  updateStats() {
     this.totalEnrolled = this.cours.length;
     this.completedCount = this.cours.filter(c => c.enrollment?.progress === 100).length;
-    this.inProgressCount = this.cours.filter(c => c.enrollment && c.enrollment.progress > 0 && c.enrollment.progress < 100).length;
+    this.inProgressCount = this.totalEnrolled - this.completedCount;
 
-    if (this.cours.length > 0) {
-      const totalProgress = this.cours.reduce((sum, c) => sum + (c.enrollment?.progress || 0), 0);
-      this.averageProgress = Math.round(totalProgress / this.cours.length);
-    }
+    const totalProgress = this.cours.reduce((sum, c) => sum + (c.enrollment?.progress || 0), 0);
+    this.averageProgress = this.totalEnrolled > 0 ? Math.round(totalProgress / this.totalEnrolled) : 0;
   }
 
   updateFilterCounts() {
-    const inProgress = this.cours.filter(c => c.enrollment && c.enrollment.progress > 0 && c.enrollment.progress < 100);
-    const completed = this.cours.filter(c => c.enrollment?.progress === 100);
-
-    this.filterOptions[0].count = this.cours.length;
-    this.filterOptions[1].count = inProgress.length;
-    this.filterOptions[2].count = completed.length;
+    this.filterOptions.forEach(opt => {
+      if (opt.value === 'all') opt.count = this.cours.length;
+      if (opt.value === 'in-progress') opt.count = this.inProgressCount;
+      if (opt.value === 'completed') opt.count = this.completedCount;
+    });
   }
 
-  applyFilter() {
-    switch (this.selectedFilter) {
-      case 'in-progress':
-        this.filteredCours = this.cours.filter(c =>
-          c.enrollment && c.enrollment.progress > 0 && c.enrollment.progress < 100
-        );
-        break;
-      case 'completed':
-        this.filteredCours = this.cours.filter(c => c.enrollment?.progress === 100);
-        break;
-      default:
-        this.filteredCours = [...this.cours];
-    }
-  }
-
-  onFilterChange(filter: string) {
+  setFilter(filter: string) {
     this.selectedFilter = filter;
     this.applyFilter();
   }
 
-  getProgressColor(progress: number): string {
-    if (progress === 100) return 'bg-green-500';
-    if (progress >= 50) return 'bg-blue-500';
-    if (progress > 0) return 'bg-yellow-500';
-    return 'bg-gray-300';
+  applyFilter() {
+    if (this.selectedFilter === 'all') {
+      this.filteredCours = [...this.cours];
+    } else if (this.selectedFilter === 'in-progress') {
+      this.filteredCours = this.cours.filter(c => (c.enrollment?.progress || 0) < 100);
+    } else if (this.selectedFilter === 'completed') {
+      this.filteredCours = this.cours.filter(c => c.enrollment?.progress === 100);
+    }
+
+    // Refresh icons
+    setTimeout(() => {
+      if (typeof feather !== 'undefined') feather.replace();
+    }, 50);
+  }
+
+  continueCourse(coursId: number) {
+    this.router.navigate(['/cours', coursId]);
+  }
+
+  logout() {
+    this.authService.logout();
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
+  }
+
+  // --- Notifications Logic ---
+
+  loadNotifications() {
+    this.userGamificationService.getRecentActivity(5).subscribe({
+      next: (activities) => {
+        this.recentActivity = activities;
+      }
+    });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      setTimeout(() => feather.replace(), 100);
+    }
+  }
+  onFilterChange(filter: string) {
+    this.setFilter(filter);
   }
 
   getProgressText(progress: number): string {
@@ -182,7 +219,9 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
     return 'Non commencé';
   }
 
-  logout() {
-    this.authService.logout();
+  getProgressColor(progress: number): string {
+    if (progress === 100) return 'bg-green-100 text-green-800';
+    if (progress > 0) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-gray-100 text-gray-800';
   }
 }

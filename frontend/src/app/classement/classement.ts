@@ -1,7 +1,8 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { UserGamificationService, UserLeaderboard } from '../user-gamification.service';
+import { RouterModule, Router } from '@angular/router';
+import { UserGamificationService, UserLeaderboard, RecentActivity } from '../user-gamification.service';
+import { GamificationNotificationService } from '../gamification-notification.service';
 import { AuthService } from '../auth';
 
 declare const feather: any;
@@ -28,8 +29,14 @@ export class ClassementComponent implements OnInit, AfterViewInit {
   userPosition: LeaderboardEntry | null = null;
   loading = true;
   error = '';
-  userInitials = 'ET';
   selectedPeriod = 'all';
+
+  userInitials = 'ET';
+  userProfileImage = '';
+
+  // Notifications
+  showNotifications = false;
+  recentActivity: RecentActivity[] = [];
 
   periodOptions = [
     { value: 'all', label: 'Tout temps' },
@@ -39,14 +46,43 @@ export class ClassementComponent implements OnInit, AfterViewInit {
 
   constructor(
     private gamificationService: UserGamificationService,
-    public authService: AuthService
+    public authService: AuthService,
+    private notificationService: GamificationNotificationService,
+    private router: Router
   ) { }
 
   ngOnInit() {
-    this.calculateUserInitials();
-    this.loadLeaderboard();
-  }
+    this.authService.userProfile$.subscribe(profile => {
+      if (profile) {
+        this.userProfileImage = profile.profileImage || '';
+        const firstName = profile.firstName || '';
+        const lastName = profile.lastName || '';
+        if (firstName && lastName) {
+          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (profile.email) {
+          const parts = profile.email.split('@')[0].split('.');
+          this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+        }
+      }
+    });
 
+    if (this.authService.getToken() && !this.userProfileImage) {
+      this.authService.loadUserProfile();
+    }
+
+    this.loadLeaderboard();
+
+    // Notifications logic
+    this.notificationService.checkForNewAchievements();
+    this.loadNotifications();
+
+    document.addEventListener('click', (event: any) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.notification-container')) {
+        this.showNotifications = false;
+      }
+    });
+  }
   ngAfterViewInit() {
     if (typeof feather !== 'undefined') {
       setTimeout(() => feather.replace(), 100);
@@ -234,5 +270,26 @@ export class ClassementComponent implements OnInit, AfterViewInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
+  }
+
+  // --- Notifications Logic ---
+
+  loadNotifications() {
+    this.gamificationService.getRecentActivity(5).subscribe({
+      next: (activities) => {
+        this.recentActivity = activities;
+      }
+    });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      setTimeout(() => feather.replace(), 100);
+    }
   }
 }

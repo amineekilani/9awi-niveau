@@ -1,30 +1,18 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { AuthService } from '../auth';
+import { AuthService, Profile } from '../auth';
+import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
 
 declare const feather: any;
-
-interface Profile {
-  id?: number;
-  email?: string;
-  provider?: string;
-  emailVerified?: boolean;
-  firstName?: string;
-  lastName?: string;
-  dateOfBirth?: string;
-  profileImage?: string;
-  role?: string;
-  createdAt?: number;
-  phoneNumber?: string;
-}
+declare const VANTA: any;
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './profile.html',
   styleUrls: ['./profile.css']
 })
@@ -33,14 +21,21 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   loading = false;
   message = '';
   errorMessage = '';
+  editMode = false;
+  uploadingImage = false;
+
+  // Données pour le header unifié
+  userInitials = 'ET';
+  userProfileImage = '';
+  showNotifications = false;
+  recentActivity: RecentActivity[] = [];
+  userStats: UserGamificationStats | null = null;
 
   // Edit mode
-  editMode = false;
   editEmail = '';
   editFirstName = '';
   editLastName = '';
   editDateOfBirth = '';
-  // store only suffix (8 digits) without +216
   editPhoneNumberSuffix = '';
   currentPassword = '';
   newPassword = '';
@@ -49,212 +44,234 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   // Profile image
   selectedImageFile: File | null = null;
   profileImagePreview: string | null = null;
-  uploadingImage = false;
 
   private apiUrl = 'http://localhost:8080/api/profile';
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService,
-    private router: Router
-  ) {}
+    public authService: AuthService,
+    private router: Router,
+    private gamificationService: UserGamificationService
+  ) { }
 
   ngOnInit() {
     this.loadProfile();
+    this.initHeaderData();
+    this.initVanta();
   }
 
   ngAfterViewInit() {
     if (typeof feather !== 'undefined') {
-      feather.replace();
+      setTimeout(() => feather.replace(), 100);
     }
   }
 
-  private getHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
-    const headerObj: any = {};
-    if (token) {
-      headerObj['Authorization'] = `Bearer ${token}`;
-    }
-    return new HttpHeaders(headerObj);
-  }
-
-  loadProfile(): void {
+  loadProfile() {
     this.loading = true;
-    this.http.get<Profile>(this.apiUrl, { headers: this.getHeaders() })
-      .subscribe({
-        next: (data) => {
-          this.profile = data;
-          this.editEmail = data.email || '';
-          this.editFirstName = data.firstName || '';
-          this.editLastName = data.lastName || '';
-          this.editDateOfBirth = data.dateOfBirth || '';
-          this.editPhoneNumberSuffix = data.phoneNumber ? data.phoneNumber.replace(/^\+216/, '') : '';
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Erreur lors du chargement du profil';
-          this.loading = false;
-        }
-      });
-  }
-
-  enableEditMode(): void {
-    this.editMode = true;
-    this.message = '';
-    this.errorMessage = '';
-  }
-
-  cancelEdit(): void {
-    this.editMode = false;
-    if (this.profile) {
-      this.editEmail = this.profile.email || '';
-      this.editFirstName = this.profile.firstName || '';
-      this.editLastName = this.profile.lastName || '';
-      this.editDateOfBirth = this.profile.dateOfBirth || '';
-      this.editPhoneNumberSuffix = this.profile.phoneNumber ? this.profile.phoneNumber.replace(/^\+216/, '') : '';
-    }
-    this.currentPassword = '';
-    this.newPassword = '';
-    this.confirmPassword = '';
-    this.message = '';
-    this.errorMessage = '';
-  }
-
-  updateProfile(): void {
-    this.message = '';
-    this.errorMessage = '';
-
-    // Validate password change
-    if (this.newPassword) {
-      if (!this.currentPassword) {
-        this.errorMessage = 'Veuillez entrer votre mot de passe actuel';
-        return;
-      }
-      if (this.newPassword !== this.confirmPassword) {
-        this.errorMessage = 'Les mots de passe ne correspondent pas';
-        return;
-      }
-      if (this.newPassword.length < 6) {
-        this.errorMessage = 'Le nouveau mot de passe doit contenir au moins 6 caractères';
-        return;
-      }
-    }
-
-    const updateData: any = {
-      email: this.editEmail,
-      firstName: this.editFirstName,
-      lastName: this.editLastName,
-      dateOfBirth: this.editDateOfBirth
-    };
-
-    // Include phone number (prefix +216 fixed)
-    if (this.editPhoneNumberSuffix) {
-      updateData.phoneNumber = '+216' + this.editPhoneNumberSuffix;
-    }
-
-    if (this.newPassword) {
-      updateData.currentPassword = this.currentPassword;
-      updateData.newPassword = this.newPassword;
-    }
-
-    this.loading = true;
-    this.http.put(this.apiUrl, updateData, {
-      headers: this.getHeaders()
-    }).subscribe({
-      next: (response: any) => {
-        this.message = response.message || 'Profil mis à jour avec succès';
-        this.editMode = false;
-        this.currentPassword = '';
-        this.newPassword = '';
-        this.confirmPassword = '';
-        this.loadProfile();
-
-        // Update email in localStorage if changed
-        if (this.editEmail !== this.authService.getEmail()) {
-          localStorage.setItem('auth-email', this.editEmail);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    this.http.get<Profile>(this.apiUrl, { headers }).subscribe({
+      next: (data) => {
+        this.profile = data;
+        this.loading = false;
+        if (typeof feather !== 'undefined') {
+          setTimeout(() => feather.replace(), 100);
         }
       },
-      error: (error) => {
-        this.errorMessage = error.error?.message || 'Erreur lors de la mise à jour du profil';
+      error: (err) => {
+        this.errorMessage = 'Erreur lors du chargement du profil';
         this.loading = false;
       }
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/home']);
+  enableEditMode() {
+    if (this.profile) {
+      this.editEmail = this.profile.email || '';
+      this.editFirstName = this.profile.firstName || '';
+      this.editLastName = this.profile.lastName || '';
+      this.editDateOfBirth = this.profile.dateOfBirth || '';
+      this.editPhoneNumberSuffix = this.profile.phoneNumber ? this.profile.phoneNumber.replace('+216', '') : '';
+      this.editMode = true;
+      if (typeof feather !== 'undefined') {
+        setTimeout(() => feather.replace(), 100);
+      }
+    }
   }
 
-  /**
-   * Gère la sélection d'une image de profil
-   */
-  onProfileImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
+  cancelEdit() {
+    this.editMode = false;
+    this.profileImagePreview = null;
+    this.selectedImageFile = null;
+    this.currentPassword = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
+  }
 
-      // Validation de taille (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        this.errorMessage = 'L\'image ne doit pas dépasser 10MB';
-        return;
+  updateProfile() {
+    if (this.newPassword && this.newPassword !== this.confirmPassword) {
+      this.errorMessage = 'Les nouveaux mots de passe ne correspondent pas';
+      return;
+    }
+
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    const updateData: any = {
+      email: this.editEmail,
+      firstName: this.editFirstName,
+      lastName: this.editLastName,
+      dateOfBirth: this.editDateOfBirth,
+      phoneNumber: this.editPhoneNumberSuffix ? '+216' + this.editPhoneNumberSuffix : null
+    };
+
+    if (this.currentPassword && this.newPassword) {
+      updateData.currentPassword = this.currentPassword;
+      updateData.newPassword = this.newPassword;
+    }
+
+    this.loading = true;
+    this.http.put<Profile>(this.apiUrl, updateData, { headers }).subscribe({
+      next: (data) => {
+        this.profile = data;
+        this.message = 'Profil mis à jour avec succès';
+        this.editMode = false;
+        this.loading = false;
+        this.currentPassword = '';
+        this.newPassword = '';
+        this.confirmPassword = '';
+        this.authService.loadUserProfile(); // Recharger le profil global
+        if (typeof feather !== 'undefined') {
+          setTimeout(() => feather.replace(), 100);
+        }
+      },
+      error: (err) => {
+        this.errorMessage = err.error.message || 'Erreur lors de la mise à jour du profil';
+        this.loading = false;
       }
+    });
+  }
 
+  onProfileImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
       this.selectedImageFile = file;
-
-      // Créer une prévisualisation
       const reader = new FileReader();
-      reader.onload = (e) => {
-        this.profileImagePreview = e.target?.result as string;
+      reader.onload = () => {
+        this.profileImagePreview = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
   }
 
-  clearProfileImage(event: Event): void {
+  clearProfileImage(event: Event) {
     event.stopPropagation();
     this.selectedImageFile = null;
     this.profileImagePreview = null;
   }
 
-  uploadProfileImage(): void {
-    if (!this.selectedImageFile) {
-      return;
-    }
+  uploadProfileImage() {
+    if (!this.selectedImageFile) return;
 
     this.uploadingImage = true;
-    this.errorMessage = '';
+    const formData = new FormData();
+    formData.append('file', this.selectedImageFile);
 
-    this.authService.uploadProfileImage(this.selectedImageFile).subscribe({
-      next: () => {
-        this.message = 'Photo de profil mise à jour avec succès';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    this.http.post<Profile>(`${this.apiUrl}/image`, formData, { headers }).subscribe({
+      next: (data) => {
+        this.profile = data;
+        this.message = 'Photo de profil mise à jour';
         this.selectedImageFile = null;
         this.profileImagePreview = null;
         this.uploadingImage = false;
-        this.loadProfile();
+        this.authService.loadUserProfile(); // Recharger le profil global
       },
       error: (err) => {
-        console.error('Image upload error:', err);
-        this.errorMessage = 'Erreur lors de l\'upload de l\'image. Veuillez réessayer.';
+        this.errorMessage = 'Erreur lors de l\'envoi de l\'image';
         this.uploadingImage = false;
       }
     });
   }
 
-  // Format timestamp to French date like '22 Novembre 2025, 14:35'
-  formatDateFrench(ts?: number): string {
-    if (!ts) return '';
-    const d = new Date(ts);
-    const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-    const day = d.getDate();
-    const month = months[d.getMonth()];
-    const year = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2,'0');
-    const mm = String(d.getMinutes()).padStart(2,'0');
-    return `${day} ${month.charAt(0).toUpperCase()+month.slice(1)} ${year}, ${hh}:${mm}`;
+  formatDateFrench(timestamp: any): string {
+    if (!timestamp) return '';
+    return new Date(timestamp).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
   }
 
-  formatPhoneSuffix(profile: Profile | null | undefined): string {
+  formatPhoneSuffix(profile: Profile | null): string {
     if (!profile || !profile.phoneNumber) return 'Non renseigné';
-    return profile.phoneNumber.replace(/^\+216/, '');
+    return profile.phoneNumber.replace('+216', '');
+  }
+
+  goBack() {
+    if (this.authService.isFormateur()) {
+      this.router.navigate(['/formateur-dashboard']);
+    } else {
+      this.router.navigate(['/home']);
+    }
+  }
+
+  private initVanta() {
+    if (typeof VANTA !== 'undefined' && VANTA.NET) {
+      VANTA.NET({
+        el: "#vanta-bg",
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        color: 0x3b82f6,
+        backgroundColor: 0xf8fafc,
+        points: 10.00,
+        maxDistance: 20.00,
+        spacing: 15.00
+      });
+    }
+  }
+
+  private initHeaderData() {
+    this.authService.userProfile$.subscribe(profile => {
+      if (profile) {
+        this.userProfileImage = profile.profileImage ? `http://localhost:8080/images/users/${profile.profileImage}` : '';
+        const firstName = profile.firstName || '';
+        const lastName = profile.lastName || '';
+        if (firstName && lastName) {
+          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (profile.email) {
+          const namePart = profile.email.split('@')[0];
+          this.userInitials = namePart.split('.').map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+        }
+      }
+    });
+
+    if (this.authService.getToken() && !this.userProfileImage) {
+      this.authService.loadUserProfile();
+    }
+
+    this.gamificationService.getRecentActivity(5).subscribe({
+      next: (activities) => {
+        this.recentActivity = activities;
+        setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
+      }
+    });
+
+    this.gamificationService.getUserStats().subscribe({
+      next: (stats) => this.userStats = stats
+    });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      setTimeout(() => { if (typeof feather !== 'undefined') feather.replace(); }, 100);
+    }
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }

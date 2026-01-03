@@ -31,6 +31,9 @@ public class UserChallenge {
     @Column(name = "joined_at")
     private Long joinedAt;
 
+    @Column(name = "is_new")
+    private Boolean isNew = false;
+
     @PrePersist
     protected void onCreate() {
         joinedAt = System.currentTimeMillis();

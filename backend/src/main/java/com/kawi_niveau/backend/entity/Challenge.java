@@ -17,7 +17,7 @@ public class Challenge {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "challenge_type", nullable = false)
+    @Column(name = "challenge_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private ChallengeType challengeType;
 

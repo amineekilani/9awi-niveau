@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth';
-import { UserGamificationService, UserGamificationStats } from '../user-gamification.service';
+import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
 import { CoursService, Cours } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
+import { GamificationNotificationService } from '../gamification-notification.service';
 
 declare const feather: any;
 
@@ -22,13 +23,15 @@ interface CoursWithEnrollment extends Cours {
   styleUrls: ['./home.css']
 })
 export class HomeComponent implements OnInit, AfterViewInit {
+  sidebarOpen = false;
+
   // Données gamification
   userStats: UserGamificationStats | null = null;
   loading = true;
   error = '';
   success = '';
 
-  // Données cours
+  // Cours
   cours: CoursWithEnrollment[] = [];
   filteredCours: CoursWithEnrollment[] = [];
 
@@ -44,30 +47,56 @@ export class HomeComponent implements OnInit, AfterViewInit {
   userName = '';
   userProfileImage = '';
 
+  // Notifications
+  showNotifications = false;
+  recentActivity: RecentActivity[] = [];
+
   constructor(
     private router: Router,
     public authService: AuthService,
     private userGamificationService: UserGamificationService,
     private coursService: CoursService,
-    private enrollmentService: EnrollmentService
+    private enrollmentService: EnrollmentService,
+    private notificationService: GamificationNotificationService
   ) { }
 
   ngOnInit() {
-    // Rediriger selon le rôle
-    if (this.authService.isFormateur()) {
-      this.router.navigate(['/formateur-main']);
-      return;
+    // S'assurer que le profil est chargé si on est déjà connecté
+    if (this.authService.getToken()) {
+      this.authService.loadUserProfile();
     }
 
-    if (this.authService.isAdmin()) {
-      this.router.navigate(['/admin-main']);
-      return;
-    }
+    this.authService.userProfile$.subscribe(profile => {
+      if (profile) {
+        this.userProfileImage = profile.profileImage || '';
+        const firstName = profile.firstName || '';
+        const lastName = profile.lastName || '';
 
-    // Charger les données pour les étudiants
-    this.calculateUserInitials();
+        if (firstName && lastName) {
+          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (profile.email) {
+          const parts = profile.email.split('@')[0].split('.');
+          this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+        }
+      }
+    });
+
     this.loadUserStats();
     this.loadCours();
+
+    // Check for new badges (SweetAlert)
+    this.notificationService.checkForNewAchievements();
+
+    // Load notifications for dropdown
+    this.loadNotifications();
+
+    // Close notifications on click outside
+    document.addEventListener('click', (event: any) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.notification-container')) {
+        this.showNotifications = false;
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -76,34 +105,21 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
   }
 
-  calculateUserInitials() {
-    const email = this.authService.getEmail();
-    if (email) {
-      const parts = email.split('@')[0].split('.');
-      this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
-    }
-  }
-
   loadUserStats() {
     console.log('🔄 Début du chargement des stats utilisateur...');
-    this.loading = true;
+    // this.loading = true; // On laisse le loading global géré par loadCours pour l'instant ou on le gère ici
 
-    // Utiliser directement les vraies données du backend (comme le classement)
     this.userGamificationService.getUserStats().subscribe({
       next: (stats) => {
-        console.log('✅ Stats utilisateur chargées depuis le backend:', stats);
-        console.log('📊 Type de totalPoints:', typeof stats.totalPoints, 'Valeur:', stats.totalPoints);
+        console.log('✅ Stats utilisateur chargées:', stats);
 
-        // Vérifier si les données sont valides
         if (!stats) {
-          console.error('❌ Stats nulles reçues du backend');
           this.setFallbackStats();
           return;
         }
 
-        // Utiliser directement les données du backend (même source que le classement)
         this.userStats = {
-          totalPoints: stats.totalPoints || 0, // Utiliser la vraie valeur du backend
+          totalPoints: stats.totalPoints || 0,
           currentLevel: stats.currentLevel || 1,
           levelName: stats.levelName || 'Débutant',
           levelDescription: stats.levelDescription || 'Bienvenue !',
@@ -117,23 +133,17 @@ export class HomeComponent implements OnInit, AfterViewInit {
           recentBadges: stats.recentBadges || []
         };
 
-        this.loading = false;
-        console.log('📊 Stats finales assignées (même source que classement):', this.userStats);
-        console.log('🎯 Points finaux affichés:', this.userStats.totalPoints);
+        // this.loading = false;
+        console.log('🎯 Points finaux:', this.userStats.totalPoints);
       },
       error: (error) => {
-        console.error('❌ Erreur lors du chargement des stats:', error);
-        console.error('📋 Détails de l\'erreur:', error.error);
-        console.error('🔍 Status:', error.status);
-
+        console.error('❌ Erreur stats:', error);
         this.setFallbackStats();
       }
     });
   }
 
   private setFallbackStats() {
-    console.log('🔄 Utilisation des stats de fallback...');
-    // Fallback seulement en cas d'erreur
     this.userStats = {
       totalPoints: 0,
       currentLevel: 1,
@@ -148,18 +158,14 @@ export class HomeComponent implements OnInit, AfterViewInit {
       recentActivities: [],
       recentBadges: []
     };
-    this.loading = false;
   }
 
   loadCours() {
-    // Charger tous les cours
     this.coursService.getAllCours().subscribe({
       next: (data) => {
         this.cours = data;
         this.extractCategories();
         this.applyFilters();
-
-        // Charger les enrollments pour les étudiants
         this.loadEnrollments();
       },
       error: (err) => {
@@ -182,7 +188,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
   applyFilters() {
     let filtered = [...this.cours];
 
-    // Filtrer par recherche
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(c =>
@@ -191,7 +196,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
       );
     }
 
-    // Filtrer par catégorie
     if (this.selectedCategorie) {
       filtered = filtered.filter(c => c.categorie === this.selectedCategorie);
     }
@@ -216,7 +220,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
   loadEnrollments() {
     this.enrollmentService.getUserEnrollments().subscribe({
       next: (enrollments) => {
-        // Marquer les cours auxquels l'étudiant est inscrit
         this.cours.forEach(cours => {
           const enrollment = enrollments.find(e => e.coursId === cours.id);
           if (enrollment) {
@@ -225,14 +228,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
           }
         });
 
-        // Appliquer les filtres après avoir chargé les enrollments
         this.applyFilters();
-
-        // Calculer les statistiques
         this.calculateStats(enrollments);
         this.loading = false;
 
-        // Rafraîchir les icônes après le chargement
         setTimeout(() => {
           if (typeof feather !== 'undefined') {
             feather.replace();
@@ -264,8 +263,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
       this.enrollmentService.enrollInCourse(coursId).subscribe({
         next: () => {
           this.success = '🎉 Inscription réussie ! Vous avez gagné 50 points !';
-          this.loadCours(); // Recharger pour mettre à jour l'état
-          this.loadUserStats(); // Recharger les stats
+          this.loadCours();
+          this.loadUserStats();
           setTimeout(() => this.success = '', 3000);
         },
         error: (err) => {
@@ -285,9 +284,23 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   scrollToCourses() {
-    const element = document.getElementById('courses-section');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('courses-section')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // --- Notifications Logic ---
+
+  loadNotifications() {
+    this.userGamificationService.getRecentActivity(5).subscribe({
+      next: (activities) => {
+        this.recentActivity = activities;
+      }
+    });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      setTimeout(() => feather.replace(), 100);
     }
   }
 }

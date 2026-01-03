@@ -22,6 +22,32 @@ public class UserGamificationController {
     @Autowired
     private UserRepository userRepository;
 
+    @PostMapping("/badges/{badgeId}/view")
+    public ResponseEntity<?> markBadgeAsViewed(@PathVariable Long badgeId, Authentication authentication) {
+        try {
+            User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            userGamificationService.markBadgeAsViewed(user, badgeId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/challenges/{challengeId}/view")
+    public ResponseEntity<?> markChallengeAsViewed(@PathVariable Long challengeId, Authentication authentication) {
+        try {
+            User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            userGamificationService.markChallengeAsViewed(user, challengeId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<UserGamificationStatsResponse> getUserStats(Authentication authentication) {
         try {
@@ -45,8 +71,8 @@ public class UserGamificationController {
             User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            List<UserGamificationStatsResponse.UserBadgeResponse> badges = 
-                userGamificationService.getUserBadges(user, filter);
+            List<UserGamificationStatsResponse.UserBadgeResponse> badges = userGamificationService.getUserBadges(user,
+                    filter);
             return ResponseEntity.ok(badges);
         } catch (Exception e) {
             System.err.println("Erreur lors de la récupération des badges utilisateur: " + e.getMessage());
@@ -93,8 +119,8 @@ public class UserGamificationController {
             User user = userRepository.findByEmailAndArchivedFalse(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            List<UserGamificationStatsResponse.RecentActivityResponse> activities = 
-                userGamificationService.getRecentActivity(user, limit);
+            List<UserGamificationStatsResponse.RecentActivityResponse> activities = userGamificationService
+                    .getRecentActivity(user, limit);
             return ResponseEntity.ok(activities);
         } catch (Exception e) {
             System.err.println("Erreur lors de la récupération de l'activité récente: " + e.getMessage());

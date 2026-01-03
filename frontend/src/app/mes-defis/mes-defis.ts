@@ -1,7 +1,8 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { UserGamificationService, UserChallenge } from '../user-gamification.service';
+import { RouterModule, Router } from '@angular/router';
+import { UserGamificationService, UserChallenge, RecentActivity } from '../user-gamification.service';
+import { GamificationNotificationService } from '../gamification-notification.service';
 import { AuthService } from '../auth';
 
 declare const feather: any;
@@ -19,8 +20,14 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
   loading = true;
   error = '';
   selectedFilter = 'active';
+
   userInitials = 'ET';
+  userProfileImage = '';
   completedCount = 0;
+
+  // Notifications
+  showNotifications = false;
+  recentActivity: RecentActivity[] = [];
 
   filterOptions = [
     { value: 'active', label: 'Défis actifs', count: 0 },
@@ -30,14 +37,43 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
 
   constructor(
     private gamificationService: UserGamificationService,
-    public authService: AuthService
+    public authService: AuthService,
+    private notificationService: GamificationNotificationService,
+    private router: Router
   ) { }
 
   ngOnInit() {
-    this.calculateUserInitials();
-    this.loadChallenges();
-  }
+    this.authService.userProfile$.subscribe(profile => {
+      if (profile) {
+        this.userProfileImage = profile.profileImage || '';
+        const firstName = profile.firstName || '';
+        const lastName = profile.lastName || '';
+        if (firstName && lastName) {
+          this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (profile.email) {
+          const parts = profile.email.split('@')[0].split('.');
+          this.userInitials = parts.map(p => p.charAt(0).toUpperCase()).join('').substring(0, 2);
+        }
+      }
+    });
 
+    if (this.authService.getToken() && !this.userProfileImage) {
+      this.authService.loadUserProfile();
+    }
+
+    this.loadChallenges();
+
+    // Notifications logic
+    this.notificationService.checkForNewAchievements();
+    this.loadNotifications();
+
+    document.addEventListener('click', (event: any) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.notification-container')) {
+        this.showNotifications = false;
+      }
+    });
+  }
   ngAfterViewInit() {
     if (typeof feather !== 'undefined') {
       setTimeout(() => feather.replace(), 100);
@@ -55,6 +91,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
   loadChallenges() {
     this.gamificationService.getUserChallenges().subscribe({
       next: (challenges) => {
+        console.log('Challenges loaded from API:', challenges);
         this.challenges = challenges;
         this.completedCount = challenges.filter(c => c.isCompleted).length;
         this.updateFilterCounts();
@@ -63,14 +100,8 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         console.error('Erreur chargement défis:', err);
-        this.error = 'Erreur lors du chargement des défis';
+        this.error = 'Erreur lors du chargement des défis. Vérifiez que le backend est démarré.';
         this.loading = false;
-
-        // Données de démonstration en cas d'erreur
-        this.challenges = this.generateDemoChallenges();
-        this.completedCount = this.challenges.filter(c => c.isCompleted).length;
-        this.updateFilterCounts();
-        this.applyFilter();
       }
     });
   }
@@ -91,6 +122,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
         joinedAt: now - 86400000 * 2,
         endDate: now + 86400000 * 5,
         timeRemaining: '5 jours restants',
+        isNew: false,
         isActive: true
       },
       {
@@ -104,6 +136,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
         xpReward: 150,
         isCompleted: false,
         joinedAt: now - 86400000 * 7,
+        isNew: false,
         isActive: true
       },
       {
@@ -118,6 +151,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
         isCompleted: true,
         completedAt: now - 86400000,
         joinedAt: now - 86400000 * 15,
+        isNew: false,
         isActive: false
       },
       {
@@ -131,6 +165,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
         xpReward: 100,
         isCompleted: false,
         joinedAt: now - 86400000 * 4,
+        isNew: false,
         isActive: true
       },
       {
@@ -145,6 +180,7 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
         isCompleted: true,
         completedAt: now - 86400000 * 3,
         joinedAt: now - 86400000 * 10,
+        isNew: false,
         isActive: false
       }
     ];
@@ -207,5 +243,26 @@ export class MesDefisComponent implements OnInit, AfterViewInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
+  }
+
+  // --- Notifications Logic ---
+
+  loadNotifications() {
+    this.gamificationService.getRecentActivity(5).subscribe({
+      next: (activities) => {
+        this.recentActivity = activities;
+      }
+    });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      setTimeout(() => feather.replace(), 100);
+    }
   }
 }

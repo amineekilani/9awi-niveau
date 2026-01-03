@@ -14,6 +14,7 @@ export interface Lecon {
   createdAt?: number;
   updatedAt?: number;
   moduleId?: number;
+  completed?: boolean;
 }
 
 @Injectable({

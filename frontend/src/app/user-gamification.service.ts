@@ -29,6 +29,7 @@ export interface UserBadge {
   id: number;
   name: string;
   description: string;
+  criteriaType?: string;
   iconUrl: string;
   earnedAt: number;
   isNew: boolean;
@@ -48,6 +49,7 @@ export interface UserChallenge {
   joinedAt: number;
   endDate?: number;
   timeRemaining?: string;
+  isNew: boolean;
   isActive: boolean;
 }
 
@@ -78,7 +80,7 @@ export interface UserLeaderboard {
 export class UserGamificationService {
   private apiUrl = 'http://localhost:8080/api/user';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getUserStats(): Observable<UserGamificationStats> {
     return this.http.get<UserGamificationStats>(`${this.apiUrl}/stats`);
@@ -98,5 +100,13 @@ export class UserGamificationService {
 
   getRecentActivity(limit: number = 10): Observable<RecentActivity[]> {
     return this.http.get<RecentActivity[]>(`${this.apiUrl}/recent-activity?limit=${limit}`);
+  }
+
+  markBadgeAsViewed(badgeId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/badges/${badgeId}/view`, {});
+  }
+
+  markChallengeAsViewed(challengeId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/challenges/${challengeId}/view`, {});
   }
 }
