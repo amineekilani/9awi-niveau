@@ -1,0 +1,180 @@
+<app-navbar></app-navbar>
+<!-- Composant d'affichage des recommandations pédagogiques -->
+<div class="recommendations-container">
+
+  <!-- En-tête avec titre et actions -->
+  <div class="header-section">
+    <h2 class="page-title">
+      🤖 Recommandations Personnalisées
+    </h2>
+
+    <div class="header-actions">
+      <div class="update-info">
+        <span class="last-update">{{ getTimeSinceLastUpdate() }}</span>
+        <label class="auto-refresh-toggle">
+          <input type="checkbox" [(ngModel)]="autoRefreshEnabled" (change)="toggleAutoRefresh()">
+          Auto-refresh
+        </label>
+      </div>
+
+      <button class="btn btn-primary" (click)="refreshRecommendations()" [disabled]="isLoading">
+        <i data-feather="refresh-cw" class="w-4 h-4"></i> Actualiser
+      </button>
+
+      <button class="btn btn-secondary" (click)="loadCustomRecommendations()" [disabled]="isLoading">
+        <i data-feather="settings" class="w-4 h-4"></i> Personnaliser
+      </button>
+    </div>
+  </div>
+
+  <!-- Message d'encouragement -->
+  <div class="encouragement-card" *ngIf="encouragementMessage && !isLoading">
+    <div class="encouragement">
+      <div class="encouragement-content">
+        <div class="encouragement-icon">
+          <i data-feather="lightbulb"></i>
+        </div>
+        <p>{{ encouragementMessage }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section" *ngIf="!isLoading && recommendations.length > 0">
+    <div class="filters-card">
+      <div class="filters-row">
+
+        <!-- Filtre par type -->
+        <div class="form-group">
+          <label for="typeFilter">Type de contenu:</label>
+          <select id="typeFilter" [(ngModel)]="selectedType" (change)="onFilterChange()" class="form-control">
+            <option *ngFor="let type of recommendationTypes" [value]="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtre par confiance -->
+        <div class="form-group">
+          <label for="confidenceFilter">Confiance minimale:</label>
+          <select id="confidenceFilter" [(ngModel)]="minConfidence" (change)="onFilterChange()" class="form-control">
+            <option [value]="0.0">Toutes (0%)</option>
+            <option [value]="0.5">Moyenne (50%)</option>
+            <option [value]="0.7">Élevée (70%)</option>
+            <option [value]="0.9">Très élevée (90%)</option>
+          </select>
+        </div>
+
+        <!-- Filtre haute priorité -->
+        <div class="form-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="showOnlyHighPriority" (change)="onFilterChange()">
+            Haute priorité uniquement
+          </label>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicateur de chargement -->
+  <div class="loading-section" *ngIf="isLoading">
+    <div class="loading-card">
+      <div class="loading-content">
+        <i data-feather="loader" class="spinner"></i>
+        <p>Génération de vos recommandations personnalisées...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div class="error-section" *ngIf="error && !isLoading">
+    <div class="error-card">
+      <div class="error-content">
+        <i data-feather="alert-circle" class="error-icon"></i>
+        <p>{{ error }}</p>
+        <button class="btn btn-primary" (click)="loadRecommendations()">
+          Réessayer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommandations groupées par type -->
+  <div class="recommendations-section" *ngIf="!isLoading && !error && groupedRecommendations.size > 0">
+
+    <div *ngFor="let type of getGroupKeys()" class="recommendation-group">
+
+      <!-- Titre du groupe -->
+      <h3 class="group-title">
+        <i [attr.data-feather]="getRecommendationIcon(type)" class="group-icon"></i>
+        {{ getTypeLabel(type) }}
+        <span class="group-count">({{ getRecommendationsForType(type).length }})</span>
+      </h3>
+
+      <!-- Liste des recommandations -->
+      <div class="recommendations-grid">
+        <div *ngFor="let recommendation of getRecommendationsForType(type)" class="recommendation-card"
+          [class.highly-recommended]="isHighlyRecommended(recommendation)">
+
+          <div class="card-header">
+            <div class="recommendation-avatar">
+              <span class="avatar-icon" [style.color]="getPriorityColor(recommendation.priority)">
+                <i [attr.data-feather]="getRecommendationIcon(recommendation.type)"></i>
+              </span>
+            </div>
+
+            <div class="card-title-section">
+              <h4 class="card-title">{{ recommendation.title }}</h4>
+
+              <div class="recommendation-meta">
+                <span class="priority-badge" [style.background-color]="getPriorityColor(recommendation.priority)">
+                  {{ getPriorityLabel(recommendation.priority) }}
+                </span>
+                <span class="confidence-score">
+                  {{ formatConfidenceScore(recommendation.confidenceScore) }} de pertinence
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <p class="recommendation-reason">{{ recommendation.reason }}</p>
+
+            <!-- Badge "Hautement recommandé" -->
+            <div class="highly-recommended-badge" *ngIf="isHighlyRecommended(recommendation)">
+              <i data-feather="star" class="w-3 h-3 mr-1"></i>
+              <span>Hautement recommandé</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-outline" (click)="dismissRecommendation(recommendation)">
+              <i data-feather="x" class="w-4 h-4"></i> Ignorer
+            </button>
+
+            <button class="btn btn-primary" (click)="navigateToRecommendation(recommendation)">
+              <i data-feather="play" class="w-4 h-4"></i> Commencer
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message si aucune recommandation -->
+  <div class="no-recommendations" *ngIf="!isLoading && !error && groupedRecommendations.size === 0">
+    <div class="no-recommendations-card">
+      <div class="no-recommendations-content">
+        <i data-feather="check-circle" class="no-recommendations-icon"></i>
+        <h3>Excellent travail !</h3>
+        <p>Vous êtes à jour avec vos apprentissages. Revenez plus tard pour de nouvelles recommandations.</p>
+        <button class="btn btn-primary" (click)="loadCustomRecommendations()">
+          <i data-feather="compass" class="w-4 h-4"></i> Explorer de nouveaux contenus
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

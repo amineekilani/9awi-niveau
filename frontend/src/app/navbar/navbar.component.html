@@ -1,0 +1,87 @@
+<header class="backdrop-blur-md shadow-lg sticky top-0 z-50"
+    style="background: linear-gradient(to right, #063cdf, #0850f5);">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+            <!-- Logo et titre -->
+            <div class="flex items-center space-x-3 cursor-pointer" routerLink="/home">
+                <img src="/Logo_9awi_Niveau_without_name.png" alt="9awi Niveau Logo" class="h-10 w-auto">
+                <span class="text-2xl font-bold text-white hidden md:block">9awi Niveau</span>
+            </div>
+
+            <!-- Navigation centrale -->
+            <nav class="hidden lg:flex space-x-6">
+                <a routerLink="/home" routerLinkActive="active"
+                    class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
+                    <i data-feather="home" class="w-4 h-4 mr-2"></i> Accueil
+                </a>
+                <a routerLink="/mes-cours" routerLinkActive="active"
+                    class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
+                    <i data-feather="book" class="w-4 h-4 mr-2"></i> Mes Cours
+                </a>
+                <a routerLink="/recommandations" routerLinkActive="active"
+                    class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
+                    <i data-feather="cpu" class="w-4 h-4 mr-2"></i> Recommandations
+                </a>
+                <a routerLink="/mes-recompenses" routerLinkActive="active"
+                    class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
+                    <i data-feather="award" class="w-4 h-4 mr-2"></i> Récompenses
+                </a>
+                <a routerLink="/mes-defis" routerLinkActive="active"
+                    class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
+                    <i data-feather="target" class="w-4 h-4 mr-2"></i> Défis
+                </a>
+                <a routerLink="/classement" routerLinkActive="active"
+                    class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
+                    <i data-feather="bar-chart-2" class="w-4 h-4 mr-2"></i> Classement
+                </a>
+            </nav>
+
+            <!-- Carte Profil Utilisateur (Moderne) -->
+            <div class="flex items-center space-x-4">
+                <!-- Notifications -->
+                <div class="relative cursor-pointer hidden md:block">
+                    <i data-feather="bell" class="text-white hover:text-gray-200 transition-colors"></i>
+                    <span *ngIf="enrolledCount > 0"
+                        class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">{{
+                        enrolledCount }}</span>
+                </div>
+
+                <!-- Carte Profil avec Stats -->
+                <div class="hidden lg:flex items-center space-x-3 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-opacity-20 transition-all"
+                    (click)="goToProfile()">
+                    <!-- Photo de profil -->
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold shadow-md">
+                        {{ userInitials }}
+                    </div>
+
+                    <!-- Info utilisateur -->
+                    <div class="text-left">
+                        <div class="text-white font-semibold text-sm">{{ (authService.getEmail() || '').split('@')[0] ||
+                            'Utilisateur' }}</div>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-blue-100">Niveau {{ userStats?.currentLevel || 1 }}</span>
+                            <span class="text-blue-200">•</span>
+                            <span class="text-blue-100">{{ userStats?.totalPoints || 0 }} XP</span>
+                        </div>
+                    </div>
+
+                    <!-- Icône dropdown -->
+                    <i data-feather="chevron-down" class="text-white w-4 h-4"></i>
+                </div>
+
+                <!-- Version mobile - Avatar simple -->
+                <div class="lg:hidden w-10 h-10 rounded-full bg-gradient-to-r from-white to-gray-200 flex items-center justify-center text-blue-600 font-bold cursor-pointer shadow-md"
+                    (click)="goToProfile()">
+                    {{ userInitials }}
+                </div>
+
+                <!-- Bouton déconnexion (desktop) -->
+                <button (click)="logout()"
+                    class="hidden xl:flex items-center text-white hover:text-gray-200 transition-colors">
+                    <i data-feather="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,38 @@
+# Dépendances Python pour l'Agent IA de Recommandation Pédagogique
+# Kawi Niveau - Système de recommandation hybride
+
+# Core ML Libraries
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.1.0
+
+# Data Processing
+scipy>=1.9.0
+
+# Optional: Advanced ML (pour évolutions futures)
+# tensorflow>=2.10.0
+# torch>=1.12.0
+# transformers>=4.20.0
+
+# Utilities
+python-dateutil>=2.8.0
+pytz>=2022.1
+
+# Development and Testing
+pytest>=7.0.0
+pytest-cov>=3.0.0
+
+# Logging and Monitoring
+loguru>=0.6.0
+
+# Performance
+numba>=0.56.0  # Accélération numérique
+joblib>=1.1.0  # Parallélisation
+
+# Data Visualization (pour analyse)
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Configuration
+pyyaml>=6.0
+python-dotenv>=0.19.0
