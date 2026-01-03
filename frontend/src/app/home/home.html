@@ -353,7 +353,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
           <div class="relative">
-            <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()" placeholder="Titre, description..."
+            <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()" placeholder="Titre, description, mots-clés..."
               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <i data-feather="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
           </div>
@@ -417,7 +417,35 @@
             </span>
           </div>
 
+          <!-- Informations formateur et domaine -->
+          <div class="text-sm text-gray-600 mb-3 pb-3 border-b border-gray-100 space-y-2">
+            <div class="flex items-center">
+              <i data-feather="user" class="w-4 h-4 mr-2"></i>
+              <span class="font-medium">Formateur :</span>
+              <span class="ml-1">{{ cours.formateurNom || 'Non spécifié' }}</span>
+            </div>
+            <div *ngIf="cours.formateurDomaine" class="flex items-center">
+              <i data-feather="target" class="w-4 h-4 mr-2"></i>
+              <span class="font-medium">Domaine :</span>
+              <span class="ml-1 text-blue-600">{{ cours.formateurDomaine }}</span>
+            </div>
+          </div>
+
           <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ cours.description }}</p>
+
+          <!-- Mots-clés -->
+          <div *ngIf="cours.keywords" class="mb-4">
+            <div class="flex flex-wrap gap-1">
+              <span *ngFor="let keyword of cours.keywords.split(',').slice(0, 3)" 
+                    class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                {{ keyword.trim() }}
+              </span>
+              <span *ngIf="cours.keywords.split(',').length > 3" 
+                    class="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
+                +{{ cours.keywords.split(',').length - 3 }}
+              </span>
+            </div>
+          </div>
 
           <!-- Progression si inscrit -->
           <div *ngIf="cours.enrollment" class="mb-4">
@@ -429,13 +457,23 @@
               <div class="rounded-full h-2 transition-all duration-300" style="background-color: #063cdf;"
                 [style.width.%]="cours.enrollment.progress"></div>
             </div>
+            <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
+              <span>{{ cours.enrollment.completedLecons || 0 }} / {{ cours.enrollment.totalLecons || 0 }} leçons</span>
+              <span *ngIf="cours.enrollment.totalQuiz > 0" class="text-xs text-gray-500">
+                {{ cours.enrollment.passedQuiz || 0 }} / {{ cours.enrollment.totalQuiz || 0 }} quiz
+              </span>
+              <span *ngIf="cours.enrollment.progress === 100" class="text-green-600 font-medium">
+                <i data-feather="check" class="w-3 h-3 mr-1"></i>
+                Terminé !
+              </span>
+            </div>
           </div>
 
           <!-- Actions -->
           <div class="flex items-center justify-between">
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-gray-500 flex items-center">
               <i data-feather="calendar" class="w-4 h-4 mr-1"></i>
-              {{ cours.createdAt | date:'shortDate' }}
+              <span>{{ cours.createdAt | date:'shortDate' }}</span>
             </div>
 
             <div class="flex space-x-2">

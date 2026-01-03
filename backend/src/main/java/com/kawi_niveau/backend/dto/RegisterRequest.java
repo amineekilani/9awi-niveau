@@ -10,4 +10,6 @@ public class RegisterRequest {
     private String lastName;
     private String dateOfBirth;
     private String phoneNumber;
+    private String role; // ETUDIANT ou FORMATEUR
+    private String domaineSpecialisation; // Pour les formateurs
 }

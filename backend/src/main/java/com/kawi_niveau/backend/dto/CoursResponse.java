@@ -20,4 +20,5 @@ public class CoursResponse {
     private String keywords;
     private Long formateurId;
     private String formateurNom;
+    private String formateurDomaine;
 }

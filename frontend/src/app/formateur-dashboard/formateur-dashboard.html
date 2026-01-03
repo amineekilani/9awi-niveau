@@ -21,6 +21,13 @@
             <div class="text-3xl font-bold text-gray-600">{{ coursArchives.length }}</div>
             <div class="text-sm text-gray-600">Cours archivés</div>
           </div>
+          <div class="h-12 w-px bg-gray-300"></div>
+          <div class="text-center">
+            <div class="text-3xl font-bold" [class]="coursWithoutKeywords > 0 ? 'text-orange-600' : 'text-green-600'">
+              {{ coursWithoutKeywords }}
+            </div>
+            <div class="text-sm text-gray-600">Sans mots-clés</div>
+          </div>
         </div>
         <a routerLink="/cours/nouveau"
           class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
@@ -114,6 +121,31 @@
             <p class="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
               {{ c.description || 'Aucune description disponible' }}
             </p>
+
+            <!-- Mots-clés -->
+            <div *ngIf="c.keywords" class="mb-4">
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let keyword of c.keywords.split(',').slice(0, 4)" 
+                      class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                  {{ keyword.trim() }}
+                </span>
+                <span *ngIf="c.keywords.split(',').length > 4" 
+                      class="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
+                  +{{ c.keywords.split(',').length - 4 }}
+                </span>
+              </div>
+            </div>
+            <div *ngIf="!c.keywords" class="mb-4">
+              <div class="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded-lg">
+                <svg class="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span class="text-xs text-orange-700">Aucun mot-clé défini</span>
+                <a [routerLink]="['/cours/modifier', c.id]" class="text-xs text-orange-600 hover:text-orange-800 underline ml-auto">
+                  Ajouter
+                </a>
+              </div>
+            </div>
 
             <!-- Divider -->
             <div class="border-t border-gray-100 my-4"></div>

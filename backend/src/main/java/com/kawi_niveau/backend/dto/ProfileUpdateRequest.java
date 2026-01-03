@@ -11,4 +11,5 @@ public class ProfileUpdateRequest {
     private String lastName;
     private String dateOfBirth;
     private String phoneNumber;
+    private String domaineSpecialisation;
 }

@@ -47,7 +47,8 @@ public class ProfileController {
                 user.getProfileImage(),
                user.getRole().name(),
                user.getCreatedAt(),
-               user.getPhoneNumber()
+               user.getPhoneNumber(),
+               user.getDomaineSpecialisation()
         );
 
         return ResponseEntity.ok(profile);
@@ -82,6 +83,11 @@ public class ProfileController {
                user.setPhoneNumber(request.getPhoneNumber());
            }
 
+        // Update domaine de spécialisation (only for formateurs)
+        if (request.getDomaineSpecialisation() != null && user.getRole() == com.kawi_niveau.backend.entity.Role.FORMATEUR) {
+            user.setDomaineSpecialisation(request.getDomaineSpecialisation());
+        }
+
         // Update password if provided (only for local users)
         if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
             if (!"local".equals(user.getProvider())) {
@@ -98,7 +104,23 @@ public class ProfileController {
 
         userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("Profil mis à jour avec succès"));
+        // Retourner le profil mis à jour au lieu d'un simple message
+        ProfileResponse updatedProfile = new ProfileResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getProvider(),
+                user.isEmailVerified(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getDateOfBirth(),
+                user.getProfileImage(),
+                user.getRole().name(),
+                user.getCreatedAt(),
+                user.getPhoneNumber(),
+                user.getDomaineSpecialisation()
+        );
+
+        return ResponseEntity.ok(updatedProfile);
     }
 
     /**

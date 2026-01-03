@@ -126,6 +126,35 @@
       </div>
 
       <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700">Type de compte</label>
+        <select
+          class="input-focus-effect block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
+          [(ngModel)]="role"
+          name="role"
+          required
+        >
+          <option value="ETUDIANT">Étudiant</option>
+          <option value="FORMATEUR">Formateur</option>
+        </select>
+      </div>
+
+      <div class="space-y-1" *ngIf="role === 'FORMATEUR'">
+        <label class="text-sm font-medium text-gray-700">Domaine de spécialisation</label>
+        <select
+          class="input-focus-effect block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500"
+          [(ngModel)]="domaineSpecialisation"
+          name="domaineSpecialisation"
+          [required]="role === 'FORMATEUR'"
+        >
+          <option value="">Choisissez votre domaine</option>
+          <option *ngFor="let domaine of domaines" [value]="domaine.nom">
+            {{ domaine.nom }}
+          </option>
+        </select>
+        <p class="text-xs text-gray-500">Sélectionnez votre domaine d'expertise principal</p>
+      </div>
+
+      <div class="space-y-1">
         <label class="text-sm font-medium text-gray-700">Mot de passe</label>
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

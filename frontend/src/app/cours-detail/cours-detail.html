@@ -97,6 +97,22 @@
           </span>
         </div>
         <p class="text-gray-700 leading-relaxed">{{ cours.description || 'Aucune description disponible' }}</p>
+        
+        <!-- Mots-clés -->
+        <div *ngIf="cours.keywords" class="mt-4 pt-4 border-t border-gray-200">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            <span class="text-sm font-medium text-gray-700">Mots-clés :</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span *ngFor="let keyword of cours.keywords.split(',')" 
+                  class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200">
+              {{ keyword.trim() }}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 

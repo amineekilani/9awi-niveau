@@ -186,7 +186,7 @@
               <i data-feather="search" class="text-gray-400 w-5 h-5"></i>
             </div>
             <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
-              placeholder="Rechercher un cours par nom ou description..."
+              placeholder="Rechercher par titre, description, mots-clés..."
               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" />
           </div>
 
@@ -226,65 +226,114 @@
       </div>
 
       <!-- Cours Grid -->
-      <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div *ngFor="let c of filteredCours"
-          class="bg-white rounded-xl shadow-md overflow-hidden course-card transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-          <div
-            class="relative h-48 bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center overflow-hidden">
+          class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow overflow-hidden">
+
+          <!-- Image du cours -->
+          <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
             <img *ngIf="c.thumbnailUrl" [src]="'http://localhost:8080/images/cours/' + c.thumbnailUrl" [alt]="c.titre"
               class="w-full h-full object-cover" (error)="$any($event.target).style.display='none'" />
-            <i *ngIf="!c.thumbnailUrl" data-feather="book-open" class="text-white w-16 h-16 opacity-50"></i>
+            <div *ngIf="!c.thumbnailUrl" class="w-full h-full flex items-center justify-center text-white">
+              <i data-feather="book-open" class="w-16 h-16 opacity-50"></i>
+            </div>
+
+            <!-- Badge d'inscription -->
             <div *ngIf="c.isEnrolled"
-              class="absolute top-4 right-4 bg-primary-500 text-white text-xs px-2 py-1 rounded-full">Inscrit</div>
+              class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+              <i data-feather="check" class="w-4 h-4 mr-1"></i>
+              Inscrit
+            </div>
             <div *ngIf="!c.isEnrolled"
-              class="absolute top-4 left-4 bg-secondary-500 text-white text-xs px-2 py-1 rounded-full">Nouveau</div>
+              class="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+              Nouveau
+            </div>
           </div>
 
+          <!-- Contenu du cours -->
           <div class="p-6">
-            <div class="flex justify-between items-start mb-3">
-              <span *ngIf="c.categorie" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{{
-                c.categorie }}</span>
-              <span *ngIf="!c.categorie"
-                class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">Cours</span>
-              <div class="flex items-center text-yellow-400">
-                <i data-feather="star" class="w-4 h-4 fill-current"></i>
-                <span class="ml-1 text-gray-600 text-sm">4.8</span>
+            <div class="flex items-start justify-between mb-3">
+              <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">{{ c.titre }}</h3>
+              <span *ngIf="c.categorie" class="ml-2 px-2 py-1 text-xs rounded-full whitespace-nowrap"
+                style="background-color: #e3f2fd; color: #063cdf;">
+                {{ c.categorie }}
+              </span>
+            </div>
+
+            <!-- Informations formateur et domaine -->
+            <div class="text-sm text-gray-600 mb-3 pb-3 border-b border-gray-100 space-y-2">
+              <div class="flex items-center">
+                <i data-feather="user" class="w-4 h-4 mr-2"></i>
+                <span class="font-medium">Formateur :</span>
+                <span class="ml-1">{{ c.formateurNom || 'Non spécifié' }}</span>
+              </div>
+              <div *ngIf="c.formateurDomaine" class="flex items-center">
+                <i data-feather="target" class="w-4 h-4 mr-2"></i>
+                <span class="font-medium">Domaine :</span>
+                <span class="ml-1 text-blue-600">{{ c.formateurDomaine }}</span>
               </div>
             </div>
 
-            <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{{ c.titre }}</h3>
-            <p class="text-gray-600 mb-4 text-sm line-clamp-3">{{ c.description }}</p>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ c.description }}</p>
 
-            <!-- Progression pour les cours inscrits -->
+            <!-- Mots-clés -->
+            <div *ngIf="c.keywords" class="mb-4">
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let keyword of c.keywords.split(',').slice(0, 3)" 
+                      class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                  {{ keyword.trim() }}
+                </span>
+                <span *ngIf="c.keywords.split(',').length > 3" 
+                      class="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
+                  +{{ c.keywords.split(',').length - 3 }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Progression si inscrit -->
             <div *ngIf="c.isEnrolled && c.enrollment" class="mb-4">
-              <div class="flex justify-between text-xs text-gray-600 mb-1">
+              <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
                 <span>Progression</span>
-                <span class="font-bold text-primary-500">{{ c.enrollment.progress }}%</span>
+                <span>{{ c.enrollment.progress }}%</span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-gradient-to-r from-primary-500 to-accent h-2 rounded-full transition-all"
+                <div class="rounded-full h-2 transition-all duration-300" style="background-color: #063cdf;"
                   [style.width.%]="c.enrollment.progress"></div>
               </div>
-              <p class="text-xs text-gray-500 mt-1">{{ c.enrollment.completedLecons }} / {{ c.enrollment.totalLecons }}
-                leçons</p>
-            </div>
-
-            <div class="flex justify-between items-center mb-4">
-              <div class="flex items-center text-gray-500">
-                <i data-feather="user" class="w-4 h-4"></i>
-                <span class="ml-2 text-sm">{{ c.formateurNom }}</span>
+              <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
+                <span>{{ c.enrollment.completedLecons || 0 }} / {{ c.enrollment.totalLecons || 0 }} leçons</span>
+                <span *ngIf="c.enrollment.totalQuiz > 0" class="text-xs text-gray-500">
+                  {{ c.enrollment.passedQuiz || 0 }} / {{ c.enrollment.totalQuiz || 0 }} quiz
+                </span>
+                <span *ngIf="c.enrollment.progress === 100" class="text-green-600 font-medium">
+                  <i data-feather="check" class="w-3 h-3 mr-1"></i>
+                  Terminé !
+                </span>
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <a [routerLink]="['/cours', c.id]"
-                class="flex-1 text-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all font-medium">
-                {{ c.isEnrolled ? 'Continuer' : 'Voir détails' }}
-              </a>
-              <button *ngIf="!authService.isFormateur() && !c.isEnrolled" (click)="enrollInCourse(c.id!, $event)"
-                class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-600 transition-all">
-                <i data-feather="plus" class="w-5 h-5"></i>
-              </button>
+            <!-- Actions -->
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-gray-500 flex items-center">
+                <i data-feather="calendar" class="w-4 h-4 mr-1"></i>
+                <span>{{ c.createdAt | date:'shortDate' }}</span>
+              </div>
+
+              <div class="flex space-x-2">
+                <button *ngIf="!c.isEnrolled && c.id" (click)="enrollInCourse(c.id, $event)"
+                  class="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+                  style="background-color: #063cdf;" onmouseover="this.style.backgroundColor='#0850f5'"
+                  onmouseout="this.style.backgroundColor='#063cdf'">
+                  <i data-feather="plus" class="w-4 h-4 mr-1"></i>
+                  S'inscrire
+                </button>
+
+                <button *ngIf="c.isEnrolled && c.id" [routerLink]="['/cours', c.id]"
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                  <i data-feather="play" class="w-4 h-4 mr-1"></i>
+                  Continuer
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -79,7 +79,7 @@ public class AuthController {
                 }
             }
 
-            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail(), user.getRole().name()));
+            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail(), user.getRole().name(), user.getDomaineSpecialisation()));
         } catch (org.springframework.security.core.AuthenticationException e) {
             // Gérer les tentatives échouées
             if (user != null && "local".equals(user.getProvider())) {
@@ -121,35 +121,58 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
-        if (userRepository.findByEmailAndArchivedFalse(registerRequest.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
-        }
-
-        com.kawi_niveau.backend.entity.User user = new com.kawi_niveau.backend.entity.User();
-        user.setEmail(registerRequest.getEmail());
-        user.setPassword(encoder.encode(registerRequest.getPassword()));
-        user.setProvider("local");
-        user.setEmailVerified(false);
-        user.setFirstName(registerRequest.getFirstName());
-        user.setLastName(registerRequest.getLastName());
-        user.setDateOfBirth(registerRequest.getDateOfBirth());
-        user.setPhoneNumber(registerRequest.getPhoneNumber());
-        user.setCreatedAt(System.currentTimeMillis()); // Set registration date
-        
-        // Generate verification token
-        String verificationToken = java.util.UUID.randomUUID().toString();
-        user.setVerificationToken(verificationToken);
-
-        userRepository.save(user);
-
-        // Send verification email
         try {
-            emailService.sendVerificationEmail(user.getEmail(), user.getEmail(), verificationToken);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(new MessageResponse("User registered but email sending failed: " + e.getMessage()));
-        }
+            if (userRepository.findByEmailAndArchivedFalse(registerRequest.getEmail()).isPresent()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
+            }
 
-        return ResponseEntity.ok(new MessageResponse("User registered successfully. Please check your email to verify your account."));
+            com.kawi_niveau.backend.entity.User user = new com.kawi_niveau.backend.entity.User();
+            user.setEmail(registerRequest.getEmail());
+            user.setPassword(encoder.encode(registerRequest.getPassword()));
+            user.setProvider("local");
+            user.setEmailVerified(false);
+            user.setFirstName(registerRequest.getFirstName());
+            user.setLastName(registerRequest.getLastName());
+            user.setDateOfBirth(registerRequest.getDateOfBirth());
+            user.setPhoneNumber(registerRequest.getPhoneNumber());
+            
+            // Gérer le rôle
+            if (registerRequest.getRole() != null && !registerRequest.getRole().isEmpty()) {
+                try {
+                    user.setRole(com.kawi_niveau.backend.entity.Role.valueOf(registerRequest.getRole()));
+                } catch (IllegalArgumentException e) {
+                    user.setRole(com.kawi_niveau.backend.entity.Role.ETUDIANT); // Par défaut
+                }
+            } else {
+                user.setRole(com.kawi_niveau.backend.entity.Role.ETUDIANT); // Par défaut
+            }
+            
+            // Gérer le domaine de spécialisation (seulement pour les formateurs)
+            if (user.getRole() == com.kawi_niveau.backend.entity.Role.FORMATEUR) {
+                user.setDomaineSpecialisation(registerRequest.getDomaineSpecialisation());
+            }
+            
+            user.setCreatedAt(System.currentTimeMillis()); // Set registration date
+            
+            // Generate verification token
+            String verificationToken = java.util.UUID.randomUUID().toString();
+            user.setVerificationToken(verificationToken);
+
+            userRepository.save(user);
+
+            // Send verification email
+            try {
+                emailService.sendVerificationEmail(user.getEmail(), user.getEmail(), verificationToken);
+            } catch (Exception e) {
+                return ResponseEntity.status(500).body(new MessageResponse("User registered but email sending failed: " + e.getMessage()));
+            }
+
+            return ResponseEntity.ok(new MessageResponse("User registered successfully. Please check your email to verify your account."));
+        } catch (Exception e) {
+            System.err.println("Erreur lors de l'inscription: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(new MessageResponse("Registration failed: " + e.getMessage()));
+        }
     }
 
     @Autowired
@@ -170,7 +193,7 @@ public class AuthController {
                 System.err.println("Erreur lors de l'enregistrement de connexion Google pour gamification: " + e.getMessage());
             }
             
-            return ResponseEntity.ok(new JwtResponse(jwt, user.getEmail(), user.getRole().name()));
+            return ResponseEntity.ok(new JwtResponse(jwt, user.getEmail(), user.getRole().name(), user.getDomaineSpecialisation()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Google authentication failed: " + e.getMessage()));
         }

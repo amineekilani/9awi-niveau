@@ -66,6 +66,10 @@ export class FormateurDashboardComponent implements OnInit {
     return this.activeTab === 'actifs' ? this.coursActifs : this.coursArchives;
   }
 
+  get coursWithoutKeywords(): number {
+    return this.coursActifs.filter(c => !c.keywords || c.keywords.trim() === '').length;
+  }
+
   switchTab(tab: 'actifs' | 'archives') {
     this.activeTab = tab;
   }

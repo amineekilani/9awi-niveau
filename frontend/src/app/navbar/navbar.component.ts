@@ -118,6 +118,27 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
         }
     }
 
+    getUserDomaine(): string {
+        // D'abord essayer depuis le localStorage
+        const domaine = this.authService.getDomaine();
+        if (domaine && domaine.trim() !== '') {
+            return domaine;
+        }
+        
+        // Ensuite essayer depuis le profil utilisateur
+        const profile = this.authService.getCurrentProfile();
+        if (profile && profile.role === 'FORMATEUR' && (profile as any).domaineSpecialisation) {
+            return (profile as any).domaineSpecialisation;
+        }
+        
+        // Valeur par défaut pour les formateurs
+        if (this.authService.isFormateur()) {
+            return 'Développement Web';
+        }
+        
+        return 'Expert Digital';
+    }
+
     goToProfile() {
         this.router.navigate(['/profile']);
     }

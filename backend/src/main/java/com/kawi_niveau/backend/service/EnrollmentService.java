@@ -228,6 +228,31 @@ public class EnrollmentService {
 
         int completedLecons = (int) leconCompletionRepository.countByEnrollment(enrollment);
 
+        // Compter les quiz
+        int totalQuiz = (int) modules.stream()
+                .filter(module -> quizRepository.findByModule(module).isPresent())
+                .count();
+
+        // Compter les quiz tentés (au moins une tentative)
+        int completedQuiz = (int) modules.stream()
+                .filter(module -> {
+                    return quizRepository.findByModule(module)
+                            .map(quiz -> !resultatQuizRepository.findByUserAndQuizOrderByDatePassedDesc(enrollment.getUser(), quiz).isEmpty())
+                            .orElse(false);
+                })
+                .count();
+
+        // Compter les quiz réussis (score >= 50%)
+        int passedQuiz = (int) modules.stream()
+                .filter(module -> {
+                    return quizRepository.findByModule(module)
+                            .map(quiz -> resultatQuizRepository.findByUserAndQuizOrderByDatePassedDesc(enrollment.getUser(), quiz)
+                                    .stream()
+                                    .anyMatch(resultat -> resultat.getScore() >= 50.0))
+                            .orElse(false);
+                })
+                .count();
+
         return new EnrollmentResponse(
                 enrollment.getId(),
                 enrollment.getUser().getId(),
@@ -238,7 +263,10 @@ public class EnrollmentService {
                 enrollment.getProgress(),
                 enrollment.getLastAccessedAt(),
                 totalLecons,
-                completedLecons
+                completedLecons,
+                totalQuiz,
+                completedQuiz,
+                passedQuiz
         );
     }
 

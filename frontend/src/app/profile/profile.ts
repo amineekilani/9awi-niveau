@@ -38,6 +38,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   editLastName = '';
   editDateOfBirth = '';
   editPhoneNumberSuffix = '';
+  editDomaineSpecialisation = '';
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
@@ -45,6 +46,9 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   // Profile image
   selectedImageFile: File | null = null;
   profileImagePreview: string | null = null;
+
+  // Domaines disponibles
+  domaines: any[] = [];
 
   private apiUrl = 'http://localhost:8080/api/profile';
 
@@ -57,6 +61,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.loadProfile();
+    this.loadDomaines();
     this.initHeaderData();
     this.initVanta();
   }
@@ -85,6 +90,32 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     });
   }
 
+  loadDomaines(): void {
+    this.authService.getDomaines().subscribe({
+      next: (domaines) => {
+        this.domaines = domaines;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des domaines:', err);
+      }
+    });
+  }
+
+  getProfileDomaine(): string {
+    // D'abord essayer depuis le localStorage
+    const domaine = this.authService.getDomaine();
+    if (domaine && domaine.trim() !== '') {
+      return domaine;
+    }
+    
+    // Ensuite essayer depuis le profil
+    if (this.profile && (this.profile as any).domaineSpecialisation) {
+      return (this.profile as any).domaineSpecialisation;
+    }
+    
+    return 'Développement Web';
+  }
+
   enableEditMode() {
     if (this.profile) {
       this.editEmail = this.profile.email || '';
@@ -92,6 +123,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
       this.editLastName = this.profile.lastName || '';
       this.editDateOfBirth = this.profile.dateOfBirth || '';
       this.editPhoneNumberSuffix = this.profile.phoneNumber ? this.profile.phoneNumber.replace('+216', '') : '';
+      this.editDomaineSpecialisation = (this.profile as any).domaineSpecialisation || this.authService.getDomaine() || '';
       this.editMode = true;
       if (typeof feather !== 'undefined') {
         setTimeout(() => feather.replace(), 100);
@@ -123,6 +155,11 @@ export class ProfileComponent implements OnInit, AfterViewInit {
       phoneNumber: this.editPhoneNumberSuffix ? '+216' + this.editPhoneNumberSuffix : null
     };
 
+    // Ajouter le domaine si l'utilisateur est formateur
+    if (this.profile?.role === 'FORMATEUR') {
+      updateData.domaineSpecialisation = this.editDomaineSpecialisation;
+    }
+
     if (this.currentPassword && this.newPassword) {
       updateData.currentPassword = this.currentPassword;
       updateData.newPassword = this.newPassword;
@@ -138,6 +175,12 @@ export class ProfileComponent implements OnInit, AfterViewInit {
         this.currentPassword = '';
         this.newPassword = '';
         this.confirmPassword = '';
+        
+        // Mettre à jour le domaine dans localStorage si c'est un formateur
+        if (this.profile?.role === 'FORMATEUR' && (this.profile as any).domaineSpecialisation) {
+          localStorage.setItem('auth-domaine', (this.profile as any).domaineSpecialisation);
+        }
+        
         this.authService.loadUserProfile(); // Recharger le profil global
         if (typeof feather !== 'undefined') {
           setTimeout(() => feather.replace(), 100);

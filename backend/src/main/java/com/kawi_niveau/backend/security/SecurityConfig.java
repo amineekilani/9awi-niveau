@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/api/init/**").permitAll()
+                        .requestMatchers("/api/domaines/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/profile/upload-image-after-register").permitAll()
                         .requestMatchers("/api/files/**").permitAll()

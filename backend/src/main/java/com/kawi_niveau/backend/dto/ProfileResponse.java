@@ -17,4 +17,5 @@ public class ProfileResponse {
     private String role;
     private Long createdAt;
     private String phoneNumber;
+    private String domaineSpecialisation;
 }

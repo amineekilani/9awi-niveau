@@ -18,4 +18,7 @@ public class EnrollmentResponse {
     private Long lastAccessedAt;
     private int totalLecons;
     private int completedLecons;
+    private int totalQuiz;
+    private int completedQuiz;
+    private int passedQuiz;
 }

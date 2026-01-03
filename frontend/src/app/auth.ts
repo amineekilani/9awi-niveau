@@ -25,6 +25,7 @@ export class AuthService {
   private tokenKey = 'auth-token';
   private emailKey = 'auth-email';
   private roleKey = 'auth-role';
+  private domaineKey = 'auth-domaine';
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
 
   // Profile management
@@ -88,6 +89,9 @@ export class AuthService {
         localStorage.setItem(this.tokenKey, res.token);
         localStorage.setItem(this.emailKey, res.email);
         localStorage.setItem(this.roleKey, res.role);
+        if (res.domaineSpecialisation) {
+          localStorage.setItem(this.domaineKey, res.domaineSpecialisation);
+        }
         this.loggedIn.next(true);
       }),
       catchError((error: HttpErrorResponse) => {
@@ -103,6 +107,9 @@ export class AuthService {
         localStorage.setItem(this.tokenKey, res.token);
         localStorage.setItem(this.emailKey, res.email);
         localStorage.setItem(this.roleKey, res.role);
+        if (res.domaineSpecialisation) {
+          localStorage.setItem(this.domaineKey, res.domaineSpecialisation);
+        }
         this.loggedIn.next(true);
       }),
       catchError((error: HttpErrorResponse) => {
@@ -111,14 +118,23 @@ export class AuthService {
     );
   }
 
-  register(credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string; phoneNumber?: string }): Observable<any> {
+  register(credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string; phoneNumber?: string; role?: string; domaineSpecialisation?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, credentials, { responseType: 'text' as 'json' });
+  }
+
+  getCurrentProfile(): Profile | null {
+    return this.userProfileSubject.value;
+  }
+
+  getDomaines(): Observable<any[]> {
+    return this.http.get<any[]>('http://localhost:8080/api/domaines');
   }
 
   logout() {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.emailKey);
     localStorage.removeItem(this.roleKey);
+    localStorage.removeItem(this.domaineKey);
     this.loggedIn.next(false);
     this.router.navigate(['/login']);
   }
@@ -133,6 +149,10 @@ export class AuthService {
 
   getRole(): string | null {
     return localStorage.getItem(this.roleKey);
+  }
+
+  getDomaine(): string | null {
+    return localStorage.getItem(this.domaineKey);
   }
 
   isFormateur(): boolean {

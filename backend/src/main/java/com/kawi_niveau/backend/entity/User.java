@@ -77,4 +77,7 @@ public class User {
 
     @Column(name = "phone_number")
     private String phoneNumber; // Format: +216XXXXXXXX (8 chiffres après +216)
+
+    @Column(name = "domaine_specialisation", length = 100)
+    private String domaineSpecialisation; // Domaine d'expertise pour les formateurs
 }

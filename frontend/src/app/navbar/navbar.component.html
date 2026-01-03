@@ -133,7 +133,7 @@
                         <div class="flex items-center mt-0.5" *ngIf="authService.isFormateur()">
                             <span
                                 class="bg-white bg-opacity-20 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider mr-2">Formateur</span>
-                            <span class="text-blue-100 text-[10px] opacity-80">Expert Digital</span>
+                            <span class="text-blue-100 text-[10px] opacity-80">{{ getUserDomaine() }}</span>
                         </div>
                     </div>
 

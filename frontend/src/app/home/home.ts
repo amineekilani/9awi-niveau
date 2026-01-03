@@ -157,7 +157,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(c =>
         c.titre.toLowerCase().includes(term) ||
-        c.description.toLowerCase().includes(term)
+        c.description.toLowerCase().includes(term) ||
+        (c.keywords && c.keywords.toLowerCase().includes(term))
       );
     }
 

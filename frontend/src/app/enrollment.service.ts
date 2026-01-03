@@ -14,6 +14,9 @@ export interface Enrollment {
   lastAccessedAt: number;
   totalLecons: number;
   completedLecons: number;
+  totalQuiz: number;
+  completedQuiz: number;
+  passedQuiz: number;
 }
 
 export interface EnrollmentRequest {

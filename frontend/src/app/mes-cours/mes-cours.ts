@@ -73,39 +73,45 @@ export class MesCoursComponent implements OnInit, AfterViewInit {
   }
 
   loadMesCours() {
+    // Utiliser exactement la même logique que la page d'accueil
     this.coursService.getAllCours().subscribe({
-      next: (allCours) => {
-        this.enrollmentService.getUserEnrollments().subscribe({
-          next: (enrollments) => {
-            // Filtrer uniquement les cours inscrits
-            this.cours = allCours
-              .filter(c => enrollments.some(e => e.coursId === c.id))
-              .map(c => {
-                const enrollment = enrollments.find(e => e.coursId === c.id);
-                return {
-                  ...c,
-                  enrollment: enrollment,
-                  isEnrolled: true
-                };
-              });
-
-            this.updateStats();
-            this.updateFilterCounts();
-            this.applyFilter();
-            this.loading = false;
-
-            setTimeout(() => {
-              if (typeof feather !== 'undefined') feather.replace();
-            }, 100);
-          },
-          error: (err) => {
-            this.error = 'Erreur lors du chargement des inscriptions';
-            this.loading = false;
-          }
-        });
+      next: (data) => {
+        this.cours = data;
+        this.loadEnrollments();
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des cours';
+        this.loading = false;
+      }
+    });
+  }
+
+  loadEnrollments() {
+    this.enrollmentService.getUserEnrollments().subscribe({
+      next: (enrollments) => {
+        // Marquer les cours inscrits avec leurs données d'enrollment
+        this.cours.forEach(cours => {
+          const enrollment = enrollments.find(e => e.coursId === cours.id);
+          if (enrollment) {
+            cours.enrollment = enrollment;
+            cours.isEnrolled = true;
+          }
+        });
+
+        // Filtrer uniquement les cours inscrits
+        this.cours = this.cours.filter(c => c.isEnrolled);
+
+        this.updateStats();
+        this.updateFilterCounts();
+        this.applyFilter();
+        this.loading = false;
+
+        setTimeout(() => {
+          if (typeof feather !== 'undefined') feather.replace();
+        }, 100);
+      },
+      error: (err) => {
+        this.error = 'Erreur lors du chargement des inscriptions';
         this.loading = false;
       }
     });

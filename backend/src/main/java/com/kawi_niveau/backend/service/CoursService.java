@@ -126,7 +126,22 @@ public class CoursService {
     }
 
     private CoursResponse mapToResponse(Cours cours) {
-        String formateurNom = cours.getFormateur().getFirstName() + " " + cours.getFormateur().getLastName();
+        String formateurNom = "";
+        if (cours.getFormateur().getFirstName() != null && cours.getFormateur().getLastName() != null) {
+            formateurNom = cours.getFormateur().getFirstName() + " " + cours.getFormateur().getLastName();
+        } else if (cours.getFormateur().getFirstName() != null) {
+            formateurNom = cours.getFormateur().getFirstName();
+        } else if (cours.getFormateur().getLastName() != null) {
+            formateurNom = cours.getFormateur().getLastName();
+        } else {
+            formateurNom = cours.getFormateur().getEmail(); // Fallback vers l'email
+        }
+        
+        String formateurDomaine = cours.getFormateur().getDomaineSpecialisation();
+        if (formateurDomaine == null || formateurDomaine.trim().isEmpty()) {
+            formateurDomaine = "Développement Web"; // Valeur par défaut
+        }
+        
         return new CoursResponse(
                 cours.getId(),
                 cours.getTitre(),
@@ -139,6 +154,7 @@ public class CoursService {
                 cours.getThumbnailUrl(),
                 cours.getKeywords(),
                 cours.getFormateur().getId(),
-                formateurNom);
+                formateurNom,
+                formateurDomaine);
     }
 }

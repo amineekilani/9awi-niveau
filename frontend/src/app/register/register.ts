@@ -25,6 +25,8 @@ export class RegisterComponent {
   // Phone number split: prefix fixed, suffix for the 8 digits
   phoneNumberPrefix = '+216';
   phoneNumberSuffix = '';
+  role = 'ETUDIANT'; // Par défaut étudiant
+  domaineSpecialisation = ''; // Pour les formateurs
   error = '';
   success = '';
   
@@ -32,7 +34,23 @@ export class RegisterComponent {
   selectedImageFile: File | null = null;
   profileImagePreview: string | null = null;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  // Domaines disponibles
+  domaines: any[] = [];
+
+  constructor(private authService: AuthService, private router: Router) {
+    this.loadDomaines();
+  }
+
+  loadDomaines(): void {
+    this.authService.getDomaines().subscribe({
+      next: (domaines) => {
+        this.domaines = domaines;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des domaines:', err);
+      }
+    });
+  }
 
   onProfileImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -68,6 +86,12 @@ export class RegisterComponent {
       return;
     }
 
+    // Validation pour les formateurs
+    if (this.role === 'FORMATEUR' && (!this.domaineSpecialisation || this.domaineSpecialisation.trim() === '')) {
+      this.error = 'Veuillez sélectionner un domaine de spécialisation';
+      return;
+    }
+
     this.error = '';
     this.success = '';
 
@@ -80,7 +104,9 @@ export class RegisterComponent {
       firstName: this.firstName,
       lastName: this.lastName,
       dateOfBirth: this.dateOfBirth,
-      phoneNumber: phoneNumber
+      phoneNumber: phoneNumber,
+      role: this.role,
+      domaineSpecialisation: this.role === 'FORMATEUR' ? this.domaineSpecialisation : undefined
     }).subscribe({
       next: () => {
         // Si une image a été sélectionnée, l'uploader après l'inscription

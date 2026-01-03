@@ -16,6 +16,7 @@ export interface Cours {
   keywords?: string;
   formateurId?: number;
   formateurNom?: string;
+  formateurDomaine?: string;
 }
 
 @Injectable({
