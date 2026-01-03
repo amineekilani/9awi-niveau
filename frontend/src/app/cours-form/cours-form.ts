@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { CoursService, Cours } from '../cours.service';
+import { CoursService, Cours, NiveauDifficulte, NiveauDifficulteInfo } from '../cours.service';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
+import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
 
 declare const feather: any;
 
 @Component({
   selector: 'app-cours-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent, NiveauBadgeComponent],
   templateUrl: './cours-form.html',
   styleUrls: ['./cours-form.css']
 })
@@ -20,7 +21,8 @@ export class CoursFormComponent implements OnInit {
   cours: Cours = {
     titre: '',
     description: '',
-    categorie: ''
+    categorie: '',
+    niveauDifficulte: NiveauDifficulte.DEBUTANT
   };
   isEditMode = false;
   coursId?: number;
@@ -39,6 +41,7 @@ export class CoursFormComponent implements OnInit {
   userStats: UserGamificationStats | null = null;
 
   categories: string[] = [];
+  niveauxDifficulte: NiveauDifficulteInfo[] = [];
   isCustomCategory = false;
   customCategory = '';
 
@@ -64,11 +67,23 @@ export class CoursFormComponent implements OnInit {
     this.initHeaderData();
 
     this.loadCategories();
+    this.loadNiveauxDifficulte();
     this.coursId = Number(this.route.snapshot.paramMap.get('id'));
     if (this.coursId) {
       this.isEditMode = true;
       this.loadCours();
     }
+  }
+
+  loadNiveauxDifficulte() {
+    this.coursService.getNiveauxDifficulte().subscribe({
+      next: (niveaux) => {
+        this.niveauxDifficulte = niveaux;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des niveaux:', err);
+      }
+    });
   }
 
   loadCategories() {
@@ -265,5 +280,13 @@ export class CoursFormComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  getNiveauInfo(niveau: NiveauDifficulte): NiveauDifficulteInfo | undefined {
+    return this.niveauxDifficulte.find(n => n.niveau === niveau);
+  }
+
+  onNiveauChange() {
+    // Optionnel : logique supplémentaire lors du changement de niveau
   }
 }

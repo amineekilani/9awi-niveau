@@ -3,6 +3,8 @@ package com.kawi_niveau.backend.controller;
 import com.kawi_niveau.backend.dto.CoursRequest;
 import com.kawi_niveau.backend.dto.CoursResponse;
 import com.kawi_niveau.backend.dto.MessageResponse;
+import com.kawi_niveau.backend.dto.NiveauDifficulteResponse;
+import com.kawi_niveau.backend.entity.NiveauDifficulte;
 import com.kawi_niveau.backend.service.CoursService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,8 +81,23 @@ public class CoursController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<CoursResponse>> searchCours(@RequestParam String query) {
-        List<CoursResponse> cours = coursService.searchCours(query);
+    public ResponseEntity<List<CoursResponse>> searchCours(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String categorie,
+            @RequestParam(required = false) NiveauDifficulte niveau) {
+        List<CoursResponse> cours = coursService.searchCoursAvecFiltres(query, categorie, niveau);
+        return ResponseEntity.ok(cours);
+    }
+
+    @GetMapping("/niveaux")
+    public ResponseEntity<List<NiveauDifficulteResponse>> getNiveauxDifficulte() {
+        List<NiveauDifficulteResponse> niveaux = coursService.getAllNiveauxDifficulte();
+        return ResponseEntity.ok(niveaux);
+    }
+
+    @GetMapping("/niveau/{niveau}")
+    public ResponseEntity<List<CoursResponse>> getCoursByNiveau(@PathVariable NiveauDifficulte niveau) {
+        List<CoursResponse> cours = coursService.searchCoursByNiveau(niveau);
         return ResponseEntity.ok(cours);
     }
 

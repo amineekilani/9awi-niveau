@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { CoursService, Cours } from '../cours.service';
+import { CoursService, Cours, NiveauDifficulte, NiveauDifficulteInfo } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { AuthService } from '../auth';
 import { UserGamificationService, RecentActivity } from '../user-gamification.service';
 import { GamificationNotificationService } from '../gamification-notification.service';
+import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
 
 declare const feather: any;
 
@@ -19,7 +20,7 @@ interface CoursWithEnrollment extends Cours {
 @Component({
   selector: 'app-mes-cours',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, NavbarComponent, NiveauBadgeComponent],
   templateUrl: './mes-cours.html',
   styleUrls: ['./mes-cours.css']
 })

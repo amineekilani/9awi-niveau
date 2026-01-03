@@ -5,9 +5,10 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
-import { CoursService, Cours } from '../cours.service';
+import { CoursService, Cours, NiveauDifficulte, NiveauDifficulteInfo } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { GamificationNotificationService } from '../gamification-notification.service';
+import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
 
 declare const feather: any;
 
@@ -19,7 +20,7 @@ interface CoursWithEnrollment extends Cours {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, NavbarComponent, NiveauBadgeComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
@@ -39,7 +40,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
   // Filtres
   searchTerm = '';
   selectedCategorie = '';
+  selectedNiveau = '';
   categories: string[] = [];
+  niveauxDifficulte: NiveauDifficulteInfo[] = [];
 
   // Stats calculées
   enrolledCount = 0;
@@ -62,6 +65,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
     this.loadUserStats();
     this.loadCours();
+    this.loadNiveauxDifficulte();
   }
 
   ngAfterViewInit() {
@@ -150,6 +154,17 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.categories = Array.from(categoriesSet).sort();
   }
 
+  loadNiveauxDifficulte() {
+    this.coursService.getNiveauxDifficulte().subscribe({
+      next: (niveaux) => {
+        this.niveauxDifficulte = niveaux;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des niveaux:', err);
+      }
+    });
+  }
+
   applyFilters() {
     let filtered = [...this.cours];
 
@@ -166,6 +181,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
       filtered = filtered.filter(c => c.categorie === this.selectedCategorie);
     }
 
+    if (this.selectedNiveau) {
+      filtered = filtered.filter(c => c.niveauDifficulte === this.selectedNiveau);
+    }
+
     this.filteredCours = filtered;
   }
 
@@ -177,9 +196,14 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.applyFilters();
   }
 
+  onNiveauChange() {
+    this.applyFilters();
+  }
+
   clearFilters() {
     this.searchTerm = '';
     this.selectedCategorie = '';
+    this.selectedNiveau = '';
     this.applyFilters();
   }
 
@@ -251,6 +275,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   scrollToCourses() {
     document.getElementById('courses-section')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  getNiveauDisplayName(niveau: string): string {
+    const niveauInfo = this.niveauxDifficulte.find(n => n.niveau === niveau);
+    return niveauInfo ? niveauInfo.displayName : niveau;
   }
 
   toggleNotifications() {

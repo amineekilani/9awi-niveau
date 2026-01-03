@@ -1,7 +1,22 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
+
+export enum NiveauDifficulte {
+  DEBUTANT = 'DEBUTANT',
+  INTERMEDIAIRE = 'INTERMEDIAIRE',
+  AVANCE = 'AVANCE',
+  EXPERT = 'EXPERT'
+}
+
+export interface NiveauDifficulteInfo {
+  niveau: NiveauDifficulte;
+  displayName: string;
+  description: string;
+  badgeColor: string;
+  icon: string;
+}
 
 export interface Cours {
   id?: number;
@@ -14,6 +29,8 @@ export interface Cours {
   categorie?: string;
   thumbnailUrl?: string;
   keywords?: string;
+  niveauDifficulte: NiveauDifficulte;
+  niveauDifficulteDisplay?: string;
   formateurId?: number;
   formateurNom?: string;
   formateurDomaine?: string;
@@ -51,8 +68,21 @@ export class CoursService {
     return this.http.get<Cours[]>(this.apiUrl);
   }
 
-  searchCours(query: string): Observable<Cours[]> {
-    return this.http.get<Cours[]>(`${this.apiUrl}/search`, { params: { query } });
+  searchCours(query?: string, categorie?: string, niveau?: NiveauDifficulte): Observable<Cours[]> {
+    let params = new HttpParams();
+    if (query) params = params.set('query', query);
+    if (categorie) params = params.set('categorie', categorie);
+    if (niveau) params = params.set('niveau', niveau);
+    
+    return this.http.get<Cours[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  getNiveauxDifficulte(): Observable<NiveauDifficulteInfo[]> {
+    return this.http.get<NiveauDifficulteInfo[]>(`${this.apiUrl}/niveaux`);
+  }
+
+  getCoursByNiveau(niveau: NiveauDifficulte): Observable<Cours[]> {
+    return this.http.get<Cours[]>(`${this.apiUrl}/niveau/${niveau}`);
   }
 
   getCoursById(id: number): Observable<Cours> {

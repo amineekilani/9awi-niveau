@@ -77,6 +77,60 @@
           <p class="text-xs text-gray-500 mt-1">Choisissez la catégorie qui correspond le mieux à votre cours</p>
         </div>
 
+        <!-- Niveau de difficulté -->
+        <div class="mb-6">
+          <label for="niveauDifficulte" class="block text-sm font-semibold text-gray-900 mb-2">
+            Niveau de difficulté <span class="text-red-500">*</span>
+          </label>
+          <select id="niveauDifficulte" name="niveauDifficulte" [(ngModel)]="cours.niveauDifficulte" 
+                  (change)="onNiveauChange()" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white">
+            <option *ngFor="let niveau of niveauxDifficulte" [value]="niveau.niveau">
+              {{ niveau.displayName }}
+            </option>
+          </select>
+
+          <!-- Aide contextuelle pour le niveau sélectionné -->
+          <div *ngIf="cours.niveauDifficulte && getNiveauInfo(cours.niveauDifficulte)" 
+               class="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200 animate-fade-in">
+            <div class="flex items-start gap-3">
+              <app-niveau-badge [niveau]="cours.niveauDifficulte"></app-niveau-badge>
+              <div class="flex-1">
+                <h4 class="text-sm font-semibold text-blue-900 mb-1">
+                  {{ getNiveauInfo(cours.niveauDifficulte)?.displayName }}
+                </h4>
+                <p class="text-sm text-blue-800 mb-2">
+                  {{ getNiveauInfo(cours.niveauDifficulte)?.description }}
+                </p>
+                <div class="text-xs text-blue-700">
+                  <div *ngIf="cours.niveauDifficulte === 'DEBUTANT'" class="space-y-1">
+                    <p><strong>Idéal pour :</strong> Personnes sans expérience préalable</p>
+                    <p><strong>Contenu suggéré :</strong> Concepts de base, terminologie, exemples simples</p>
+                    <p><strong>Durée recommandée :</strong> 2-6 heures</p>
+                  </div>
+                  <div *ngIf="cours.niveauDifficulte === 'INTERMEDIAIRE'" class="space-y-1">
+                    <p><strong>Idéal pour :</strong> Personnes avec des bases solides</p>
+                    <p><strong>Contenu suggéré :</strong> Techniques avancées, cas pratiques, projets</p>
+                    <p><strong>Durée recommandée :</strong> 4-12 heures</p>
+                  </div>
+                  <div *ngIf="cours.niveauDifficulte === 'AVANCE'" class="space-y-1">
+                    <p><strong>Idéal pour :</strong> Professionnels expérimentés</p>
+                    <p><strong>Contenu suggéré :</strong> Concepts complexes, optimisations, architecture</p>
+                    <p><strong>Durée recommandée :</strong> 8-20 heures</p>
+                  </div>
+                  <div *ngIf="cours.niveauDifficulte === 'EXPERT'" class="space-y-1">
+                    <p><strong>Idéal pour :</strong> Experts du domaine</p>
+                    <p><strong>Contenu suggéré :</strong> Recherche avancée, innovations, leadership</p>
+                    <p><strong>Durée recommandée :</strong> 10+ heures</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-1">Choisissez le niveau qui correspond aux prérequis de votre cours</p>
+        </div>
+
         <!-- Mots clés -->
         <div class="mb-6">
           <label class="block text-sm font-semibold text-gray-900 mb-2">
@@ -172,11 +226,13 @@
             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div>
-          <h3 class="font-semibold text-blue-900 mb-2">Conseil</h3>
-          <p class="text-sm text-blue-800">
-            Après avoir créé votre cours, vous pourrez ajouter des modules et des leçons pour structurer votre contenu
-            pédagogique.
-          </p>
+          <h3 class="font-semibold text-blue-900 mb-2">Conseils pour créer un excellent cours</h3>
+          <div class="text-sm text-blue-800 space-y-2">
+            <p>• <strong>Niveau de difficulté :</strong> Choisissez le niveau en fonction des prérequis réels nécessaires</p>
+            <p>• <strong>Mots-clés :</strong> Ajoutez des termes que vos apprenants pourraient rechercher</p>
+            <p>• <strong>Description :</strong> Mentionnez clairement les objectifs et ce que l'apprenant va acquérir</p>
+            <p>• <strong>Structure :</strong> Après création, vous pourrez ajouter des modules et leçons pour organiser le contenu</p>
+          </div>
         </div>
       </div>
     </div>

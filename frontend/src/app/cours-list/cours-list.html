@@ -178,44 +178,60 @@
       </div>
 
       <!-- Barre de recherche et filtres -->
-      <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+      <div class="bg-gradient-to-r from-blue-800 to-blue-900 rounded-xl shadow-lg p-6 mb-8 border border-blue-700">
         <div class="flex flex-col md:flex-row gap-4">
           <!-- Recherche -->
           <div class="flex-1 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i data-feather="search" class="text-gray-400 w-5 h-5"></i>
+              <i data-feather="search" class="text-blue-300 w-5 h-5"></i>
             </div>
             <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
               placeholder="Rechercher par titre, description, mots-clés..."
-              class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" />
+              class="w-full pl-10 pr-4 py-3 bg-blue-700 border border-blue-600 text-white placeholder-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all" />
           </div>
 
           <!-- Filtre par catégorie -->
-          <div class="md:w-64 relative">
+          <div class="md:w-48 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i data-feather="filter" class="text-gray-400 w-5 h-5"></i>
+              <i data-feather="filter" class="text-blue-300 w-5 h-5"></i>
             </div>
             <select [(ngModel)]="selectedCategorie" (ngModelChange)="onCategorieChange()"
-              class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none bg-white cursor-pointer">
-              <option value="">Toutes les catégories</option>
-              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+              class="w-full pl-10 pr-4 py-3 bg-blue-700 border border-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all appearance-none cursor-pointer">
+              <option value="" class="bg-blue-700">Toutes les catégories</option>
+              <option *ngFor="let cat of categories" [value]="cat" class="bg-blue-700">{{ cat }}</option>
+            </select>
+          </div>
+
+          <!-- Filtre par niveau -->
+          <div class="md:w-48 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i data-feather="trending-up" class="text-blue-300 w-5 h-5"></i>
+            </div>
+            <select [(ngModel)]="selectedNiveau" (ngModelChange)="onNiveauChange()"
+              class="w-full pl-10 pr-4 py-3 bg-blue-700 border border-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all appearance-none cursor-pointer">
+              <option value="" class="bg-blue-700">Tous les niveaux</option>
+              <option *ngFor="let niveau of niveauxDifficulte" [value]="niveau.niveau" class="bg-blue-700">
+                {{ niveau.displayName }}
+              </option>
             </select>
           </div>
 
           <!-- Bouton réinitialiser -->
-          <button *ngIf="searchTerm || selectedCategorie" (click)="clearFilters()"
-            class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-all font-medium flex items-center gap-2">
+          <button *ngIf="searchTerm || selectedCategorie || selectedNiveau" (click)="clearFilters()"
+            class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all duration-200 font-medium flex items-center gap-2">
             <i data-feather="x" class="w-5 h-5"></i>
             Réinitialiser
           </button>
         </div>
 
         <!-- Résultats de recherche -->
-        <div *ngIf="searchTerm || selectedCategorie" class="mt-4 text-sm text-gray-600">
-          <span class="font-medium">{{ filteredCours.length }}</span> cours trouvé(s)
-          <span *ngIf="searchTerm"> pour "<span class="font-medium text-primary-500">{{ searchTerm }}</span>"</span>
-          <span *ngIf="selectedCategorie"> dans la catégorie "<span class="font-medium text-primary-500">{{
+        <div *ngIf="searchTerm || selectedCategorie || selectedNiveau" class="mt-4 text-sm text-blue-200">
+          <span class="font-medium text-white">{{ filteredCours.length }}</span> cours trouvé(s)
+          <span *ngIf="searchTerm"> pour "<span class="font-medium text-blue-300">{{ searchTerm }}</span>"</span>
+          <span *ngIf="selectedCategorie"> dans la catégorie "<span class="font-medium text-blue-300">{{
               selectedCategorie }}</span>"</span>
+          <span *ngIf="selectedNiveau"> de niveau "<span class="font-medium text-blue-300">{{
+              getNiveauDisplayName(selectedNiveau) }}</span>"</span>
         </div>
       </div>
 
@@ -238,14 +254,19 @@
               <i data-feather="book-open" class="w-16 h-16 opacity-50"></i>
             </div>
 
+            <!-- Badge de niveau en haut à gauche -->
+            <div *ngIf="c.niveauDifficulte" class="absolute top-3 left-3">
+              <app-niveau-badge [niveau]="c.niveauDifficulte"></app-niveau-badge>
+            </div>
+
             <!-- Badge d'inscription -->
             <div *ngIf="c.isEnrolled"
-              class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+              class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
               <i data-feather="check" class="w-4 h-4 mr-1"></i>
               Inscrit
             </div>
             <div *ngIf="!c.isEnrolled"
-              class="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+              class="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
               Nouveau
             </div>
           </div>
@@ -321,15 +342,33 @@
 
               <div class="flex space-x-2">
                 <button *ngIf="!c.isEnrolled && c.id" (click)="enrollInCourse(c.id, $event)"
-                  class="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+                  class="px-6 py-2 text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap flex items-center"
                   style="background-color: #063cdf;" onmouseover="this.style.backgroundColor='#0850f5'"
                   onmouseout="this.style.backgroundColor='#063cdf'">
                   <i data-feather="plus" class="w-4 h-4 mr-1"></i>
                   S'inscrire
                 </button>
 
-                <button *ngIf="c.isEnrolled && c.id" [routerLink]="['/cours', c.id]"
-                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                <!-- Bouton Continuer pour cours en cours -->
+                <button *ngIf="c.isEnrolled && c.id && c.enrollment && c.enrollment.progress < 100" 
+                  [routerLink]="['/cours', c.id]"
+                  class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap flex items-center">
+                  <i data-feather="play" class="w-4 h-4 mr-1"></i>
+                  Continuer
+                </button>
+
+                <!-- Bouton Revoir pour cours terminés -->
+                <button *ngIf="c.isEnrolled && c.id && c.enrollment && c.enrollment.progress === 100" 
+                  [routerLink]="['/cours', c.id]"
+                  class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap flex items-center">
+                  <i data-feather="refresh-cw" class="w-4 h-4 mr-1"></i>
+                  Revoir
+                </button>
+
+                <!-- Bouton par défaut si pas d'enrollment data -->
+                <button *ngIf="c.isEnrolled && c.id && !c.enrollment" 
+                  [routerLink]="['/cours', c.id]"
+                  class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap flex items-center">
                   <i data-feather="play" class="w-4 h-4 mr-1"></i>
                   Continuer
                 </button>

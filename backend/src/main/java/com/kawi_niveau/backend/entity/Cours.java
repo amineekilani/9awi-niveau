@@ -38,6 +38,10 @@ public class Cours {
     @Column(name = "keywords", length = 500)
     private String keywords;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "niveau_difficulte", nullable = false)
+    private NiveauDifficulte niveauDifficulte = NiveauDifficulte.DEBUTANT;
+
     @ManyToOne
     @JoinColumn(name = "formateur_id", nullable = false)
     private User formateur;

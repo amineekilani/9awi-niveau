@@ -103,6 +103,11 @@
           <i data-feather="book-open" class="w-16 h-16 opacity-50"></i>
         </div>
 
+        <!-- Badge de niveau en haut à gauche -->
+        <div *ngIf="cours.niveauDifficulte" class="absolute top-3 left-3">
+          <app-niveau-badge [niveau]="cours.niveauDifficulte"></app-niveau-badge>
+        </div>
+
         <!-- Badge de statut -->
         <div class="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium" [class]="cours.enrollment?.progress === 100 ? 
                'bg-green-500 text-white' : 
@@ -184,7 +189,7 @@
 
           <div class="flex space-x-2">
             <button [routerLink]="['/cours', cours.id]"
-              class="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium" 
+              class="px-6 py-2 text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap flex items-center" 
               [class]="cours.enrollment?.progress === 100 ? 
                        'bg-green-600 hover:bg-green-700' : 
                        'bg-blue-600 hover:bg-blue-700'"

@@ -1,5 +1,6 @@
 package com.kawi_niveau.backend.dto;
 
+import com.kawi_niveau.backend.entity.NiveauDifficulte;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,8 @@ public class CoursResponse {
     private String categorie;
     private String thumbnailUrl;
     private String keywords;
+    private NiveauDifficulte niveauDifficulte;
+    private String niveauDifficulteDisplay;
     private Long formateurId;
     private String formateurNom;
     private String formateurDomaine;

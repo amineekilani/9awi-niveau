@@ -2,7 +2,9 @@ package com.kawi_niveau.backend.service;
 
 import com.kawi_niveau.backend.dto.CoursRequest;
 import com.kawi_niveau.backend.dto.CoursResponse;
+import com.kawi_niveau.backend.dto.NiveauDifficulteResponse;
 import com.kawi_niveau.backend.entity.Cours;
+import com.kawi_niveau.backend.entity.NiveauDifficulte;
 import com.kawi_niveau.backend.entity.Role;
 import com.kawi_niveau.backend.entity.User;
 import com.kawi_niveau.backend.repository.CoursRepository;
@@ -10,6 +12,7 @@ import com.kawi_niveau.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +39,7 @@ public class CoursService {
         cours.setCategorie(request.getCategorie());
         cours.setThumbnailUrl(request.getThumbnailUrl());
         cours.setKeywords(request.getKeywords());
+        cours.setNiveauDifficulte(request.getNiveauDifficulte());
         cours.setFormateur(formateur);
 
         Cours savedCours = coursRepository.save(cours);
@@ -58,6 +62,7 @@ public class CoursService {
         cours.setCategorie(request.getCategorie());
         cours.setThumbnailUrl(request.getThumbnailUrl());
         cours.setKeywords(request.getKeywords());
+        cours.setNiveauDifficulte(request.getNiveauDifficulte());
 
         Cours updatedCours = coursRepository.save(cours);
         return mapToResponse(updatedCours);
@@ -119,6 +124,43 @@ public class CoursService {
         return coursRepository.findDistinctCategories();
     }
 
+    public List<NiveauDifficulteResponse> getAllNiveauxDifficulte() {
+        return Arrays.stream(NiveauDifficulte.values())
+                .map(NiveauDifficulteResponse::fromNiveau)
+                .collect(Collectors.toList());
+    }
+
+    public List<CoursResponse> searchCoursByNiveau(NiveauDifficulte niveau) {
+        List<Cours> coursList = coursRepository.findByNiveauDifficulteAndArchivedFalse(niveau);
+        return coursList.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    public List<CoursResponse> searchCoursAvecFiltres(String keyword, String categorie, NiveauDifficulte niveau) {
+        List<Cours> coursList;
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            if (categorie != null && !categorie.trim().isEmpty() && niveau != null) {
+                coursList = coursRepository.searchCoursWithAllFilters(keyword, categorie, niveau);
+            } else if (categorie != null && !categorie.trim().isEmpty()) {
+                coursList = coursRepository.searchCoursWithKeywordAndCategory(keyword, categorie);
+            } else if (niveau != null) {
+                coursList = coursRepository.searchCoursWithKeywordAndNiveau(keyword, niveau);
+            } else {
+                coursList = coursRepository.searchCours(keyword);
+            }
+        } else if (categorie != null && !categorie.trim().isEmpty() && niveau != null) {
+            coursList = coursRepository.findByCategorieAndNiveauDifficulteAndArchivedFalse(categorie, niveau);
+        } else if (categorie != null && !categorie.trim().isEmpty()) {
+            coursList = coursRepository.findByCategorieAndArchivedFalse(categorie);
+        } else if (niveau != null) {
+            coursList = coursRepository.findByNiveauDifficulteAndArchivedFalse(niveau);
+        } else {
+            coursList = coursRepository.findByArchivedFalse();
+        }
+        
+        return coursList.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
     public CoursResponse getCoursById(Long id) {
         Cours cours = coursRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
@@ -153,6 +195,8 @@ public class CoursService {
                 cours.getCategorie(),
                 cours.getThumbnailUrl(),
                 cours.getKeywords(),
+                cours.getNiveauDifficulte(),
+                cours.getNiveauDifficulte().getDisplayName(),
                 cours.getFormateur().getId(),
                 formateurNom,
                 formateurDomaine);

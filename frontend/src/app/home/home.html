@@ -328,7 +328,8 @@
       <h3 class="text-xl font-semibold text-gray-900 mb-2">Prêt à commencer votre aventure ?</h3>
       <p class="text-gray-600 mb-6">Inscrivez-vous à votre premier cours et commencez à gagner des points et des
         récompenses !</p>
-      <button (click)="scrollToCourses()" class="text-white px-6 py-3 rounded-lg font-medium transition-colors"
+      <button (click)="scrollToCourses()"
+        class="text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center"
         style="background-color: #063cdf;" onmouseover="this.style.backgroundColor='#0850f5'"
         onmouseout="this.style.backgroundColor='#063cdf'">
         Découvrir les cours
@@ -342,39 +343,61 @@
       <h2 class="text-3xl font-bold text-gray-900">Catalogue des Cours</h2>
       <div class="flex items-center space-x-4">
         <div class="text-sm text-gray-600">
-          {{ cours.length }} cours disponibles
+          {{ filteredCours.length }} / {{ cours.length }} cours
         </div>
       </div>
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white rounded-xl shadow-sm border p-6 mb-8">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-gradient-to-r from-blue-800 to-blue-900 rounded-xl shadow-lg p-6 mb-8 border border-blue-700">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
+          <label class="block text-sm font-medium text-blue-100 mb-2">Rechercher</label>
           <div class="relative">
-            <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()" placeholder="Titre, description, mots-clés..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <i data-feather="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
+            <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()"
+              placeholder="Titre, description, mots-clés..."
+              class="w-full pl-10 pr-4 py-3 bg-blue-700 border border-blue-600 text-white placeholder-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all">
+            <i data-feather="search" class="absolute left-3 top-3.5 w-4 h-4 text-blue-300"></i>
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+          <label class="block text-sm font-medium text-blue-100 mb-2">Catégorie</label>
           <select [(ngModel)]="selectedCategorie" (change)="onCategorieChange()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option value="">Toutes les catégories</option>
-            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            class="w-full px-3 py-3 bg-blue-700 border border-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all">
+            <option value="" class="bg-blue-700">Toutes les catégories</option>
+            <option *ngFor="let cat of categories" [value]="cat" class="bg-blue-700">{{ cat }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-blue-100 mb-2">Niveau de difficulté</label>
+          <select [(ngModel)]="selectedNiveau" (change)="onNiveauChange()"
+            class="w-full px-3 py-3 bg-blue-700 border border-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all">
+            <option value="" class="bg-blue-700">Tous les niveaux</option>
+            <option *ngFor="let niveau of niveauxDifficulte" [value]="niveau.niveau" class="bg-blue-700">
+              {{ niveau.displayName }}
+            </option>
           </select>
         </div>
 
         <div class="flex items-end">
           <button (click)="clearFilters()"
-            class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <i data-feather="x" class="w-4 h-4 mr-2"></i>
+            class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2">
+            <i data-feather="x" class="w-4 h-4"></i>
             Effacer
           </button>
         </div>
+      </div>
+
+      <!-- Résultats de recherche -->
+      <div *ngIf="searchTerm || selectedCategorie || selectedNiveau" class="mt-4 text-sm text-blue-200">
+        <span class="font-medium text-white">{{ filteredCours.length }}</span> cours trouvé(s)
+        <span *ngIf="searchTerm"> pour "<span class="font-medium text-blue-300">{{ searchTerm }}</span>"</span>
+        <span *ngIf="selectedCategorie"> dans la catégorie "<span class="font-medium text-blue-300">{{ selectedCategorie
+            }}</span>"</span>
+        <span *ngIf="selectedNiveau"> de niveau "<span class="font-medium text-blue-300">{{
+            getNiveauDisplayName(selectedNiveau) }}</span>"</span>
       </div>
     </div>
 
@@ -384,25 +407,31 @@
     </div>
 
     <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let cours of filteredCours"
+      <div *ngFor="let coursItem of filteredCours"
         class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow overflow-hidden">
 
         <!-- Image du cours -->
         <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
-          <img *ngIf="cours.thumbnailUrl" [src]="'http://localhost:8080/images/cours/' + cours.thumbnailUrl"
-            [alt]="cours.titre" class="w-full h-full object-cover" (error)="$any($event.target).style.display='none'">
-          <div *ngIf="!cours.thumbnailUrl" class="w-full h-full flex items-center justify-center text-white">
+          <img *ngIf="coursItem.thumbnailUrl" [src]="'http://localhost:8080/images/cours/' + coursItem.thumbnailUrl"
+            [alt]="coursItem.titre" class="w-full h-full object-cover"
+            (error)="$any($event.target).style.display='none'">
+          <div *ngIf="!coursItem.thumbnailUrl" class="w-full h-full flex items-center justify-center text-white">
             <i data-feather="book-open" class="w-16 h-16 opacity-50"></i>
           </div>
 
+          <!-- Badge de niveau en haut à gauche -->
+          <div *ngIf="coursItem.niveauDifficulte" class="absolute top-3 left-3">
+            <app-niveau-badge [niveau]="coursItem.niveauDifficulte"></app-niveau-badge>
+          </div>
+
           <!-- Badge d'inscription -->
-          <div *ngIf="cours.isEnrolled"
-            class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+          <div *ngIf="coursItem.isEnrolled"
+            class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
             <i data-feather="check" class="w-4 h-4 mr-1"></i>
             Inscrit
           </div>
-          <div *ngIf="!cours.isEnrolled"
-            class="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+          <div *ngIf="!coursItem.isEnrolled"
+            class="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
             Nouveau
           </div>
         </div>
@@ -410,10 +439,10 @@
         <!-- Contenu du cours -->
         <div class="p-6">
           <div class="flex items-start justify-between mb-3">
-            <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">{{ cours.titre }}</h3>
-            <span *ngIf="cours.categorie" class="ml-2 px-2 py-1 text-xs rounded-full whitespace-nowrap"
+            <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">{{ coursItem.titre }}</h3>
+            <span *ngIf="coursItem.categorie" class="ml-2 px-2 py-1 text-xs rounded-full whitespace-nowrap"
               style="background-color: #e3f2fd; color: #063cdf;">
-              {{ cours.categorie }}
+              {{ coursItem.categorie }}
             </span>
           </div>
 
@@ -422,47 +451,48 @@
             <div class="flex items-center">
               <i data-feather="user" class="w-4 h-4 mr-2"></i>
               <span class="font-medium">Formateur :</span>
-              <span class="ml-1">{{ cours.formateurNom || 'Non spécifié' }}</span>
+              <span class="ml-1">{{ coursItem.formateurNom || 'Non spécifié' }}</span>
             </div>
-            <div *ngIf="cours.formateurDomaine" class="flex items-center">
+            <div *ngIf="coursItem.formateurDomaine" class="flex items-center">
               <i data-feather="target" class="w-4 h-4 mr-2"></i>
               <span class="font-medium">Domaine :</span>
-              <span class="ml-1 text-blue-600">{{ cours.formateurDomaine }}</span>
+              <span class="ml-1 text-blue-600">{{ coursItem.formateurDomaine }}</span>
             </div>
           </div>
 
-          <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ cours.description }}</p>
+          <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ coursItem.description }}</p>
 
           <!-- Mots-clés -->
-          <div *ngIf="cours.keywords" class="mb-4">
+          <div *ngIf="coursItem.keywords" class="mb-4">
             <div class="flex flex-wrap gap-1">
-              <span *ngFor="let keyword of cours.keywords.split(',').slice(0, 3)" 
-                    class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+              <span *ngFor="let keyword of coursItem.keywords.split(',').slice(0, 3)"
+                class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
                 {{ keyword.trim() }}
               </span>
-              <span *ngIf="cours.keywords.split(',').length > 3" 
-                    class="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
-                +{{ cours.keywords.split(',').length - 3 }}
+              <span *ngIf="coursItem.keywords.split(',').length > 3"
+                class="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
+                +{{ coursItem.keywords.split(',').length - 3 }}
               </span>
             </div>
           </div>
 
           <!-- Progression si inscrit -->
-          <div *ngIf="cours.enrollment" class="mb-4">
+          <div *ngIf="coursItem.enrollment" class="mb-4">
             <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
               <span>Progression</span>
-              <span>{{ cours.enrollment.progress }}%</span>
+              <span>{{ coursItem.enrollment.progress }}%</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div class="rounded-full h-2 transition-all duration-300" style="background-color: #063cdf;"
-                [style.width.%]="cours.enrollment.progress"></div>
+                [style.width.%]="coursItem.enrollment.progress"></div>
             </div>
             <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
-              <span>{{ cours.enrollment.completedLecons || 0 }} / {{ cours.enrollment.totalLecons || 0 }} leçons</span>
-              <span *ngIf="cours.enrollment.totalQuiz > 0" class="text-xs text-gray-500">
-                {{ cours.enrollment.passedQuiz || 0 }} / {{ cours.enrollment.totalQuiz || 0 }} quiz
+              <span>{{ coursItem.enrollment.completedLecons || 0 }} / {{ coursItem.enrollment.totalLecons || 0 }}
+                leçons</span>
+              <span *ngIf="coursItem.enrollment.totalQuiz > 0" class="text-xs text-gray-500">
+                {{ coursItem.enrollment.passedQuiz || 0 }} / {{ coursItem.enrollment.totalQuiz || 0 }} quiz
               </span>
-              <span *ngIf="cours.enrollment.progress === 100" class="text-green-600 font-medium">
+              <span *ngIf="coursItem.enrollment.progress === 100" class="text-green-600 font-medium">
                 <i data-feather="check" class="w-3 h-3 mr-1"></i>
                 Terminé !
               </span>
@@ -473,20 +503,40 @@
           <div class="flex items-center justify-between">
             <div class="text-sm text-gray-500 flex items-center">
               <i data-feather="calendar" class="w-4 h-4 mr-1"></i>
-              <span>{{ cours.createdAt | date:'shortDate' }}</span>
+              <span>{{ coursItem.createdAt | date:'shortDate' }}</span>
             </div>
 
             <div class="flex space-x-2">
-              <button *ngIf="!cours.isEnrolled && cours.id" (click)="enrollInCourse(cours.id, $event)"
-                class="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+              <button *ngIf="!coursItem.isEnrolled && coursItem.id" (click)="enrollInCourse(coursItem.id, $event)"
+                class="px-6 py-2 text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap flex items-center"
                 style="background-color: #063cdf;" onmouseover="this.style.backgroundColor='#0850f5'"
                 onmouseout="this.style.backgroundColor='#063cdf'">
                 <i data-feather="plus" class="w-4 h-4 mr-1"></i>
                 S'inscrire
               </button>
 
-              <button *ngIf="cours.isEnrolled && cours.id" [routerLink]="['/cours', cours.id]"
-                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+              <!-- Bouton Continuer pour cours en cours -->
+              <button
+                *ngIf="coursItem.isEnrolled && coursItem.id && coursItem.enrollment && coursItem.enrollment.progress < 100"
+                [routerLink]="['/cours', coursItem.id]"
+                class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap flex items-center">
+                <i data-feather="play" class="w-4 h-4 mr-1"></i>
+                Continuer
+              </button>
+
+              <!-- Bouton Revoir pour cours terminés -->
+              <button
+                *ngIf="coursItem.isEnrolled && coursItem.id && coursItem.enrollment && coursItem.enrollment.progress === 100"
+                [routerLink]="['/cours', coursItem.id]"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap flex items-center">
+                <i data-feather="refresh-cw" class="w-4 h-4 mr-1"></i>
+                Revoir
+              </button>
+
+              <!-- Bouton par défaut si pas d'enrollment data -->
+              <button *ngIf="coursItem.isEnrolled && coursItem.id && !coursItem.enrollment"
+                [routerLink]="['/cours', coursItem.id]"
+                class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap flex items-center">
                 <i data-feather="play" class="w-4 h-4 mr-1"></i>
                 Continuer
               </button>
@@ -505,7 +555,7 @@
         <span *ngIf="!searchTerm && !selectedCategorie">Il n'y a pas encore de cours disponibles.</span>
       </p>
       <button *ngIf="searchTerm || selectedCategorie" (click)="clearFilters()"
-        class="px-4 py-2 text-white rounded-lg transition-colors" style="background-color: #063cdf;"
+        class="px-4 py-2 text-white rounded-lg transition-colors flex items-center" style="background-color: #063cdf;"
         onmouseover="this.style.backgroundColor='#0850f5'" onmouseout="this.style.backgroundColor='#063cdf'">
         Voir tous les cours
       </button>

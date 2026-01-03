@@ -2,9 +2,10 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CoursService, Cours } from '../cours.service';
+import { CoursService, Cours, NiveauDifficulte, NiveauDifficulteInfo } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { AuthService } from '../auth';
+import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
 
 declare const feather: any;
 
@@ -16,7 +17,7 @@ interface CoursWithEnrollment extends Cours {
 @Component({
   selector: 'app-cours-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, NiveauBadgeComponent],
   templateUrl: './cours-list.html',
   styleUrls: ['./cours-list.css']
 })
@@ -30,7 +31,9 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   // Filtres
   searchTerm = '';
   selectedCategorie = '';
+  selectedNiveau = '';
   categories: string[] = [];
+  niveauxDifficulte: NiveauDifficulteInfo[] = [];
 
   // Statistiques gamifiées
   enrolledCount = 0;
@@ -49,7 +52,19 @@ export class CoursListComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.loadCours();
+    this.loadNiveauxDifficulte();
     this.calculateUserInitials();
+  }
+
+  loadNiveauxDifficulte() {
+    this.coursService.getNiveauxDifficulte().subscribe({
+      next: (niveaux) => {
+        this.niveauxDifficulte = niveaux;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des niveaux:', err);
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -103,36 +118,30 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   applyFilters() {
     let filtered = [...this.cours];
 
-    // Filtrer par recherche
-    /*
-    // Ancienne méthode locale (désactivée pour utiliser le backend)
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(c =>
-        c.titre.toLowerCase().includes(term) ||
-        c.description.toLowerCase().includes(term) ||
-        (c.keywords && c.keywords.toLowerCase().includes(term))
-      );
-    }
-    */
-
     // Le filtrage par mot clé est maintenant géré par le backend via onSearchChange
-    // On garde juste le filtre catégorie ici qui s'applique sur les résultats retournés
+    // On garde juste les filtres catégorie et niveau ici qui s'appliquent sur les résultats retournés
     if (this.selectedCategorie) {
       filtered = filtered.filter(c => c.categorie === this.selectedCategorie);
+    }
+
+    if (this.selectedNiveau) {
+      filtered = filtered.filter(c => c.niveauDifficulte === this.selectedNiveau);
     }
 
     this.filteredCours = filtered;
   }
 
   onSearchChange() {
-    if (this.searchTerm.trim()) {
+    if (this.searchTerm.trim() || this.selectedCategorie || this.selectedNiveau) {
       this.loading = true;
-      this.coursService.searchCours(this.searchTerm).subscribe({
+      this.coursService.searchCours(
+        this.searchTerm || undefined, 
+        this.selectedCategorie || undefined, 
+        this.selectedNiveau as NiveauDifficulte || undefined
+      ).subscribe({
         next: (data) => {
           this.cours = data;
-          // Ré-appliquer le filtre catégorie si nécessaire
-          this.applyFilters(); // applyFilters ne filtre plus localement pour le texte, donc ça marche
+          this.applyFilters();
           this.loading = false;
         },
         error: (err) => {
@@ -141,18 +150,23 @@ export class CoursListComponent implements OnInit, AfterViewInit {
         }
       });
     } else {
-      // Si la recherche est vide, on recharge tout
+      // Si tous les filtres sont vides, on recharge tout
       this.loadCours();
     }
   }
 
   onCategorieChange() {
-    this.applyFilters();
+    this.onSearchChange();
+  }
+
+  onNiveauChange() {
+    this.onSearchChange();
   }
 
   clearFilters() {
     this.searchTerm = '';
     this.selectedCategorie = '';
+    this.selectedNiveau = '';
     this.loadCours();
   }
 
@@ -238,5 +252,10 @@ export class CoursListComponent implements OnInit, AfterViewInit {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  getNiveauDisplayName(niveau: string): string {
+    const niveauInfo = this.niveauxDifficulte.find(n => n.niveau === niveau);
+    return niveauInfo ? niveauInfo.displayName : niveau;
   }
 }

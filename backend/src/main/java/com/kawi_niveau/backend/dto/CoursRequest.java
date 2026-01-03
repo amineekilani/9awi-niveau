@@ -1,6 +1,8 @@
 package com.kawi_niveau.backend.dto;
 
+import com.kawi_niveau.backend.entity.NiveauDifficulte;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -15,4 +17,7 @@ public class CoursRequest {
     private String thumbnailUrl;
 
     private String keywords;
+
+    @NotNull(message = "Le niveau de difficulté est obligatoire")
+    private NiveauDifficulte niveauDifficulte = NiveauDifficulte.DEBUTANT;
 }

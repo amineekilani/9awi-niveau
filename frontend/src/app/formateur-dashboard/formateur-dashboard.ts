@@ -3,15 +3,22 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AuthService } from '../auth';
-import { CoursService, Cours } from '../cours.service';
+import { CoursService, Cours, NiveauDifficulte, NiveauDifficulteInfo } from '../cours.service';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
+import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
 
 declare const feather: any;
+
+interface NiveauStats {
+  niveau: NiveauDifficulte;
+  count: number;
+  percentage: number;
+}
 
 @Component({
   selector: 'app-formateur-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, NavbarComponent],
+  imports: [CommonModule, RouterModule, NavbarComponent, NiveauBadgeComponent],
   templateUrl: './formateur-dashboard.html',
   styleUrls: ['./formateur-dashboard.css']
 })
@@ -20,6 +27,8 @@ export class FormateurDashboardComponent implements OnInit {
   activeTab: 'actifs' | 'archives' = 'actifs';
   loading = false;
   error = '';
+  niveauxStats: NiveauStats[] = [];
+  niveauxDifficulte: NiveauDifficulteInfo[] = [];
 
   // Données pour le header unifié
   userInitials = 'ET';
@@ -43,7 +52,19 @@ export class FormateurDashboardComponent implements OnInit {
 
     // Initialiser les données du header
     this.initHeaderData();
+    this.loadNiveauxDifficulte();
     this.loadCours();
+  }
+
+  loadNiveauxDifficulte() {
+    this.coursService.getNiveauxDifficulte().subscribe({
+      next: (niveaux) => {
+        this.niveauxDifficulte = niveaux;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des niveaux:', err);
+      }
+    });
   }
 
   private initHeaderData() {
@@ -81,6 +102,7 @@ export class FormateurDashboardComponent implements OnInit {
       next: (data) => {
         console.log('Cours reçus du backend:', data);
         this.allCours = data;
+        this.calculateNiveauxStats();
         console.log('Cours actifs:', this.coursActifs);
         console.log('Cours archivés:', this.coursArchives);
         this.loading = false;
@@ -89,6 +111,37 @@ export class FormateurDashboardComponent implements OnInit {
         this.error = 'Erreur lors du chargement des cours';
         this.loading = false;
       }
+    });
+  }
+
+  calculateNiveauxStats() {
+    const stats = new Map<NiveauDifficulte, number>();
+    const coursActifs = this.coursActifs;
+    
+    // Compter les cours par niveau
+    coursActifs.forEach(cours => {
+      if (cours.niveauDifficulte) {
+        const count = stats.get(cours.niveauDifficulte) || 0;
+        stats.set(cours.niveauDifficulte, count + 1);
+      }
+    });
+
+    // Convertir en tableau avec pourcentages
+    this.niveauxStats = Array.from(stats.entries()).map(([niveau, count]) => ({
+      niveau,
+      count,
+      percentage: coursActifs.length > 0 ? Math.round((count / coursActifs.length) * 100) : 0
+    }));
+
+    // Trier par ordre de niveau
+    this.niveauxStats.sort((a, b) => {
+      const order = { 
+        [NiveauDifficulte.DEBUTANT]: 1, 
+        [NiveauDifficulte.INTERMEDIAIRE]: 2, 
+        [NiveauDifficulte.AVANCE]: 3, 
+        [NiveauDifficulte.EXPERT]: 4 
+      };
+      return order[a.niveau] - order[b.niveau];
     });
   }
 
@@ -120,5 +173,29 @@ export class FormateurDashboardComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  getRecommendation(): string {
+    if (this.niveauxStats.length === 0) return '';
+    
+    const totalCours = this.coursActifs.length;
+    if (totalCours === 0) return 'Créez votre premier cours pour commencer !';
+    
+    const debutantCount = this.niveauxStats.find(s => s.niveau === NiveauDifficulte.DEBUTANT)?.count || 0;
+    const expertCount = this.niveauxStats.find(s => s.niveau === NiveauDifficulte.EXPERT)?.count || 0;
+    
+    if (debutantCount === 0) {
+      return 'Ajoutez des cours débutants pour attirer plus d\'apprenants.';
+    }
+    
+    if (expertCount === 0 && totalCours >= 3) {
+      return 'Créez des cours experts pour fidéliser vos apprenants avancés.';
+    }
+    
+    if (totalCours < 5) {
+      return 'Diversifiez votre offre en créant des cours de différents niveaux.';
+    }
+    
+    return 'Excellente répartition ! Continuez à équilibrer vos niveaux.';
   }
 }
