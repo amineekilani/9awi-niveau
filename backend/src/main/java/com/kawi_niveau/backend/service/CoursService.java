@@ -108,6 +108,10 @@ public class CoursService {
         return coursList.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    public List<String> getAllCategories() {
+        return coursRepository.findDistinctCategories();
+    }
+
     public CoursResponse getCoursById(Long id) {
         Cours cours = coursRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
@@ -127,7 +131,6 @@ public class CoursService {
                 cours.getCategorie(),
                 cours.getThumbnailUrl(),
                 cours.getFormateur().getId(),
-                formateurNom
-        );
+                formateurNom);
     }
 }

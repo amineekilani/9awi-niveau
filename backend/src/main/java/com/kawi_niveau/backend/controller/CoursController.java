@@ -32,7 +32,8 @@ public class CoursController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCours(@PathVariable Long id, @Valid @RequestBody CoursRequest request, Authentication authentication) {
+    public ResponseEntity<?> updateCours(@PathVariable Long id, @Valid @RequestBody CoursRequest request,
+            Authentication authentication) {
         try {
             String email = authentication.getName();
             CoursResponse cours = coursService.updateCours(id, request, email);
@@ -75,6 +76,12 @@ public class CoursController {
     public ResponseEntity<List<CoursResponse>> getAllCours() {
         List<CoursResponse> cours = coursService.getAllCours();
         return ResponseEntity.ok(cours);
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        List<String> categories = coursService.getAllCategories();
+        return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/{id}")

@@ -57,19 +57,23 @@
           <label for="categorie" class="block text-sm font-semibold text-gray-900 mb-2">
             Catégorie du cours
           </label>
-          <select id="categorie" name="categorie" [(ngModel)]="cours.categorie"
+          <select id="categorie" name="categorie" [(ngModel)]="cours.categorie" (change)="onCategoryChange($event)"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white">
             <option value="">Sélectionnez une catégorie</option>
-            <option value="Programmation">Programmation</option>
-            <option value="Design">Design</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Business">Business</option>
-            <option value="Langues">Langues</option>
-            <option value="Sciences">Sciences</option>
-            <option value="Mathématiques">Mathématiques</option>
-            <option value="Développement Personnel">Développement Personnel</option>
-            <option value="Autre">Autre</option>
+            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            <option value="Autre">Autre (Ajouter une nouvelle)</option>
           </select>
+
+          <!-- Champ pour nouvelle catégorie -->
+          <div *ngIf="isCustomCategory" class="mt-3 animate-fade-in">
+            <label for="customCategory" class="block text-sm font-semibold text-gray-900 mb-2">
+              Nom de la nouvelle catégorie <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="customCategory" name="customCategory" [(ngModel)]="customCategory"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="Ex: Intelligence Artificielle" />
+          </div>
+
           <p class="text-xs text-gray-500 mt-1">Choisissez la catégorie qui correspond le mieux à votre cours</p>
         </div>
 

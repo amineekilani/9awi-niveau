@@ -38,6 +38,10 @@ export class CoursFormComponent implements OnInit {
   recentActivity: RecentActivity[] = [];
   userStats: UserGamificationStats | null = null;
 
+  categories: string[] = [];
+  isCustomCategory = false;
+  customCategory = '';
+
   constructor(
     private coursService: CoursService,
     public authService: AuthService,
@@ -55,11 +59,34 @@ export class CoursFormComponent implements OnInit {
     // Initialiser les données du header
     this.initHeaderData();
 
+    this.loadCategories();
     this.coursId = Number(this.route.snapshot.paramMap.get('id'));
     if (this.coursId) {
       this.isEditMode = true;
       this.loadCours();
     }
+  }
+
+  loadCategories() {
+    this.coursService.getCategories().subscribe({
+      next: (data) => {
+        this.categories = data;
+        // Ajouter les catégories par défaut si elles n'existent pas
+        const defaultCategories = [
+          'Programmation', 'Design', 'Marketing', 'Business',
+          'Langues', 'Sciences', 'Mathématiques', 'Développement Personnel'
+        ];
+
+        defaultCategories.forEach(cat => {
+          if (!this.categories.includes(cat)) {
+            this.categories.push(cat);
+          }
+        });
+
+        this.categories.sort();
+      },
+      error: (err) => console.error('Erreur chargement catégories', err)
+    });
   }
 
   loadCours() {
@@ -72,6 +99,18 @@ export class CoursFormComponent implements OnInit {
         if (this.cours.thumbnailUrl) {
           this.thumbnailPreview = `http://localhost:8080/images/cours/${this.cours.thumbnailUrl}`;
         }
+
+        // Vérifier si la catégorie existe dans la liste
+        if (this.cours.categorie && !this.categories.includes(this.cours.categorie)) {
+          // Si la catégorie n'est pas dans la liste (ou pas encore chargée), on l'ajoute
+          // Mais attendez, si elle n'est pas dans la liste des catégories par défaut + fetchées, c'est une custom ?
+          // On va juste s'assurer qu'elle est dans la liste pour l'affichage correct du select
+          if (!this.categories.includes(this.cours.categorie)) {
+            this.categories.push(this.cours.categorie);
+            this.categories.sort();
+          }
+        }
+
         this.loading = false;
       },
       error: (err) => {
@@ -118,6 +157,16 @@ export class CoursFormComponent implements OnInit {
     this.error = '';
     this.success = '';
 
+    // Gérer la catégorie personnalisée
+    if (this.isCustomCategory) {
+      if (!this.customCategory.trim()) {
+        this.error = 'Veuillez saisir une catégorie';
+        this.loading = false;
+        return;
+      }
+      this.cours.categorie = this.customCategory.trim();
+    }
+
     // Si un fichier est sélectionné, l'uploader d'abord
     if (this.selectedFile) {
       this.uploadingThumbnail = true;
@@ -137,6 +186,15 @@ export class CoursFormComponent implements OnInit {
       });
     } else {
       this.saveCours();
+    }
+  }
+
+  onCategoryChange(event: any) {
+    if (event.target.value === 'Autre') {
+      this.isCustomCategory = true;
+      this.cours.categorie = '';
+    } else {
+      this.isCustomCategory = false;
     }
   }
 

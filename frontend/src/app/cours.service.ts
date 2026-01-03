@@ -58,4 +58,8 @@ export class CoursService {
     formData.append('file', file);
     return this.http.post('http://localhost:8080/images/cours/upload', formData);
   }
+
+  getCategories(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/categories`);
+  }
 }
