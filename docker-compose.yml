@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: 9awi-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: 9awi_niveau
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Map init scripts if needed. Since the backend handles DDL (update), we might not strictly need init scripts unless there is seed data.
+      # The user has data.sql and schema.sql in resources, but Spring Boot might pick them up.
+      # For now, we rely on Spring Boot to initialize the DB structure.
+
+  backend:
+    build: ./backend
+    container_name: 9awi-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/9awi_niveau?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: 9awi-frontend
+    restart: always
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
+    driver: bridge

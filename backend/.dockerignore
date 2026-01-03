@@ -1,0 +1,15 @@
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.git
+.gitignore
+.idea
+*.iml
+test_*.sql
+migration_*.sql
+fix_*.sql
+debug_*.sql
+create_*.sql
+init_*.sql
+uploads/
