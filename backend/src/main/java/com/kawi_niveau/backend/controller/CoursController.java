@@ -78,6 +78,12 @@ public class CoursController {
         return ResponseEntity.ok(cours);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<CoursResponse>> searchCours(@RequestParam String query) {
+        List<CoursResponse> cours = coursService.searchCours(query);
+        return ResponseEntity.ok(cours);
+    }
+
     @GetMapping("/categories")
     public ResponseEntity<List<String>> getCategories() {
         List<String> categories = coursService.getAllCategories();

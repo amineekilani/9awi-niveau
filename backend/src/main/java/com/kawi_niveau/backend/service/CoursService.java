@@ -110,6 +110,11 @@ public class CoursService {
         return coursList.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    public List<CoursResponse> searchCours(String keyword) {
+        List<Cours> coursList = coursRepository.searchCours(keyword);
+        return coursList.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
     public List<String> getAllCategories() {
         return coursRepository.findDistinctCategories();
     }

@@ -50,6 +50,10 @@ export class CoursService {
     return this.http.get<Cours[]>(this.apiUrl);
   }
 
+  searchCours(query: string): Observable<Cours[]> {
+    return this.http.get<Cours[]>(`${this.apiUrl}/search`, { params: { query } });
+  }
+
   getCoursById(id: number): Observable<Cours> {
     return this.http.get<Cours>(`${this.apiUrl}/${id}`);
   }

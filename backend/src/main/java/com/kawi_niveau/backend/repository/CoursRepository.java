@@ -20,4 +20,10 @@ public interface CoursRepository extends JpaRepository<Cours, Long> {
 
     @Query("SELECT DISTINCT c.categorie FROM Cours c WHERE c.categorie IS NOT NULL")
     List<String> findDistinctCategories();
+
+    @Query("SELECT c FROM Cours c WHERE c.archived = false AND " +
+            "(LOWER(c.titre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(COALESCE(c.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(COALESCE(c.keywords, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<Cours> searchCours(String keyword);
 }

@@ -104,6 +104,8 @@ export class CoursListComponent implements OnInit, AfterViewInit {
     let filtered = [...this.cours];
 
     // Filtrer par recherche
+    /*
+    // Ancienne méthode locale (désactivée pour utiliser le backend)
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(c =>
@@ -112,8 +114,10 @@ export class CoursListComponent implements OnInit, AfterViewInit {
         (c.keywords && c.keywords.toLowerCase().includes(term))
       );
     }
+    */
 
-    // Filtrer par catégorie
+    // Le filtrage par mot clé est maintenant géré par le backend via onSearchChange
+    // On garde juste le filtre catégorie ici qui s'applique sur les résultats retournés
     if (this.selectedCategorie) {
       filtered = filtered.filter(c => c.categorie === this.selectedCategorie);
     }
@@ -122,7 +126,24 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   }
 
   onSearchChange() {
-    this.applyFilters();
+    if (this.searchTerm.trim()) {
+      this.loading = true;
+      this.coursService.searchCours(this.searchTerm).subscribe({
+        next: (data) => {
+          this.cours = data;
+          // Ré-appliquer le filtre catégorie si nécessaire
+          this.applyFilters(); // applyFilters ne filtre plus localement pour le texte, donc ça marche
+          this.loading = false;
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la recherche';
+          this.loading = false;
+        }
+      });
+    } else {
+      // Si la recherche est vide, on recharge tout
+      this.loadCours();
+    }
   }
 
   onCategorieChange() {
@@ -132,7 +153,7 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   clearFilters() {
     this.searchTerm = '';
     this.selectedCategorie = '';
-    this.applyFilters();
+    this.loadCours();
   }
 
   loadEnrollments() {
