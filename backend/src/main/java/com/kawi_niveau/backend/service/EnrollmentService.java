@@ -52,6 +52,9 @@ public class EnrollmentService {
     @Autowired
     private GamificationService gamificationService;
 
+    @Autowired
+    private ParcoursProgressionService parcoursProgressionService;
+
     @Transactional
     public EnrollmentResponse enrollInCourse(Long userId, EnrollmentRequest request) {
         User user = userRepository.findById(userId)
@@ -201,6 +204,14 @@ public class EnrollmentService {
         }
 
         enrollmentRepository.save(enrollment);
+        
+        // ✅ MISE À JOUR DES PARCOURS
+        // Déclencher la mise à jour de la progression des parcours
+        try {
+            parcoursProgressionService.updateProgressionParcours(enrollment.getUser(), enrollment.getCours());
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la mise à jour de la progression des parcours: " + e.getMessage());
+        }
     }
 
     public List<Long> getCompletedLeconIds(Long userId, Long coursId) {

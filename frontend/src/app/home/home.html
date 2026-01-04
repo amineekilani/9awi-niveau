@@ -295,6 +295,111 @@
       </div>
     </div>
 
+    <!-- Section Parcours Recommandés -->
+    <div *ngIf="!loading" class="bg-white rounded-xl shadow-sm border p-8 mb-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">
+            <i data-feather="map" class="inline-block w-6 h-6 mr-2 text-indigo-600"></i>
+            Parcours Recommandés
+          </h2>
+          <p class="text-gray-600">Découvrez des parcours structurés pour développer vos compétences</p>
+        </div>
+        <a routerLink="/parcours" 
+           class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center transition-colors">
+          Voir tous les parcours
+          <i data-feather="arrow-right" class="w-4 h-4 ml-1"></i>
+        </a>
+      </div>
+
+      <!-- Cards des parcours -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Parcours 1 -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+             routerLink="/parcours">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <i data-feather="code" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+              Débutant
+            </span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Développement Web</h3>
+          <p class="text-gray-600 text-sm mb-4">Apprenez HTML, CSS et JavaScript de A à Z</p>
+          <div class="flex items-center justify-between text-sm text-gray-500">
+            <span class="flex items-center">
+              <i data-feather="clock" class="w-4 h-4 mr-1"></i>
+              25h
+            </span>
+            <span class="flex items-center">
+              <i data-feather="users" class="w-4 h-4 mr-1"></i>
+              150+ inscrits
+            </span>
+          </div>
+        </div>
+
+        <!-- Parcours 2 -->
+        <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+             routerLink="/parcours">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+              <i data-feather="database" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+              Intermédiaire
+            </span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Base de Données</h3>
+          <p class="text-gray-600 text-sm mb-4">Maîtrisez SQL et la conception de bases de données</p>
+          <div class="flex items-center justify-between text-sm text-gray-500">
+            <span class="flex items-center">
+              <i data-feather="clock" class="w-4 h-4 mr-1"></i>
+              18h
+            </span>
+            <span class="flex items-center">
+              <i data-feather="users" class="w-4 h-4 mr-1"></i>
+              89+ inscrits
+            </span>
+          </div>
+        </div>
+
+        <!-- Parcours 3 -->
+        <div class="bg-gradient-to-br from-purple-50 to-violet-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+             routerLink="/parcours">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
+              <i data-feather="smartphone" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+              Avancé
+            </span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Développement Mobile</h3>
+          <p class="text-gray-600 text-sm mb-4">Créez des applications mobiles avec React Native</p>
+          <div class="flex items-center justify-between text-sm text-gray-500">
+            <span class="flex items-center">
+              <i data-feather="clock" class="w-4 h-4 mr-1"></i>
+              35h
+            </span>
+            <span class="flex items-center">
+              <i data-feather="users" class="w-4 h-4 mr-1"></i>
+              67+ inscrits
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Call to action -->
+      <div class="text-center mt-8">
+        <a routerLink="/parcours" 
+           class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+          <i data-feather="search" class="w-5 h-5 mr-2"></i>
+          Explorer tous les parcours
+        </a>
+      </div>
+    </div>
+
     <!-- Activité récente -->
     <div *ngIf="!loading && userStats && (userStats.recentActivities?.length || 0) > 0"
       class="bg-white rounded-xl shadow-sm border p-6 mb-8">

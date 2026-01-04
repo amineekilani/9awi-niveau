@@ -30,6 +30,9 @@ public class ParcoursService {
     @Autowired
     private CoursRepository coursRepository;
 
+    @Autowired
+    private ParcoursValidationService validationService;
+
     // Créer un nouveau parcours
     public ParcoursResponse createParcours(ParcoursRequest request, String formateurEmail) {
         User formateur = userRepository.findByEmail(formateurEmail)
@@ -215,10 +218,17 @@ public class ParcoursService {
         response.setNombreCompletions((int) inscriptionRepository.countByParcoursAndIsCompletedTrue(parcours));
         response.setProgressionMoyenne(inscriptionRepository.getAverageProgressionByParcours(parcours));
 
-        // Étapes
+        // Étapes avec validation si utilisateur connecté
         if (parcours.getEtapes() != null) {
+            User user = null;
+            if (userEmail != null) {
+                user = userRepository.findByEmail(userEmail).orElse(null);
+            }
+            
+            final User finalUser = user; // Variable finale pour la lambda
             List<ParcoursEtapeResponse> etapesResponse = parcours.getEtapes().stream()
-                    .map(this::convertEtapeToResponse)
+                    .sorted((a, b) -> a.getOrdreEtape().compareTo(b.getOrdreEtape()))
+                    .map(etape -> convertEtapeToResponse(etape, finalUser, parcours.getEtapes()))
                     .collect(Collectors.toList());
             response.setEtapes(etapesResponse);
         }
@@ -239,8 +249,155 @@ public class ParcoursService {
         return response;
     }
 
-    // Convertir une étape en réponse
-    private ParcoursEtapeResponse convertEtapeToResponse(ParcoursEtape etape) {
+    // ===== MÉTHODES POUR LES APPRENANTS =====
+
+    // Obtenir tous les parcours publiés
+    public List<ParcoursResponse> getParcoursPublies(String userEmail) {
+        List<ParcoursApprentissage> parcours = parcoursRepository.findByIsPublishedTrueOrderByCreatedAtDesc();
+        return parcours.stream()
+                .map(p -> convertToResponse(p, userEmail))
+                .collect(Collectors.toList());
+    }
+
+    // Rechercher des parcours publiés
+    public List<ParcoursResponse> rechercherParcours(String terme, String userEmail) {
+        List<ParcoursApprentissage> parcours = parcoursRepository.searchPublishedParcours(terme);
+        return parcours.stream()
+                .map(p -> convertToResponse(p, userEmail))
+                .collect(Collectors.toList());
+    }
+
+    // Obtenir les parcours par catégorie
+    public List<ParcoursResponse> getParcoursParCategorie(String categorie, String userEmail) {
+        List<ParcoursApprentissage> parcours = parcoursRepository.findByCategorieAndIsPublishedTrueOrderByCreatedAtDesc(categorie);
+        return parcours.stream()
+                .map(p -> convertToResponse(p, userEmail))
+                .collect(Collectors.toList());
+    }
+
+    // Obtenir les parcours populaires (les plus inscrits)
+    public List<ParcoursResponse> getParcoursPopulaires(String userEmail) {
+        List<ParcoursApprentissage> parcours = parcoursRepository.findPopularParcours();
+        return parcours.stream()
+                .limit(10) // Limiter aux 10 plus populaires
+                .map(p -> convertToResponse(p, userEmail))
+                .collect(Collectors.toList());
+    }
+
+    // S'inscrire à un parcours
+    public void sInscrireAuParcours(Long parcoursId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        ParcoursApprentissage parcours = parcoursRepository.findById(parcoursId)
+                .orElseThrow(() -> new RuntimeException("Parcours non trouvé"));
+
+        if (!parcours.getIsPublished()) {
+            throw new RuntimeException("Ce parcours n'est pas publié");
+        }
+
+        // Vérifier si l'utilisateur n'est pas déjà inscrit
+        if (inscriptionRepository.existsByParcoursAndUser(parcours, user)) {
+            throw new RuntimeException("Vous êtes déjà inscrit à ce parcours");
+        }
+
+        // Créer l'inscription
+        ParcoursInscription inscription = new ParcoursInscription();
+        inscription.setParcours(parcours);
+        inscription.setUser(user);
+        inscription.setDateInscription(LocalDateTime.now());
+        inscription.setEtapeCourante(1);
+        inscription.setProgressionPourcentage(0);
+        inscription.setIsCompleted(false);
+
+        inscriptionRepository.save(inscription);
+    }
+
+    // Se désinscrire d'un parcours
+    public void seDesinscrireDuParcours(Long parcoursId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        ParcoursApprentissage parcours = parcoursRepository.findById(parcoursId)
+                .orElseThrow(() -> new RuntimeException("Parcours non trouvé"));
+
+        ParcoursInscription inscription = inscriptionRepository.findByParcoursAndUser(parcours, user)
+                .orElseThrow(() -> new RuntimeException("Vous n'êtes pas inscrit à ce parcours"));
+
+        inscriptionRepository.delete(inscription);
+    }
+
+    // Obtenir toutes les inscriptions d'un utilisateur
+    public List<ParcoursResponse> getMesInscriptions(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        List<ParcoursInscription> inscriptions = inscriptionRepository.findByUserOrderByDateInscriptionDesc(user);
+        
+        return inscriptions.stream()
+                .map(inscription -> {
+                    ParcoursResponse response = convertToResponse(inscription.getParcours(), userEmail);
+                    // Ajouter les informations d'inscription
+                    response.setDateInscription(inscription.getDateInscription());
+                    response.setDateCompletion(inscription.getDateCompletion());
+                    response.setProgressionUtilisateur(inscription.getProgressionPourcentage());
+                    response.setEtapeCouranteUtilisateur(inscription.getEtapeCourante());
+                    response.setPointsGagnesUtilisateur(inscription.getPointsGagnes());
+                    response.setIsCompletedUtilisateur(inscription.getIsCompleted());
+                    response.setCertificatGenere(inscription.getCertificatGenere());
+                    response.setCertificatUrl(inscription.getCertificatUrl());
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
+
+    // Obtenir les inscriptions en cours d'un utilisateur
+    public List<ParcoursResponse> getMesInscriptionsEnCours(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        List<ParcoursInscription> inscriptions = inscriptionRepository.findByUserAndIsCompletedFalseOrderByDateInscriptionDesc(user);
+        
+        return inscriptions.stream()
+                .map(inscription -> {
+                    ParcoursResponse response = convertToResponse(inscription.getParcours(), userEmail);
+                    // Ajouter les informations d'inscription
+                    response.setDateInscription(inscription.getDateInscription());
+                    response.setProgressionUtilisateur(inscription.getProgressionPourcentage());
+                    response.setEtapeCouranteUtilisateur(inscription.getEtapeCourante());
+                    response.setPointsGagnesUtilisateur(inscription.getPointsGagnes());
+                    response.setIsCompletedUtilisateur(inscription.getIsCompleted());
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
+
+    // Obtenir les inscriptions terminées d'un utilisateur
+    public List<ParcoursResponse> getMesInscriptionsTerminees(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        List<ParcoursInscription> inscriptions = inscriptionRepository.findByUserAndIsCompletedTrueOrderByDateCompletionDesc(user);
+        
+        return inscriptions.stream()
+                .map(inscription -> {
+                    ParcoursResponse response = convertToResponse(inscription.getParcours(), userEmail);
+                    // Ajouter les informations d'inscription
+                    response.setDateInscription(inscription.getDateInscription());
+                    response.setDateCompletion(inscription.getDateCompletion());
+                    response.setProgressionUtilisateur(inscription.getProgressionPourcentage());
+                    response.setEtapeCouranteUtilisateur(inscription.getEtapeCourante());
+                    response.setPointsGagnesUtilisateur(inscription.getPointsGagnes());
+                    response.setIsCompletedUtilisateur(inscription.getIsCompleted());
+                    response.setCertificatGenere(inscription.getCertificatGenere());
+                    response.setCertificatUrl(inscription.getCertificatUrl());
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
+
+    // Convertir une étape en réponse avec validation
+    private ParcoursEtapeResponse convertEtapeToResponse(ParcoursEtape etape, User user, List<ParcoursEtape> toutesEtapes) {
         ParcoursEtapeResponse response = new ParcoursEtapeResponse();
         
         response.setId(etape.getId());
@@ -259,6 +416,75 @@ public class ParcoursService {
         response.setDescription(etape.getDescription());
         response.setCreatedAt(etape.getCreatedAt());
 
+        // Validation et progression si utilisateur connecté
+        if (user != null) {
+            // Récupérer les étapes précédentes pour la validation linéaire
+            List<ParcoursEtape> etapesPrecedentes = toutesEtapes.stream()
+                    .filter(e -> e.getOrdreEtape() < etape.getOrdreEtape())
+                    .collect(Collectors.toList());
+
+            // Valider l'étape
+            boolean isDebloque = validationService.isEtapeDebloquee(etape, user, etapesPrecedentes);
+            boolean isComplete = validationService.isEtapeComplete(etape, user);
+            
+            response.setIsDebloque(isDebloque);
+            response.setIsComplete(isComplete);
+
+            // Récupérer les données de progression
+            ParcoursValidationService.EtapeValidationResult validation = 
+                    validationService.validateEtapeConditions(etape, user);
+            
+            response.setProgressionCours((int) Math.round(validation.getProgressionCours()));
+            response.setScoreObtenu((int) Math.round(validation.getScoreObtenu()));
+        } else {
+            // Pas d'utilisateur connecté, valeurs par défaut
+            response.setIsDebloque(false);
+            response.setIsComplete(false);
+            response.setProgressionCours(0);
+            response.setScoreObtenu(0);
+        }
+
         return response;
+    }
+
+    // Forcer la mise à jour de la progression d'un parcours spécifique
+    public void forcerMiseAJourProgression(Long parcoursId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        ParcoursApprentissage parcours = parcoursRepository.findById(parcoursId)
+                .orElseThrow(() -> new RuntimeException("Parcours non trouvé"));
+
+        // Vérifier si l'utilisateur est inscrit
+        ParcoursInscription inscription = inscriptionRepository.findByParcoursAndUser(parcours, user)
+                .orElseThrow(() -> new RuntimeException("Vous n'êtes pas inscrit à ce parcours"));
+
+        // Forcer le recalcul de la progression
+        List<ParcoursEtape> etapes = etapeRepository.findByParcoursOrderByOrdreEtape(parcours);
+        
+        int etapesCompletes = 0;
+        int etapeCourante = 1;
+        
+        for (ParcoursEtape etape : etapes) {
+            boolean isComplete = validationService.isEtapeComplete(etape, user);
+            if (isComplete) {
+                etapesCompletes++;
+            } else {
+                etapeCourante = etape.getOrdreEtape();
+                break;
+            }
+        }
+        
+        // Mettre à jour l'inscription
+        int progressionPourcentage = etapes.isEmpty() ? 0 : (etapesCompletes * 100) / etapes.size();
+        inscription.setProgressionPourcentage(progressionPourcentage);
+        inscription.setEtapeCourante(etapeCourante);
+        inscription.setIsCompleted(etapesCompletes == etapes.size());
+        
+        if (inscription.getIsCompleted() && inscription.getDateCompletion() == null) {
+            inscription.setDateCompletion(LocalDateTime.now());
+        }
+        
+        inscriptionRepository.save(inscription);
     }
 }

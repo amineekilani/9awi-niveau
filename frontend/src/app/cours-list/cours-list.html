@@ -216,8 +216,21 @@
             </select>
           </div>
 
+          <!-- Filtre par parcours -->
+          <div class="md:w-48 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i data-feather="map" class="text-blue-300 w-5 h-5"></i>
+            </div>
+            <select [(ngModel)]="selectedParcours" (ngModelChange)="onParcoursChange()"
+              class="w-full pl-10 pr-4 py-3 bg-blue-700 border border-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all appearance-none cursor-pointer">
+              <option value="" class="bg-blue-700">Tous les cours</option>
+              <option value="with-parcours" class="bg-blue-700">Fait partie d'un parcours</option>
+              <option value="without-parcours" class="bg-blue-700">Cours indépendants</option>
+            </select>
+          </div>
+
           <!-- Bouton réinitialiser -->
-          <button *ngIf="searchTerm || selectedCategorie || selectedNiveau" (click)="clearFilters()"
+          <button *ngIf="searchTerm || selectedCategorie || selectedNiveau || selectedParcours" (click)="clearFilters()"
             class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all duration-200 font-medium flex items-center gap-2">
             <i data-feather="x" class="w-5 h-5"></i>
             Réinitialiser
@@ -225,13 +238,15 @@
         </div>
 
         <!-- Résultats de recherche -->
-        <div *ngIf="searchTerm || selectedCategorie || selectedNiveau" class="mt-4 text-sm text-blue-200">
+        <div *ngIf="searchTerm || selectedCategorie || selectedNiveau || selectedParcours" class="mt-4 text-sm text-blue-200">
           <span class="font-medium text-white">{{ filteredCours.length }}</span> cours trouvé(s)
           <span *ngIf="searchTerm"> pour "<span class="font-medium text-blue-300">{{ searchTerm }}</span>"</span>
           <span *ngIf="selectedCategorie"> dans la catégorie "<span class="font-medium text-blue-300">{{
               selectedCategorie }}</span>"</span>
           <span *ngIf="selectedNiveau"> de niveau "<span class="font-medium text-blue-300">{{
               getNiveauDisplayName(selectedNiveau) }}</span>"</span>
+          <span *ngIf="selectedParcours === 'with-parcours'"> <span class="font-medium text-blue-300">faisant partie d'un parcours</span></span>
+          <span *ngIf="selectedParcours === 'without-parcours'"> <span class="font-medium text-blue-300">indépendants</span></span>
         </div>
       </div>
 
@@ -268,6 +283,13 @@
             <div *ngIf="!c.isEnrolled"
               class="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
               Nouveau
+            </div>
+
+            <!-- Badge parcours -->
+            <div *ngIf="c.nombreParcours && c.nombreParcours > 0"
+              class="absolute bottom-3 right-3 bg-indigo-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+              <i data-feather="map" class="w-3 h-3 mr-1"></i>
+              {{ c.nombreParcours }} parcours
             </div>
           </div>
 
@@ -372,6 +394,24 @@
                   <i data-feather="play" class="w-4 h-4 mr-1"></i>
                   Continuer
                 </button>
+              </div>
+
+              <!-- Suggestion de parcours après inscription -->
+              <div *ngIf="c.isEnrolled && c.parcoursAssocies && c.parcoursAssocies.length > 0" class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div class="flex items-center mb-2">
+                  <i data-feather="map" class="w-4 h-4 text-indigo-600 mr-2"></i>
+                  <span class="text-sm font-medium text-indigo-800">Parcours recommandés</span>
+                </div>
+                <div class="space-y-1">
+                  <div *ngFor="let parcours of c.parcoursAssocies.slice(0, 2)" class="text-xs text-indigo-700">
+                    <a [routerLink]="['/parcours', parcours.id]" class="hover:text-indigo-900 hover:underline">
+                      • {{ parcours.titre }}
+                    </a>
+                  </div>
+                  <div *ngIf="c.parcoursAssocies.length > 2" class="text-xs text-indigo-600">
+                    +{{ c.parcoursAssocies.length - 2 }} autres parcours
+                  </div>
+                </div>
               </div>
             </div>
           </div>

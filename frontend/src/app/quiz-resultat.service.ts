@@ -57,6 +57,10 @@ export class QuizResultatService {
     return this.http.get<QuizAttempt>(`${this.apiUrl}/quiz/${quizId}/best-score`);
   }
 
+  getBestScoreForCours(coursId: number): Observable<QuizAttempt> {
+    return this.http.get<QuizAttempt>(`${this.apiUrl}/cours/${coursId}/best-score`);
+  }
+
   getResultatDetails(resultatId: number): Observable<ResultatQuiz> {
     return this.http.get<ResultatQuiz>(`${this.apiUrl}/${resultatId}`);
   }

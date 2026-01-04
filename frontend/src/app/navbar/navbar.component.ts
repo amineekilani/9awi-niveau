@@ -12,7 +12,8 @@ declare const feather: any;
     selector: 'app-navbar',
     standalone: true,
     imports: [CommonModule, RouterModule],
-    templateUrl: './navbar.component.html'
+    templateUrl: './navbar.component.html',
+    styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
     userInitials = 'ET';

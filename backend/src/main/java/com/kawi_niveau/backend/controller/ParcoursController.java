@@ -112,10 +112,107 @@ public class ParcoursController {
     @GetMapping("/publies")
     public ResponseEntity<?> getParcoursPublies(Authentication authentication) {
         try {
-            // Cette méthode sera implémentée plus tard pour les apprenants
-            return ResponseEntity.ok("Fonctionnalité en cours de développement");
+            String userEmail = authentication.getName();
+            List<ParcoursResponse> parcours = parcoursService.getParcoursPublies(userEmail);
+            return ResponseEntity.ok(parcours);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erreur: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des parcours: " + e.getMessage());
+        }
+    }
+
+    // Rechercher des parcours publiés
+    @GetMapping("/rechercher")
+    public ResponseEntity<?> rechercherParcours(@RequestParam String terme, Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            List<ParcoursResponse> parcours = parcoursService.rechercherParcours(terme, userEmail);
+            return ResponseEntity.ok(parcours);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la recherche: " + e.getMessage());
+        }
+    }
+
+    // Obtenir les parcours par catégorie
+    @GetMapping("/categorie/{categorie}")
+    public ResponseEntity<?> getParcoursParCategorie(@PathVariable String categorie, Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            List<ParcoursResponse> parcours = parcoursService.getParcoursParCategorie(categorie, userEmail);
+            return ResponseEntity.ok(parcours);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des parcours: " + e.getMessage());
+        }
+    }
+
+    // Obtenir les parcours populaires
+    @GetMapping("/populaires")
+    public ResponseEntity<?> getParcoursPopulaires(Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            List<ParcoursResponse> parcours = parcoursService.getParcoursPopulaires(userEmail);
+            return ResponseEntity.ok(parcours);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des parcours populaires: " + e.getMessage());
+        }
+    }
+
+    // S'inscrire à un parcours
+    @PostMapping("/{id}/inscription")
+    public ResponseEntity<?> sInscrireAuParcours(@PathVariable Long id, Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            parcoursService.sInscrireAuParcours(id, userEmail);
+            return ResponseEntity.ok().body("{\"message\": \"Inscription réussie au parcours\"}");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de l'inscription: " + e.getMessage());
+        }
+    }
+
+    // Se désinscrire d'un parcours
+    @DeleteMapping("/{id}/inscription")
+    public ResponseEntity<?> seDesinscrireDuParcours(@PathVariable Long id, Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            parcoursService.seDesinscrireDuParcours(id, userEmail);
+            return ResponseEntity.ok().body("{\"message\": \"Désinscription réussie du parcours\"}");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la désinscription: " + e.getMessage());
+        }
+    }
+
+    // Obtenir les parcours de l'utilisateur connecté
+    @GetMapping("/mes-inscriptions")
+    public ResponseEntity<?> getMesInscriptions(Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            List<ParcoursResponse> parcours = parcoursService.getMesInscriptions(userEmail);
+            return ResponseEntity.ok(parcours);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des inscriptions: " + e.getMessage());
+        }
+    }
+
+    // Obtenir les parcours en cours de l'utilisateur
+    @GetMapping("/mes-inscriptions/en-cours")
+    public ResponseEntity<?> getMesInscriptionsEnCours(Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            List<ParcoursResponse> parcours = parcoursService.getMesInscriptionsEnCours(userEmail);
+            return ResponseEntity.ok(parcours);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des parcours en cours: " + e.getMessage());
+        }
+    }
+
+    // Obtenir les parcours terminés de l'utilisateur
+    @GetMapping("/mes-inscriptions/termines")
+    public ResponseEntity<?> getMesInscriptionsTerminees(Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            List<ParcoursResponse> parcours = parcoursService.getMesInscriptionsTerminees(userEmail);
+            return ResponseEntity.ok(parcours);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des parcours terminés: " + e.getMessage());
         }
     }
 
@@ -135,6 +232,18 @@ public class ParcoursController {
             return ResponseEntity.ok(parcours);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erreur lors de la récupération des statistiques: " + e.getMessage());
+        }
+    }
+
+    // Forcer la mise à jour de la progression d'un parcours spécifique
+    @PostMapping("/{id}/forcer-mise-a-jour")
+    public ResponseEntity<?> forcerMiseAJourProgression(@PathVariable Long id, Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            parcoursService.forcerMiseAJourProgression(id, userEmail);
+            return ResponseEntity.ok().body("{\"message\": \"Progression mise à jour avec succès\"}");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la mise à jour: " + e.getMessage());
         }
     }
 }

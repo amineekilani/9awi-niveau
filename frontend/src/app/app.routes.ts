@@ -27,6 +27,9 @@ import { RecommendationsComponent } from './recommendations/recommendations.comp
 import { ParcoursDashboardComponent } from './parcours-dashboard/parcours-dashboard.component';
 import { ParcoursManagerComponent } from './parcours-manager/parcours-manager.component';
 import { ParcoursFormComponent } from './parcours-form/parcours-form.component';
+import { ParcoursCatalogueComponent } from './parcours-catalogue/parcours-catalogue.component';
+import { ParcoursDetailComponent } from './parcours-detail/parcours-detail.component';
+import { MesParcoursComponent } from './mes-parcours/mes-parcours.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -53,6 +56,9 @@ export const routes: Routes = [
   
   // Routes pour les parcours d'apprentissage
   { path: 'parcours-dashboard', component: ParcoursDashboardComponent, canActivate: [authGuard] },
+  { path: 'parcours', component: ParcoursCatalogueComponent, canActivate: [authGuard] }, // Catalogue pour apprenants
+  { path: 'parcours/:id', component: ParcoursDetailComponent, canActivate: [authGuard] }, // Détail pour apprenants
+  { path: 'mes-parcours', component: MesParcoursComponent, canActivate: [authGuard] }, // Dashboard personnel apprenants
   { path: 'parcours/nouveau', component: ParcoursFormComponent, canActivate: [authGuard] },
   { path: 'parcours/modifier/:id', component: ParcoursFormComponent, canActivate: [authGuard] },
   { path: 'parcours/gerer/:id', component: ParcoursManagerComponent, canActivate: [authGuard] },

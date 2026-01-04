@@ -32,6 +32,9 @@ public class QuizResultatService {
     @Autowired
     private GamificationService gamificationService;
 
+    @Autowired
+    private ParcoursProgressionService parcoursProgressionService;
+
     @Transactional
     public ResultatQuizResponse submitQuiz(Long userId, Long quizId, QuizSubmissionRequest request) {
         User user = userRepository.findById(userId)
@@ -87,6 +90,14 @@ public class QuizResultatService {
         } catch (Exception e) {
             // Log l'erreur mais ne pas faire échouer la soumission du quiz
             System.err.println("Erreur lors de la gamification: " + e.getMessage());
+        }
+
+        // ✅ MISE À JOUR DES PARCOURS
+        // Déclencher la mise à jour de la progression des parcours après un quiz
+        try {
+            parcoursProgressionService.updateProgressionParcours(user, quiz.getModule().getCours());
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la mise à jour de la progression des parcours après quiz: " + e.getMessage());
         }
 
         return new ResultatQuizResponse(
@@ -165,5 +176,37 @@ public class QuizResultatService {
                     r.getNombreQuestions()
                 ))
                 .orElse(null);
+    }
+
+    public QuizAttemptResponse getBestScoreForCours(Long userId, Long coursId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Récupérer tous les quiz du cours et trouver le meilleur score
+        List<Quiz> quizzes = quizRepository.findAll().stream()
+                .filter(q -> q.getModule().getCours().getId().equals(coursId))
+                .collect(Collectors.toList());
+
+        double meilleurScore = 0.0;
+        QuizAttemptResponse meilleurResultat = null;
+
+        for (Quiz quiz : quizzes) {
+            QuizAttemptResponse resultat = resultatQuizRepository.findFirstByUserAndQuizOrderByScoreDesc(user, quiz)
+                    .map(r -> new QuizAttemptResponse(
+                        r.getId(),
+                        r.getScore(),
+                        r.getDatePassed(),
+                        r.getReponsesCorrectes(),
+                        r.getNombreQuestions()
+                    ))
+                    .orElse(null);
+
+            if (resultat != null && resultat.getScore() > meilleurScore) {
+                meilleurScore = resultat.getScore();
+                meilleurResultat = resultat;
+            }
+        }
+
+        return meilleurResultat;
     }
 }

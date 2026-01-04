@@ -56,6 +56,13 @@ export interface ParcoursResponse {
   isInscrit?: boolean;
   progressionUtilisateur?: number;
   etapeCouranteUtilisateur?: number;
+  // Champs supplémentaires pour les inscriptions
+  dateInscription?: string;
+  dateCompletion?: string;
+  pointsGagnesUtilisateur?: number;
+  isCompletedUtilisateur?: boolean;
+  certificatGenere?: boolean;
+  certificatUrl?: string;
 }
 
 export interface ParcoursEtapeResponse {
@@ -224,5 +231,68 @@ export class ParcoursService {
   // Obtenir les statistiques d'un parcours
   getStatistiquesParcours(id: number): Observable<ParcoursResponse> {
     return this.http.get<ParcoursResponse>(`${this.apiUrl}/${id}/statistiques`, { headers: this.getHeaders() });
+  }
+
+  // ===== MÉTHODES POUR LES APPRENANTS =====
+
+  // Obtenir tous les parcours publiés
+  getParcoursPublies(): Observable<ParcoursResponse[]> {
+    return this.http.get<ParcoursResponse[]>(`${this.apiUrl}/publies`, { headers: this.getHeaders() });
+  }
+
+  // Rechercher des parcours publiés
+  rechercherParcours(terme: string): Observable<ParcoursResponse[]> {
+    return this.http.get<ParcoursResponse[]>(`${this.apiUrl}/rechercher?terme=${encodeURIComponent(terme)}`, { headers: this.getHeaders() });
+  }
+
+  // Obtenir les parcours par catégorie
+  getParcoursParCategorie(categorie: string): Observable<ParcoursResponse[]> {
+    return this.http.get<ParcoursResponse[]>(`${this.apiUrl}/categorie/${encodeURIComponent(categorie)}`, { headers: this.getHeaders() });
+  }
+
+  // Obtenir les parcours populaires
+  getParcoursPopulaires(): Observable<ParcoursResponse[]> {
+    return this.http.get<ParcoursResponse[]>(`${this.apiUrl}/populaires`, { headers: this.getHeaders() });
+  }
+
+  // S'inscrire à un parcours
+  sInscrireAuParcours(parcoursId: number): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/${parcoursId}/inscription`, {}, { headers: this.getHeaders() });
+  }
+
+  // Se désinscrire d'un parcours
+  seDesinscrireDuParcours(parcoursId: number): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiUrl}/${parcoursId}/inscription`, { headers: this.getHeaders() });
+  }
+
+  // Mettre à jour manuellement la progression d'un utilisateur
+  recalculerProgression(): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/recalculer-progression`, {}, { headers: this.getHeaders() });
+  }
+
+  // Forcer la mise à jour de la progression d'un parcours spécifique
+  forcerMiseAJourProgression(parcoursId: number): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/${parcoursId}/forcer-mise-a-jour`, {}, { headers: this.getHeaders() });
+  }
+
+  // Utilitaire pour construire l'URL complète de l'image
+  getImageUrl(thumbnailUrl: string | undefined): string {
+    if (!thumbnailUrl) return '';
+    return `http://localhost:8080/images/parcours/${thumbnailUrl}`;
+  }
+
+  // Obtenir mes inscriptions aux parcours
+  getMesInscriptions(): Observable<ParcoursResponse[]> {
+    return this.http.get<ParcoursResponse[]>(`${this.apiUrl}/mes-inscriptions`, { headers: this.getHeaders() });
+  }
+
+  // Obtenir mes inscriptions en cours
+  getMesInscriptionsEnCours(): Observable<ParcoursResponse[]> {
+    return this.http.get<ParcoursResponse[]>(`${this.apiUrl}/mes-inscriptions/en-cours`, { headers: this.getHeaders() });
+  }
+
+  // Obtenir mes inscriptions terminées
+  getMesInscriptionsTerminees(): Observable<ParcoursResponse[]> {
+    return this.http.get<ParcoursResponse[]>(`${this.apiUrl}/mes-inscriptions/termines`, { headers: this.getHeaders() });
   }
 }

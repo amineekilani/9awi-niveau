@@ -32,6 +32,7 @@ export class CoursListComponent implements OnInit, AfterViewInit {
   searchTerm = '';
   selectedCategorie = '';
   selectedNiveau = '';
+  selectedParcours = '';
   categories: string[] = [];
   niveauxDifficulte: NiveauDifficulteInfo[] = [];
 
@@ -128,11 +129,18 @@ export class CoursListComponent implements OnInit, AfterViewInit {
       filtered = filtered.filter(c => c.niveauDifficulte === this.selectedNiveau);
     }
 
+    // Filtrage par parcours
+    if (this.selectedParcours === 'with-parcours') {
+      filtered = filtered.filter(c => c.nombreParcours && c.nombreParcours > 0);
+    } else if (this.selectedParcours === 'without-parcours') {
+      filtered = filtered.filter(c => !c.nombreParcours || c.nombreParcours === 0);
+    }
+
     this.filteredCours = filtered;
   }
 
   onSearchChange() {
-    if (this.searchTerm.trim() || this.selectedCategorie || this.selectedNiveau) {
+    if (this.searchTerm.trim() || this.selectedCategorie || this.selectedNiveau || this.selectedParcours) {
       this.loading = true;
       this.coursService.searchCours(
         this.searchTerm || undefined, 
@@ -163,10 +171,15 @@ export class CoursListComponent implements OnInit, AfterViewInit {
     this.onSearchChange();
   }
 
+  onParcoursChange() {
+    this.onSearchChange();
+  }
+
   clearFilters() {
     this.searchTerm = '';
     this.selectedCategorie = '';
     this.selectedNiveau = '';
+    this.selectedParcours = '';
     this.loadCours();
   }
 

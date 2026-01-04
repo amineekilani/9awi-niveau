@@ -83,6 +83,18 @@ public class QuizResultatController {
         return ResponseEntity.ok(bestScore);
     }
 
+    @GetMapping("/cours/{coursId}/best-score")
+    public ResponseEntity<QuizAttemptResponse> getBestScoreForCours(
+            @PathVariable Long coursId,
+            Authentication authentication) {
+        String email = authentication.getName();
+        User user = userRepository.findByEmailAndArchivedFalse(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        
+        QuizAttemptResponse bestScore = quizResultatService.getBestScoreForCours(user.getId(), coursId);
+        return ResponseEntity.ok(bestScore);
+    }
+
     @GetMapping("/{resultatId}")
     public ResponseEntity<ResultatQuizResponse> getResultatDetails(
             @PathVariable Long resultatId,

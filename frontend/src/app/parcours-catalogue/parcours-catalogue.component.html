@@ -1,0 +1,310 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="container mx-auto px-4 py-8">
+    
+    <!-- En-tête -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        <i data-feather="map" class="inline-block w-8 h-8 mr-3 text-indigo-600"></i>
+        Parcours d'Apprentissage
+      </h1>
+      <p class="text-gray-600">Découvrez des parcours structurés pour développer vos compétences</p>
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+      <div class="flex flex-col lg:flex-row gap-4">
+        
+        <!-- Recherche -->
+        <div class="flex-1">
+          <div class="relative">
+            <i data-feather="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange()"
+              placeholder="Rechercher un parcours, formateur..."
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <!-- Catégorie -->
+          <select
+            [(ngModel)]="selectedCategorie"
+            (change)="onFilterChange()"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="">Toutes les catégories</option>
+            <option *ngFor="let categorie of categories" [value]="categorie">{{ categorie }}</option>
+          </select>
+
+          <!-- Niveau -->
+          <select
+            [(ngModel)]="selectedNiveau"
+            (change)="onFilterChange()"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="">Tous les niveaux</option>
+            <option *ngFor="let niveau of niveaux" [value]="niveau">{{ getNiveauDisplayName(niveau) }}</option>
+          </select>
+
+          <!-- Tri -->
+          <select
+            [(ngModel)]="sortBy"
+            (change)="onFilterChange()"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="recent">Plus récents</option>
+            <option value="popular">Plus populaires</option>
+            <option value="alphabetical">Alphabétique</option>
+          </select>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-2">
+          <button
+            (click)="clearFilters()"
+            class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <i data-feather="x" class="w-4 h-4"></i>
+          </button>
+          
+          <button
+            (click)="toggleViewMode()"
+            class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <i [attr.data-feather]="viewMode === 'grid' ? 'list' : 'grid'" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="mb-6">
+      <p class="text-gray-600">
+        <span class="font-semibold">{{ parcoursFiltered.length }}</span> 
+        parcours trouvé{{ parcoursFiltered.length > 1 ? 's' : '' }}
+        <span *ngIf="searchTerm || selectedCategorie || selectedNiveau" class="text-indigo-600">
+          (filtré{{ parcoursFiltered.length > 1 ? 's' : '' }} sur {{ parcours.length }})
+        </span>
+      </p>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <p class="mt-2 text-gray-600">Chargement des parcours...</p>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2"></i>
+        <span class="text-red-700">{{ error }}</span>
+      </div>
+    </div>
+
+    <!-- Aucun résultat -->
+    <div *ngIf="!loading && !error && parcoursFiltered.length === 0" class="text-center py-12">
+      <i data-feather="search" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun parcours trouvé</h3>
+      <p class="text-gray-600 mb-4">Essayez de modifier vos critères de recherche</p>
+      <button
+        (click)="clearFilters()"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+      >
+        Effacer les filtres
+      </button>
+    </div>
+
+    <!-- Liste des parcours - Vue grille -->
+    <div *ngIf="!loading && !error && parcoursFiltered.length > 0 && viewMode === 'grid'" 
+         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      <div *ngFor="let parcours of parcoursFiltered" 
+           class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
+           (click)="voirDetailsParcours(parcours)">
+        
+        <!-- Image -->
+        <div class="relative h-48 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-t-lg">
+          <img 
+            *ngIf="parcours.thumbnailUrl" 
+            [src]="parcoursService.getImageUrl(parcours.thumbnailUrl)" 
+            [alt]="parcours.titre"
+            class="w-full h-full object-cover rounded-t-lg"
+            (error)="$any($event.target).style.display='none'"
+          >
+          <div *ngIf="!parcours.thumbnailUrl" class="flex items-center justify-center h-full">
+            <i data-feather="map" class="w-12 h-12 text-white"></i>
+          </div>
+          
+          <!-- Badge niveau -->
+          <div class="absolute top-3 right-3">
+            <span [class]="'px-2 py-1 text-xs font-medium rounded-full ' + getNiveauColor(parcours.niveauDifficulte)">
+              {{ getNiveauDisplayName(parcours.niveauDifficulte) }}
+            </span>
+          </div>
+
+          <!-- Badge inscription -->
+          <div *ngIf="parcours.isInscrit" class="absolute top-3 left-3">
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+              <i data-feather="check" class="w-3 h-3 inline mr-1"></i>
+              Inscrit
+            </span>
+          </div>
+        </div>
+
+        <!-- Contenu -->
+        <div class="p-6">
+          <!-- Titre et catégorie -->
+          <div class="mb-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{{ parcours.titre }}</h3>
+            <p class="text-sm text-indigo-600">{{ parcours.categorie }}</p>
+          </div>
+
+          <!-- Description -->
+          <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ parcours.description || 'Aucune description disponible' }}</p>
+
+          <!-- Formateur -->
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+              <i data-feather="user" class="w-4 h-4 text-gray-600"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">{{ parcours.formateurNom }}</p>
+            </div>
+          </div>
+
+          <!-- Progression (si inscrit) -->
+          <div *ngIf="parcours.isInscrit && parcours.progressionUtilisateur !== undefined" class="mb-4">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-gray-600">Progression</span>
+              <span class="text-xs font-medium text-gray-900">{{ parcours.progressionUtilisateur }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                [class]="'h-2 rounded-full transition-all duration-300 ' + getProgressionColor(parcours.progressionUtilisateur || 0)"
+                [style.width.%]="parcours.progressionUtilisateur || 0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistiques -->
+          <div class="flex items-center justify-between text-sm text-gray-500">
+            <div class="flex items-center space-x-4">
+              <span class="flex items-center">
+                <i data-feather="clock" class="w-4 h-4 mr-1"></i>
+                {{ formatDuree(parcours.dureeEstimeeHeures) }}
+              </span>
+              <span class="flex items-center">
+                <i data-feather="layers" class="w-4 h-4 mr-1"></i>
+                {{ parcours.nombreEtapes }} étapes
+              </span>
+            </div>
+            <span class="flex items-center">
+              <i data-feather="users" class="w-4 h-4 mr-1"></i>
+              {{ parcours.nombreInscriptions }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des parcours - Vue liste -->
+    <div *ngIf="!loading && !error && parcoursFiltered.length > 0 && viewMode === 'list'" 
+         class="space-y-4">
+      
+      <div *ngFor="let parcours of parcoursFiltered" 
+           class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
+           (click)="voirDetailsParcours(parcours)">
+        
+        <div class="flex">
+          <!-- Image -->
+          <div class="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-l-lg flex-shrink-0 relative">
+            <img 
+              *ngIf="parcours.thumbnailUrl" 
+              [src]="parcoursService.getImageUrl(parcours.thumbnailUrl)" 
+              [alt]="parcours.titre"
+              class="w-full h-full object-cover rounded-l-lg"
+              (error)="$any($event.target).style.display='none'"
+            >
+            <div *ngIf="!parcours.thumbnailUrl" class="flex items-center justify-center h-full">
+              <i data-feather="map" class="w-8 h-8 text-white"></i>
+            </div>
+          </div>
+
+          <!-- Contenu -->
+          <div class="flex-1 p-6">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <!-- Titre et badges -->
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ parcours.titre }}</h3>
+                    <p class="text-sm text-indigo-600">{{ parcours.categorie }}</p>
+                  </div>
+                  <div class="flex gap-2 ml-4">
+                    <span [class]="'px-2 py-1 text-xs font-medium rounded-full ' + getNiveauColor(parcours.niveauDifficulte)">
+                      {{ getNiveauDisplayName(parcours.niveauDifficulte) }}
+                    </span>
+                    <span *ngIf="parcours.isInscrit" class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                      <i data-feather="check" class="w-3 h-3 inline mr-1"></i>
+                      Inscrit
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ parcours.description || 'Aucune description disponible' }}</p>
+
+                <!-- Formateur et statistiques -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center mr-2">
+                      <i data-feather="user" class="w-3 h-3 text-gray-600"></i>
+                    </div>
+                    <span class="text-sm text-gray-700">{{ parcours.formateurNom }}</span>
+                  </div>
+                  
+                  <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <span class="flex items-center">
+                      <i data-feather="clock" class="w-4 h-4 mr-1"></i>
+                      {{ formatDuree(parcours.dureeEstimeeHeures) }}
+                    </span>
+                    <span class="flex items-center">
+                      <i data-feather="layers" class="w-4 h-4 mr-1"></i>
+                      {{ parcours.nombreEtapes }} étapes
+                    </span>
+                    <span class="flex items-center">
+                      <i data-feather="users" class="w-4 h-4 mr-1"></i>
+                      {{ parcours.nombreInscriptions }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Progression (si inscrit) -->
+                <div *ngIf="parcours.isInscrit && parcours.progressionUtilisateur !== undefined" class="mt-3">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs text-gray-600">Progression</span>
+                    <span class="text-xs font-medium text-gray-900">{{ parcours.progressionUtilisateur }}%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      [class]="'h-2 rounded-full transition-all duration-300 ' + getProgressionColor(parcours.progressionUtilisateur || 0)"
+                      [style.width.%]="parcours.progressionUtilisateur || 0">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

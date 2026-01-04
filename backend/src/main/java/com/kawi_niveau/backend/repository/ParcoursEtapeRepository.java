@@ -2,6 +2,7 @@ package com.kawi_niveau.backend.repository;
 
 import com.kawi_niveau.backend.entity.ParcoursEtape;
 import com.kawi_niveau.backend.entity.ParcoursApprentissage;
+import com.kawi_niveau.backend.entity.Cours;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,9 @@ public interface ParcoursEtapeRepository extends JpaRepository<ParcoursEtape, Lo
     
     // Trouver toutes les étapes d'un parcours ordonnées
     List<ParcoursEtape> findByParcoursOrderByOrdreEtape(ParcoursApprentissage parcours);
+    
+    // Trouver toutes les étapes qui utilisent un cours spécifique
+    List<ParcoursEtape> findByCours(Cours cours);
     
     // Trouver une étape par parcours et ordre
     Optional<ParcoursEtape> findByParcoursAndOrdreEtape(ParcoursApprentissage parcours, Integer ordreEtape);

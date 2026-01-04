@@ -34,6 +34,9 @@ export interface Cours {
   formateurId?: number;
   formateurNom?: string;
   formateurDomaine?: string;
+  // Propriétés pour l'intégration avec les parcours
+  nombreParcours?: number;
+  parcoursAssocies?: {id: number, titre: string}[];
 }
 
 @Injectable({

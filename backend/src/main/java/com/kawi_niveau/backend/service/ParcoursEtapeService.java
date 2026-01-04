@@ -27,6 +27,9 @@ public class ParcoursEtapeService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ParcoursValidationService validationService;
+
     // Ajouter une étape à un parcours
     @Transactional
     public ParcoursEtapeResponse addEtapeToParcours(Long parcoursId, ParcoursEtapeRequest request, String formateurEmail) {
@@ -81,15 +84,21 @@ public class ParcoursEtapeService {
         return convertToResponse(etape);
     }
 
-    // Obtenir toutes les étapes d'un parcours
+    // Obtenir toutes les étapes d'un parcours avec validation
     public List<ParcoursEtapeResponse> getEtapesByParcours(Long parcoursId, String userEmail) {
         ParcoursApprentissage parcours = parcoursRepository.findById(parcoursId)
                 .orElseThrow(() -> new RuntimeException("Parcours non trouvé"));
 
         List<ParcoursEtape> etapes = etapeRepository.findByParcoursOrderByOrdreEtape(parcours);
 
+        User user = null;
+        if (userEmail != null) {
+            user = userRepository.findByEmail(userEmail).orElse(null);
+        }
+
+        final User finalUser = user;
         return etapes.stream()
-                .map(this::convertToResponse)
+                .map(etape -> convertToResponseWithValidation(etape, finalUser, etapes))
                 .collect(Collectors.toList());
     }
 
@@ -235,6 +244,11 @@ public class ParcoursEtapeService {
 
     // Convertir une étape en réponse
     private ParcoursEtapeResponse convertToResponse(ParcoursEtape etape) {
+        return convertToResponseWithValidation(etape, null, null);
+    }
+
+    // Convertir une étape en réponse avec validation
+    private ParcoursEtapeResponse convertToResponseWithValidation(ParcoursEtape etape, User user, List<ParcoursEtape> toutesEtapes) {
         ParcoursEtapeResponse response = new ParcoursEtapeResponse();
         
         response.setId(etape.getId());
@@ -252,6 +266,34 @@ public class ParcoursEtapeService {
         response.setQuizObligatoires(etape.getQuizObligatoires());
         response.setDescription(etape.getDescription());
         response.setCreatedAt(etape.getCreatedAt());
+
+        // Validation et progression si utilisateur connecté
+        if (user != null && toutesEtapes != null) {
+            // Récupérer les étapes précédentes pour la validation linéaire
+            List<ParcoursEtape> etapesPrecedentes = toutesEtapes.stream()
+                    .filter(e -> e.getOrdreEtape() < etape.getOrdreEtape())
+                    .collect(Collectors.toList());
+
+            // Valider l'étape
+            boolean isDebloque = validationService.isEtapeDebloquee(etape, user, etapesPrecedentes);
+            boolean isComplete = validationService.isEtapeComplete(etape, user);
+            
+            response.setIsDebloque(isDebloque);
+            response.setIsComplete(isComplete);
+
+            // Récupérer les données de progression
+            ParcoursValidationService.EtapeValidationResult validation = 
+                    validationService.validateEtapeConditions(etape, user);
+            
+            response.setProgressionCours((int) Math.round(validation.getProgressionCours()));
+            response.setScoreObtenu((int) Math.round(validation.getScoreObtenu()));
+        } else {
+            // Pas d'utilisateur connecté, valeurs par défaut
+            response.setIsDebloque(false);
+            response.setIsComplete(false);
+            response.setProgressionCours(0);
+            response.setScoreObtenu(0);
+        }
 
         return response;
     }

@@ -20,6 +20,9 @@ public interface ParcoursInscriptionRepository extends JpaRepository<ParcoursIns
     // Trouver toutes les inscriptions d'un utilisateur
     List<ParcoursInscription> findByUserOrderByDateInscriptionDesc(User user);
     
+    // Trouver toutes les inscriptions d'un utilisateur (sans tri)
+    List<ParcoursInscription> findByUser(User user);
+    
     // Trouver les inscriptions actives d'un utilisateur (non terminées)
     List<ParcoursInscription> findByUserAndIsCompletedFalseOrderByDateInscriptionDesc(User user);
     
@@ -28,6 +31,9 @@ public interface ParcoursInscriptionRepository extends JpaRepository<ParcoursIns
     
     // Trouver toutes les inscriptions d'un parcours
     List<ParcoursInscription> findByParcoursOrderByDateInscriptionDesc(ParcoursApprentissage parcours);
+    
+    // Trouver toutes les inscriptions d'un parcours (sans tri)
+    List<ParcoursInscription> findByParcours(ParcoursApprentissage parcours);
     
     // Compter les inscriptions d'un parcours
     long countByParcours(ParcoursApprentissage parcours);

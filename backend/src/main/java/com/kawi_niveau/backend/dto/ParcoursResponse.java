@@ -39,6 +39,14 @@ public class ParcoursResponse {
     private Boolean isInscrit = false;
     private Integer progressionUtilisateur;
     private Integer etapeCouranteUtilisateur;
+    
+    // Informations d'inscription (pour "Mes Parcours")
+    private LocalDateTime dateInscription;
+    private LocalDateTime dateCompletion;
+    private Integer pointsGagnesUtilisateur;
+    private Boolean isCompletedUtilisateur = false;
+    private Boolean certificatGenere = false;
+    private String certificatUrl;
 
     // Constructeurs
     public ParcoursResponse() {}
@@ -118,4 +126,22 @@ public class ParcoursResponse {
 
     public Integer getEtapeCouranteUtilisateur() { return etapeCouranteUtilisateur; }
     public void setEtapeCouranteUtilisateur(Integer etapeCouranteUtilisateur) { this.etapeCouranteUtilisateur = etapeCouranteUtilisateur; }
+
+    public LocalDateTime getDateInscription() { return dateInscription; }
+    public void setDateInscription(LocalDateTime dateInscription) { this.dateInscription = dateInscription; }
+
+    public LocalDateTime getDateCompletion() { return dateCompletion; }
+    public void setDateCompletion(LocalDateTime dateCompletion) { this.dateCompletion = dateCompletion; }
+
+    public Integer getPointsGagnesUtilisateur() { return pointsGagnesUtilisateur; }
+    public void setPointsGagnesUtilisateur(Integer pointsGagnesUtilisateur) { this.pointsGagnesUtilisateur = pointsGagnesUtilisateur; }
+
+    public Boolean getIsCompletedUtilisateur() { return isCompletedUtilisateur; }
+    public void setIsCompletedUtilisateur(Boolean isCompletedUtilisateur) { this.isCompletedUtilisateur = isCompletedUtilisateur; }
+
+    public Boolean getCertificatGenere() { return certificatGenere; }
+    public void setCertificatGenere(Boolean certificatGenere) { this.certificatGenere = certificatGenere; }
+
+    public String getCertificatUrl() { return certificatUrl; }
+    public void setCertificatUrl(String certificatUrl) { this.certificatUrl = certificatUrl; }
 }
