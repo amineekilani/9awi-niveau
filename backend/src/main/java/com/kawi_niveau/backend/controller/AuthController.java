@@ -43,15 +43,14 @@ public class AuthController {
             if (user.getAccountLockedUntil() != null && user.getAccountLockedUntil() > System.currentTimeMillis()) {
                 long remainingMinutes = (user.getAccountLockedUntil() - System.currentTimeMillis()) / 60000;
                 return ResponseEntity.status(423).body(new MessageResponse(
-                    "Votre compte est temporairement verrouillé suite à plusieurs tentatives de connexion échouées. Réessayez dans " + remainingMinutes + " minute(s)."
-                ));
+                        "Votre compte est temporairement verrouillé suite à plusieurs tentatives de connexion échouées. Réessayez dans "
+                                + remainingMinutes + " minute(s)."));
             }
 
             // Vérifier si l'email est vérifié
             if (!user.isEmailVerified()) {
                 throw new com.kawi_niveau.backend.exception.EmailNotVerifiedException(
-                    "Veuillez vérifier votre adresse email avant de vous connecter. Consultez votre boîte de réception pour le lien de vérification."
-                );
+                        "Veuillez vérifier votre adresse email avant de vous connecter. Consultez votre boîte de réception pour le lien de vérification.");
             }
         }
 
@@ -68,18 +67,20 @@ public class AuthController {
                 user.setLastFailedLogin(null);
                 user.setAccountLockedUntil(null);
                 userRepository.save(user);
-                
+
                 // Enregistrer la connexion pour la gamification
                 try {
                     String ipAddress = getClientIpAddress();
                     String userAgent = getUserAgent();
                     gamificationService.recordLogin(user, ipAddress, userAgent);
                 } catch (Exception e) {
-                    System.err.println("Erreur lors de l'enregistrement de connexion pour gamification: " + e.getMessage());
+                    System.err.println(
+                            "Erreur lors de l'enregistrement de connexion pour gamification: " + e.getMessage());
                 }
             }
 
-            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail(), user.getRole().name(), user.getDomaineSpecialisation()));
+            return ResponseEntity.ok(new JwtResponse(jwt, loginRequest.getEmail(), user.getRole().name(),
+                    user.getDomaineSpecialisation()));
         } catch (org.springframework.security.core.AuthenticationException e) {
             // Gérer les tentatives échouées
             if (user != null && "local".equals(user.getProvider())) {
@@ -104,8 +105,7 @@ public class AuthController {
 
                 if (attempts >= 5) {
                     return ResponseEntity.status(423).body(new MessageResponse(
-                        "Trop de tentatives échouées. Votre compte est verrouillé pendant 15 minutes. Un email d'alerte vous a été envoyé."
-                    ));
+                            "Trop de tentatives échouées. Votre compte est verrouillé pendant 15 minutes. Un email d'alerte vous a été envoyé."));
                 }
             }
 
@@ -135,7 +135,7 @@ public class AuthController {
             user.setLastName(registerRequest.getLastName());
             user.setDateOfBirth(registerRequest.getDateOfBirth());
             user.setPhoneNumber(registerRequest.getPhoneNumber());
-            
+
             // Gérer le rôle
             if (registerRequest.getRole() != null && !registerRequest.getRole().isEmpty()) {
                 try {
@@ -146,14 +146,14 @@ public class AuthController {
             } else {
                 user.setRole(com.kawi_niveau.backend.entity.Role.ETUDIANT); // Par défaut
             }
-            
+
             // Gérer le domaine de spécialisation (seulement pour les formateurs)
             if (user.getRole() == com.kawi_niveau.backend.entity.Role.FORMATEUR) {
                 user.setDomaineSpecialisation(registerRequest.getDomaineSpecialisation());
             }
-            
+
             user.setCreatedAt(System.currentTimeMillis()); // Set registration date
-            
+
             // Generate verification token
             String verificationToken = java.util.UUID.randomUUID().toString();
             user.setVerificationToken(verificationToken);
@@ -164,10 +164,12 @@ public class AuthController {
             try {
                 emailService.sendVerificationEmail(user.getEmail(), user.getEmail(), verificationToken);
             } catch (Exception e) {
-                return ResponseEntity.status(500).body(new MessageResponse("User registered but email sending failed: " + e.getMessage()));
+                return ResponseEntity.status(500)
+                        .body(new MessageResponse("User registered but email sending failed: " + e.getMessage()));
             }
 
-            return ResponseEntity.ok(new MessageResponse("User registered successfully. Please check your email to verify your account."));
+            return ResponseEntity.ok(new MessageResponse(
+                    "User registered successfully. Please check your email to verify your account."));
         } catch (Exception e) {
             System.err.println("Erreur lors de l'inscription: " + e.getMessage());
             e.printStackTrace();
@@ -179,23 +181,27 @@ public class AuthController {
     private com.kawi_niveau.backend.service.OAuth2Service oauth2Service;
 
     @PostMapping("/google")
-    public ResponseEntity<?> authenticateWithGoogle(@RequestBody com.kawi_niveau.backend.dto.OAuth2LoginRequest request) {
+    public ResponseEntity<?> authenticateWithGoogle(
+            @RequestBody com.kawi_niveau.backend.dto.OAuth2LoginRequest request) {
         try {
             com.kawi_niveau.backend.entity.User user = oauth2Service.processGoogleUser(request.getToken());
             String jwt = jwtUtils.generateJwtToken(user.getEmail());
-            
+
             // Enregistrer la connexion pour la gamification
             try {
                 String ipAddress = getClientIpAddress();
                 String userAgent = getUserAgent();
                 gamificationService.recordLogin(user, ipAddress, userAgent);
             } catch (Exception e) {
-                System.err.println("Erreur lors de l'enregistrement de connexion Google pour gamification: " + e.getMessage());
+                System.err.println(
+                        "Erreur lors de l'enregistrement de connexion Google pour gamification: " + e.getMessage());
             }
-            
-            return ResponseEntity.ok(new JwtResponse(jwt, user.getEmail(), user.getRole().name(), user.getDomaineSpecialisation()));
+
+            return ResponseEntity
+                    .ok(new JwtResponse(jwt, user.getEmail(), user.getRole().name(), user.getDomaineSpecialisation()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Google authentication failed: " + e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Google authentication failed: " + e.getMessage()));
         }
     }
 
@@ -264,7 +270,8 @@ public class AuthController {
         user.setResetTokenExpiry(null);
         userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("Password reset successfully. You can now login with your new password."));
+        return ResponseEntity
+                .ok(new MessageResponse("Password reset successfully. You can now login with your new password."));
     }
 
     // Méthodes utilitaires pour récupérer les informations de connexion

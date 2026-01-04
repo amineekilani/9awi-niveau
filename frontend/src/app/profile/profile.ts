@@ -107,12 +107,12 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     if (domaine && domaine.trim() !== '') {
       return domaine;
     }
-    
+
     // Ensuite essayer depuis le profil
     if (this.profile && (this.profile as any).domaineSpecialisation) {
       return (this.profile as any).domaineSpecialisation;
     }
-    
+
     return 'Développement Web';
   }
 
@@ -146,6 +146,13 @@ export class ProfileComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    // Validation date de naissance
+    const birthYear = new Date(this.editDateOfBirth).getFullYear();
+    if (birthYear < 1906 || birthYear > 2020) {
+      this.errorMessage = 'La date de naissance est invalide';
+      return;
+    }
+
     const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
     const updateData: any = {
       email: this.editEmail,
@@ -175,12 +182,12 @@ export class ProfileComponent implements OnInit, AfterViewInit {
         this.currentPassword = '';
         this.newPassword = '';
         this.confirmPassword = '';
-        
+
         // Mettre à jour le domaine dans localStorage si c'est un formateur
         if (this.profile?.role === 'FORMATEUR' && (this.profile as any).domaineSpecialisation) {
           localStorage.setItem('auth-domaine', (this.profile as any).domaineSpecialisation);
         }
-        
+
         this.authService.loadUserProfile(); // Recharger le profil global
         if (typeof feather !== 'undefined') {
           setTimeout(() => feather.replace(), 100);

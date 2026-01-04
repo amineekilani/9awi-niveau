@@ -29,7 +29,7 @@ export class RegisterComponent {
   domaineSpecialisation = ''; // Pour les formateurs
   error = '';
   success = '';
-  
+
   // Profile image
   selectedImageFile: File | null = null;
   profileImagePreview: string | null = null;
@@ -57,7 +57,7 @@ export class RegisterComponent {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      
+
       // Validation de taille (10MB max)
       if (file.size > 10 * 1024 * 1024) {
         this.error = 'L\'image ne doit pas dépasser 10MB';
@@ -87,6 +87,13 @@ export class RegisterComponent {
       return;
     }
 
+    // Validation date de naissance
+    const birthYear = new Date(this.dateOfBirth).getFullYear();
+    if (birthYear < 1906 || birthYear > 2020) {
+      this.error = 'La date de naissance est invalide';
+      return;
+    }
+
     // Validation pour les formateurs
     if (this.role === 'FORMATEUR' && (!this.domaineSpecialisation || this.domaineSpecialisation.trim() === '')) {
       this.error = 'Veuillez sélectionner un domaine de spécialisation';
@@ -99,8 +106,8 @@ export class RegisterComponent {
     // D'abord, enregistrer l'utilisateur
     const phoneNumber = this.phoneNumberPrefix + (this.phoneNumberSuffix || '');
 
-    this.authService.register({ 
-      email: this.email, 
+    this.authService.register({
+      email: this.email,
       password: this.password,
       firstName: this.firstName,
       lastName: this.lastName,
@@ -160,8 +167,8 @@ export class RegisterComponent {
 
       google.accounts.id.renderButton(
         document.getElementById('google-signup-button'),
-        { 
-          theme: 'outline', 
+        {
+          theme: 'outline',
           size: 'large',
           width: '100%',
           text: 'signup_with',
