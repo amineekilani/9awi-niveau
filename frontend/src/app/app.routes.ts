@@ -53,20 +53,20 @@ export const routes: Routes = [
   { path: 'cours/:id', component: CoursDetailComponent, canActivate: [authGuard] },
   { path: 'module/:id', component: ModuleDetailComponent, canActivate: [authGuard] },
   { path: 'quiz/:quizId/module/:moduleId', component: QuizViewerComponent, canActivate: [authGuard] },
-  
+
   // Routes pour les parcours d'apprentissage
   { path: 'parcours-dashboard', component: ParcoursDashboardComponent, canActivate: [authGuard] },
   { path: 'parcours', component: ParcoursCatalogueComponent, canActivate: [authGuard] }, // Catalogue pour apprenants
-  { path: 'parcours/:id', component: ParcoursDetailComponent, canActivate: [authGuard] }, // Détail pour apprenants
   { path: 'mes-parcours', component: MesParcoursComponent, canActivate: [authGuard] }, // Dashboard personnel apprenants
   { path: 'parcours/nouveau', component: ParcoursFormComponent, canActivate: [authGuard] },
   { path: 'parcours/modifier/:id', component: ParcoursFormComponent, canActivate: [authGuard] },
   { path: 'parcours/gerer/:id', component: ParcoursManagerComponent, canActivate: [authGuard] },
-  
+  { path: 'parcours/:id', component: ParcoursDetailComponent, canActivate: [authGuard] }, // Détail pour apprenants
+
   // Routes Admin avec layout unifié
-  { 
-    path: 'admin', 
-    component: AdminMainComponent, 
+  {
+    path: 'admin',
+    component: AdminMainComponent,
     canActivate: [authGuard, adminGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
