@@ -1,0 +1,95 @@
+<!-- Bouton flottant du chatbot -->
+<div class="chatbot-container">
+  <!-- Bouton principal -->
+  <button 
+    (click)="toggleChat()"
+    class="chatbot-toggle"
+    [class.active]="isOpen"
+    title="Assistant virtuel">
+    <i *ngIf="!isOpen" data-feather="message-circle" class="w-6 h-6"></i>
+    <i *ngIf="isOpen" data-feather="x" class="w-6 h-6"></i>
+  </button>
+
+  <!-- Fenêtre de chat -->
+  <div class="chat-window" [class.open]="isOpen">
+    <!-- En-tête -->
+    <div class="chat-header">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+          <i data-feather="bot" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h3 class="text-white font-semibold text-sm">Assistant 9awi Niveau</h3>
+          <p class="text-blue-100 text-xs">En ligne</p>
+        </div>
+      </div>
+      <button (click="clearChat()" class="text-white hover:text-blue-200 transition-colors" title="Effacer la conversation">
+        <i data-feather="refresh-cw" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages">
+      <div *ngFor="let message of messages" 
+           class="message"
+           [class.user-message]="message.isUser"
+           [class.bot-message]="!message.isUser">
+        
+        <!-- Message du bot -->
+        <div *ngIf="!message.isUser" class="flex items-start space-x-2 mb-4">
+          <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <i data-feather="bot" class="w-3 h-3 text-white"></i>
+          </div>
+          <div class="bg-gray-100 rounded-lg rounded-tl-none px-3 py-2 max-w-xs">
+            <p class="text-gray-800 text-sm">{{ message.text }}</p>
+            <span class="text-xs text-gray-500 mt-1 block">{{ message.timestamp | date:'HH:mm' }}</span>
+          </div>
+        </div>
+
+        <!-- Message de l'utilisateur -->
+        <div *ngIf="message.isUser" class="flex items-start space-x-2 mb-4 justify-end">
+          <div class="bg-blue-600 rounded-lg rounded-tr-none px-3 py-2 max-w-xs">
+            <p class="text-white text-sm">{{ message.text }}</p>
+            <span class="text-xs text-blue-200 mt-1 block text-right">{{ message.timestamp | date:'HH:mm' }}</span>
+          </div>
+          <div class="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <i data-feather="user" class="w-3 h-3 text-white"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicateur de frappe -->
+      <div *ngIf="isTyping" class="flex items-start space-x-2 mb-4">
+        <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+          <i data-feather="bot" class="w-3 h-3 text-white"></i>
+        </div>
+        <div class="bg-gray-100 rounded-lg rounded-tl-none px-3 py-2">
+          <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone de saisie -->
+    <div class="chat-input">
+      <div class="flex items-center space-x-2">
+        <input 
+          type="text" 
+          [(ngModel)]="currentMessage"
+          (keypress)="onKeyPress($event)"
+          placeholder="Tapez votre message..."
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          maxlength="500">
+        <button 
+          (click)="sendMessage()"
+          [disabled]="!currentMessage.trim()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center">
+          <i data-feather="send" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

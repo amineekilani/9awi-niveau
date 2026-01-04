@@ -9,6 +9,7 @@ import { CoursService, Cours, NiveauDifficulte, NiveauDifficulteInfo } from '../
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { GamificationNotificationService } from '../gamification-notification.service';
 import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
+import { ChatbotComponent } from '../chatbot/chatbot';
 
 declare const feather: any;
 
@@ -20,7 +21,7 @@ interface CoursWithEnrollment extends Cours {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, NavbarComponent, NiveauBadgeComponent],
+  imports: [CommonModule, RouterModule, FormsModule, NavbarComponent, NiveauBadgeComponent, ChatbotComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
