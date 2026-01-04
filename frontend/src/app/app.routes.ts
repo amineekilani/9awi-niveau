@@ -24,6 +24,9 @@ import { MesDefisComponent } from './mes-defis/mes-defis';
 import { ClassementComponent } from './classement/classement';
 import { MesCoursComponent } from './mes-cours/mes-cours';
 import { RecommendationsComponent } from './recommendations/recommendations.component';
+import { ParcoursDashboardComponent } from './parcours-dashboard/parcours-dashboard.component';
+import { ParcoursManagerComponent } from './parcours-manager/parcours-manager.component';
+import { ParcoursFormComponent } from './parcours-form/parcours-form.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -47,6 +50,12 @@ export const routes: Routes = [
   { path: 'cours/:id', component: CoursDetailComponent, canActivate: [authGuard] },
   { path: 'module/:id', component: ModuleDetailComponent, canActivate: [authGuard] },
   { path: 'quiz/:quizId/module/:moduleId', component: QuizViewerComponent, canActivate: [authGuard] },
+  
+  // Routes pour les parcours d'apprentissage
+  { path: 'parcours-dashboard', component: ParcoursDashboardComponent, canActivate: [authGuard] },
+  { path: 'parcours/nouveau', component: ParcoursFormComponent, canActivate: [authGuard] },
+  { path: 'parcours/modifier/:id', component: ParcoursFormComponent, canActivate: [authGuard] },
+  { path: 'parcours/gerer/:id', component: ParcoursManagerComponent, canActivate: [authGuard] },
   
   // Routes Admin avec layout unifié
   { 

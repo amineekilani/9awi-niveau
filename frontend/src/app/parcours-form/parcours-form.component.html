@@ -1,0 +1,274 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-gray-50">
+  <main class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <a routerLink="/parcours-dashboard" class="hover:text-blue-600">Mes Parcours</a>
+        <i data-feather="chevron-right" class="w-4 h-4"></i>
+        <span>{{ isEditMode ? 'Modifier le parcours' : 'Nouveau parcours' }}</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+        {{ isEditMode ? 'Modifier le parcours' : 'Créer un nouveau parcours' }}
+      </h1>
+      <p class="text-gray-500 mt-1">
+        {{ isEditMode ? 'Modifiez les informations de votre parcours d\'apprentissage' : 'Créez un parcours d\'apprentissage structuré pour vos apprenants' }}
+      </p>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="success || error" class="mb-6">
+      <div *ngIf="success" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <div class="flex items-center">
+          <i data-feather="check-circle" class="w-5 h-5 mr-2"></i>
+          <span>{{ success }}</span>
+        </div>
+        <button (click)="clearMessages()" class="text-green-600 hover:text-green-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <div class="flex items-center">
+          <i data-feather="alert-circle" class="w-5 h-5 mr-2"></i>
+          <span>{{ error }}</span>
+        </div>
+        <button (click)="clearMessages()" class="text-red-600 hover:text-red-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Formulaire -->
+    <form [formGroup]="parcoursForm" (ngSubmit)="onSubmit()" class="space-y-8">
+      
+      <!-- Section 1: Informations de base -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+          <i data-feather="info" class="w-5 h-5 mr-2 text-blue-600"></i>
+          Informations de base
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Titre -->
+          <div class="md:col-span-2">
+            <label for="titre" class="block text-sm font-medium text-gray-700 mb-2">
+              Titre du parcours *
+            </label>
+            <input type="text" id="titre" formControlName="titre"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [class.border-red-500]="isFieldInvalid('titre')"
+              placeholder="Ex: Parcours Développement Web Complet">
+            <div *ngIf="isFieldInvalid('titre')" class="mt-1 text-sm text-red-600">
+              {{ getFieldError('titre') }}
+            </div>
+          </div>
+
+          <!-- Catégorie -->
+          <div>
+            <label for="categorie" class="block text-sm font-medium text-gray-700 mb-2">
+              Catégorie
+            </label>
+            <select id="categorie" formControlName="categorie"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+              <option value="">Sélectionner une catégorie</option>
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+
+          <!-- Niveau de difficulté -->
+          <div>
+            <label for="niveauDifficulte" class="block text-sm font-medium text-gray-700 mb-2">
+              Niveau de difficulté
+            </label>
+            <select id="niveauDifficulte" formControlName="niveauDifficulte"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+              <option *ngFor="let niveau of niveauxDifficulte" [value]="niveau">
+                {{ getNiveauDisplayName(niveau) }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Durée estimée -->
+          <div>
+            <label for="dureeEstimeeHeures" class="block text-sm font-medium text-gray-700 mb-2">
+              Durée estimée (heures)
+            </label>
+            <input type="number" id="dureeEstimeeHeures" formControlName="dureeEstimeeHeures"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [class.border-red-500]="isFieldInvalid('dureeEstimeeHeures')"
+              placeholder="Ex: 40" min="1" max="1000">
+            <div *ngIf="isFieldInvalid('dureeEstimeeHeures')" class="mt-1 text-sm text-red-600">
+              {{ getFieldError('dureeEstimeeHeures') }}
+            </div>
+          </div>
+
+          <!-- Type de parcours -->
+          <div>
+            <label for="typeParcours" class="block text-sm font-medium text-gray-700 mb-2">
+              Type de parcours *
+            </label>
+            <select id="typeParcours" formControlName="typeParcours"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+              <option *ngFor="let type of typesParcours" [value]="type">
+                {{ getTypeParcoursDisplayName(type) }}
+              </option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">
+              Linéaire : les cours doivent être suivis dans l'ordre. Flexible : ordre libre.
+            </p>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mt-6">
+          <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+            Description du parcours
+          </label>
+          <textarea id="description" formControlName="description" rows="4"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            [class.border-red-500]="isFieldInvalid('description')"
+            placeholder="Décrivez les objectifs et le contenu de votre parcours d'apprentissage..."></textarea>
+          <div *ngIf="isFieldInvalid('description')" class="mt-1 text-sm text-red-600">
+            {{ getFieldError('description') }}
+          </div>
+        </div>
+
+        <!-- Prérequis -->
+        <div class="mt-6">
+          <label for="prerequis" class="block text-sm font-medium text-gray-700 mb-2">
+            Prérequis (optionnel)
+          </label>
+          <textarea id="prerequis" formControlName="prerequis" rows="3"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            [class.border-red-500]="isFieldInvalid('prerequis')"
+            placeholder="Listez les connaissances ou compétences requises avant de commencer ce parcours..."></textarea>
+          <div *ngIf="isFieldInvalid('prerequis')" class="mt-1 text-sm text-red-600">
+            {{ getFieldError('prerequis') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Image du parcours -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+          <i data-feather="image" class="w-5 h-5 mr-2 text-blue-600"></i>
+          Image du parcours
+        </h2>
+
+        <div class="flex flex-col md:flex-row gap-6">
+          <!-- Zone d'upload -->
+          <div class="flex-1">
+            <label for="thumbnail" class="block text-sm font-medium text-gray-700 mb-2">
+              Thumbnail du parcours
+            </label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+              <input type="file" id="thumbnail" accept="image/*" (change)="onFileSelected($event)" class="hidden">
+              <label for="thumbnail" class="cursor-pointer">
+                <i data-feather="upload" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                <p class="text-sm text-gray-600 mb-2">Cliquez pour sélectionner une image</p>
+                <p class="text-xs text-gray-500">PNG, JPG, GIF jusqu'à 5MB</p>
+              </label>
+            </div>
+          </div>
+
+          <!-- Aperçu -->
+          <div *ngIf="imagePreview" class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Aperçu</label>
+            <div class="relative">
+              <img [src]="imagePreview" alt="Aperçu" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+              <button type="button" (click)="removeImage()"
+                class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+                <i data-feather="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Configuration avancée -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+          <i data-feather="settings" class="w-5 h-5 mr-2 text-blue-600"></i>
+          Configuration avancée
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Points bonus -->
+          <div>
+            <label for="pointsBonus" class="block text-sm font-medium text-gray-700 mb-2">
+              Points bonus à la completion
+            </label>
+            <input type="number" id="pointsBonus" formControlName="pointsBonus"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [class.border-red-500]="isFieldInvalid('pointsBonus')"
+              placeholder="Ex: 500" min="0" max="10000">
+            <p class="mt-1 text-xs text-gray-500">Points accordés en plus à la completion du parcours</p>
+            <div *ngIf="isFieldInvalid('pointsBonus')" class="mt-1 text-sm text-red-600">
+              {{ getFieldError('pointsBonus') }}
+            </div>
+          </div>
+
+          <!-- Badge de completion -->
+          <div>
+            <label for="badgeCompletion" class="block text-sm font-medium text-gray-700 mb-2">
+              Badge de completion
+            </label>
+            <input type="text" id="badgeCompletion" formControlName="badgeCompletion"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              placeholder="Ex: Maître du Développement Web">
+            <p class="mt-1 text-xs text-gray-500">Nom du badge spécial accordé à la completion</p>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="mt-6 space-y-4">
+          <!-- Certificat -->
+          <div class="flex items-center">
+            <input type="checkbox" id="certificatEnabled" formControlName="certificatEnabled"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="certificatEnabled" class="ml-2 block text-sm text-gray-700">
+              Générer un certificat de completion
+            </label>
+          </div>
+
+          <!-- Publication -->
+          <div class="flex items-center">
+            <input type="checkbox" id="isPublished" formControlName="isPublished"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="isPublished" class="ml-2 block text-sm text-gray-700">
+              Publier le parcours immédiatement
+            </label>
+            <p class="ml-2 text-xs text-gray-500">(vous pourrez le publier plus tard)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-end">
+        <button type="button" (click)="cancel()"
+          class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+          Annuler
+        </button>
+        <button type="submit" [disabled]="loading || parcoursForm.invalid"
+          class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
+          <div *ngIf="loading" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+          <i *ngIf="!loading" data-feather="save" class="w-4 h-4"></i>
+          <span>{{ isEditMode ? 'Modifier le parcours' : 'Créer le parcours' }}</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Note d'aide -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div class="flex items-start">
+        <i data-feather="info" class="w-5 h-5 text-blue-600 mr-2 mt-0.5"></i>
+        <div class="text-sm text-blue-800">
+          <p class="font-medium mb-1">Prochaines étapes</p>
+          <p>Après avoir créé votre parcours, vous pourrez ajouter et organiser les cours qui le composent dans l'interface de gestion du parcours.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

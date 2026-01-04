@@ -147,8 +147,8 @@
           [required]="role === 'FORMATEUR'"
         >
           <option value="">Choisissez votre domaine</option>
-          <option *ngFor="let domaine of domaines" [value]="domaine.nom">
-            {{ domaine.nom }}
+          <option *ngFor="let domaine of domaines" [value]="domaine">
+            {{ domaine }}
           </option>
         </select>
         <p class="text-xs text-gray-500">Sélectionnez votre domaine d'expertise principal</p>

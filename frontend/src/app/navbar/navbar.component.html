@@ -16,6 +16,10 @@
                     class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
                     <i data-feather="grid" class="w-4 h-4 mr-2"></i> Tableau de Bord
                 </a>
+                <a routerLink="/parcours-dashboard" routerLinkActive="active" *ngIf="authService.isFormateur()"
+                    class="text-white hover:text-gray-200 font-medium nav-link transition-colors flex items-center">
+                    <i data-feather="map" class="w-4 h-4 mr-2"></i> Mes Parcours
+                </a>
 
                 <!-- Liens Étudiant -->
                 <a routerLink="/home" routerLinkActive="active" *ngIf="!authService.isFormateur()"

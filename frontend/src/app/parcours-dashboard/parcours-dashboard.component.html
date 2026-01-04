@@ -1,0 +1,268 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-gray-50">
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-8 flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Mes Parcours d'Apprentissage</h1>
+        <p class="text-gray-500 mt-1">Créez et gérez vos parcours d'apprentissage structurés</p>
+      </div>
+      <button (click)="createNewParcours()"
+        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+        <i data-feather="plus" class="w-5 h-5"></i>
+        <span>Créer un parcours</span>
+      </button>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="success || error" class="mb-6">
+      <div *ngIf="success" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <span>{{ success }}</span>
+        <button (click)="clearMessages()" class="text-green-600 hover:text-green-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <span>{{ error }}</span>
+        <button (click)="clearMessages()" class="text-red-600 hover:text-red-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="mb-8 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <i data-feather="bar-chart-2" class="w-5 h-5 mr-2 text-blue-600"></i>
+        Vue d'ensemble
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <div class="text-center">
+          <div class="text-3xl font-bold text-blue-600">{{ stats.totalParcours }}</div>
+          <div class="text-sm text-gray-600">Total parcours</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-green-600">{{ stats.parcoursPublies }}</div>
+          <div class="text-sm text-gray-600">Publiés</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-purple-600">{{ stats.totalInscriptions }}</div>
+          <div class="text-sm text-gray-600">Inscriptions</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-orange-600">{{ stats.totalCompletions }}</div>
+          <div class="text-sm text-gray-600">Completions</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold" [class]="stats.tauxCompletionMoyen >= 70 ? 'text-green-600' : stats.tauxCompletionMoyen >= 40 ? 'text-yellow-600' : 'text-red-600'">
+            {{ stats.tauxCompletionMoyen }}%
+          </div>
+          <div class="text-sm text-gray-600">Taux completion</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres et Tri -->
+    <div class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        
+        <!-- Onglets -->
+        <div class="flex gap-2">
+          <button (click)="switchTab('tous')"
+            [class]="activeTab === 'tous' 
+              ? 'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200'
+              : 'px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200'">
+            Tous ({{ parcours.length }})
+          </button>
+          <button (click)="switchTab('publies')"
+            [class]="activeTab === 'publies' 
+              ? 'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200'
+              : 'px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200'">
+            Publiés ({{ stats.parcoursPublies }})
+          </button>
+          <button (click)="switchTab('brouillons')"
+            [class]="activeTab === 'brouillons' 
+              ? 'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200'
+              : 'px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200'">
+            Brouillons ({{ stats.totalParcours - stats.parcoursPublies }})
+          </button>
+        </div>
+
+        <!-- Tri -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Trier par:</span>
+          <select [(ngModel)]="sortBy" (change)="changeSortBy(sortBy)"
+            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="recent">Plus récent</option>
+            <option value="titre">Titre</option>
+            <option value="inscriptions">Inscriptions</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      <p class="text-gray-600 mt-4">Chargement de vos parcours...</p>
+    </div>
+
+    <!-- Liste des Parcours -->
+    <div *ngIf="!loading && filteredParcours.length > 0">
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div *ngFor="let parcours of filteredParcours"
+          class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
+          
+          <!-- Thumbnail -->
+          <div class="relative h-48 bg-gradient-to-br from-blue-400 to-purple-600 overflow-hidden">
+            <img *ngIf="parcours.thumbnailUrl" 
+                 [src]="'http://localhost:8080/images/parcours/' + parcours.thumbnailUrl" 
+                 [alt]="parcours.titre"
+                 class="w-full h-full object-cover" 
+                 (error)="$any($event.target).style.display='none'" />
+            <div *ngIf="!parcours.thumbnailUrl" class="absolute inset-0 flex items-center justify-center">
+              <i data-feather="map" class="w-16 h-16 text-white opacity-50"></i>
+            </div>
+            
+            <!-- Badge de statut -->
+            <span class="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium"
+                  [class]="getStatusBadgeClass(parcours)">
+              {{ getStatusText(parcours) }}
+            </span>
+
+            <!-- Badge du type de parcours -->
+            <span *ngIf="parcours.typeParcours" 
+                  class="absolute top-4 left-4 px-2 py-1 bg-black bg-opacity-50 text-white rounded text-xs">
+              {{ getTypeParcoursDisplayName(parcours.typeParcours) }}
+            </span>
+          </div>
+
+          <div class="p-6">
+            <!-- Titre et niveau -->
+            <div class="mb-3">
+              <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                {{ parcours.titre }}
+              </h3>
+              <div class="flex items-center gap-2">
+                <span *ngIf="parcours.niveauDifficulte" 
+                      class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                  {{ getNiveauDisplayName(parcours.niveauDifficulte) }}
+                </span>
+                <span *ngIf="parcours.categorie" 
+                      class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                  {{ parcours.categorie }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p class="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
+              {{ parcours.description || 'Aucune description disponible' }}
+            </p>
+
+            <!-- Statistiques -->
+            <div class="mb-4 grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div class="text-lg font-bold text-blue-600">{{ parcours.nombreEtapes }}</div>
+                <div class="text-xs text-gray-600">Étapes</div>
+              </div>
+              <div>
+                <div class="text-lg font-bold text-purple-600">{{ parcours.nombreInscriptions }}</div>
+                <div class="text-xs text-gray-600">Inscrits</div>
+              </div>
+              <div>
+                <div class="text-lg font-bold text-green-600">{{ parcours.nombreCompletions }}</div>
+                <div class="text-xs text-gray-600">Terminés</div>
+              </div>
+            </div>
+
+            <!-- Progression moyenne -->
+            <div *ngIf="parcours.progressionMoyenne !== null && parcours.progressionMoyenne !== undefined" class="mb-4">
+              <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
+                <span>Progression moyenne</span>
+                <span>{{ parcours.progressionMoyenne | number:'1.0-0' }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="rounded-full h-2 transition-all duration-300"
+                     [class]="getProgressionColor(parcours.progressionMoyenne)"
+                     [style.width.%]="parcours.progressionMoyenne"></div>
+              </div>
+            </div>
+
+            <!-- Informations supplémentaires -->
+            <div class="mb-4 text-xs text-gray-500 space-y-1">
+              <div *ngIf="parcours.dureeEstimeeHeures" class="flex items-center">
+                <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                {{ parcours.dureeEstimeeHeures }}h estimées
+              </div>
+              <div class="flex items-center">
+                <i data-feather="calendar" class="w-3 h-3 mr-1"></i>
+                Créé le {{ parcours.createdAt | date:'shortDate' }}
+              </div>
+              <div *ngIf="parcours.pointsBonus && parcours.pointsBonus > 0" class="flex items-center">
+                <i data-feather="award" class="w-3 h-3 mr-1"></i>
+                +{{ parcours.pointsBonus }} points bonus
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-2">
+              <!-- Action principale -->
+              <button (click)="manageParcours(parcours.id!)"
+                class="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-center font-medium flex items-center justify-center gap-2">
+                <i data-feather="settings" class="w-4 h-4"></i>
+                <span>Gérer le parcours</span>
+              </button>
+
+              <!-- Actions secondaires -->
+              <div class="grid grid-cols-3 gap-2">
+                <button (click)="editParcours(parcours.id!)"
+                  class="px-2 py-1.5 bg-amber-50 text-amber-700 rounded hover:bg-amber-100 transition-colors duration-200 text-xs font-medium flex items-center justify-center gap-1">
+                  <i data-feather="edit-2" class="w-3 h-3"></i>
+                  <span>Modifier</span>
+                </button>
+                <button (click)="togglePublishParcours(parcours)"
+                  [class]="parcours.isPublished 
+                    ? 'px-2 py-1.5 bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors duration-200 text-xs font-medium flex items-center justify-center gap-1'
+                    : 'px-2 py-1.5 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors duration-200 text-xs font-medium flex items-center justify-center gap-1'">
+                  <i [attr.data-feather]="parcours.isPublished ? 'eye-off' : 'eye'" class="w-3 h-3"></i>
+                  <span>{{ parcours.isPublished ? 'Dépublier' : 'Publier' }}</span>
+                </button>
+                <button (click)="deleteParcours(parcours)"
+                  class="px-2 py-1.5 bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors duration-200 text-xs font-medium flex items-center justify-center gap-1">
+                  <i data-feather="trash-2" class="w-3 h-3"></i>
+                  <span>Supprimer</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- État vide -->
+    <div *ngIf="!loading && filteredParcours.length === 0"
+      class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+      <div class="max-w-md mx-auto">
+        <i data-feather="map" class="mx-auto h-24 w-24 text-gray-400 mb-4"></i>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">
+          {{ activeTab === 'tous' ? 'Aucun parcours créé' : 
+             activeTab === 'publies' ? 'Aucun parcours publié' : 
+             'Aucun brouillon' }}
+        </h3>
+        <p class="text-gray-600 mb-6">
+          {{ activeTab === 'tous' ? 'Commencez à créer votre premier parcours d\'apprentissage structuré.' :
+             activeTab === 'publies' ? 'Publiez vos parcours pour les rendre accessibles aux apprenants.' :
+             'Créez des brouillons pour préparer vos parcours avant publication.' }}
+        </p>
+        <button *ngIf="activeTab === 'tous'" (click)="createNewParcours()"
+          class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+          <i data-feather="plus" class="w-6 h-6"></i>
+          <span>Créer votre premier parcours</span>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>

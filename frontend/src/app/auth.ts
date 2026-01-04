@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
 import { tap, catchError, shareReplay } from 'rxjs/operators';
+import { DOMAINES_SPECIALISATION } from './constants/domaines';
 
 export interface Profile {
   id?: number;
@@ -126,8 +127,8 @@ export class AuthService {
     return this.userProfileSubject.value;
   }
 
-  getDomaines(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:8080/api/domaines');
+  getDomaines(): Observable<string[]> {
+    return of([...DOMAINES_SPECIALISATION]);
   }
 
   logout() {

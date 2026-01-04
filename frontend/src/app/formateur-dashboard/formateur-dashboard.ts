@@ -101,6 +101,10 @@ export class FormateurDashboardComponent implements OnInit {
     this.coursService.getMesCours().subscribe({
       next: (data) => {
         console.log('Cours reçus du backend:', data);
+        // Debug spécifique pour les thumbnails
+        data.forEach(cours => {
+          console.log(`Cours "${cours.titre}": thumbnailUrl = "${cours.thumbnailUrl}"`);
+        });
         this.allCours = data;
         this.calculateNiveauxStats();
         console.log('Cours actifs:', this.coursActifs);

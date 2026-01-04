@@ -10,13 +10,14 @@ import { ModuleProgressService, ModuleProgress } from '../module-progress.servic
 import { ApprenantProgressionService, ApprenantProgression } from '../apprenant-progression.service';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
+import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
 
 declare const feather: any;
 
 @Component({
   selector: 'app-cours-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent, NiveauBadgeComponent],
   templateUrl: './cours-detail.html',
   styleUrls: ['./cours-detail.css']
 })

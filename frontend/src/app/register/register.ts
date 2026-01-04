@@ -45,6 +45,7 @@ export class RegisterComponent {
     this.authService.getDomaines().subscribe({
       next: (domaines) => {
         this.domaines = domaines;
+        console.log('Domaines chargés:', domaines); // Debug
       },
       error: (err) => {
         console.error('Erreur lors du chargement des domaines:', err);
