@@ -256,20 +256,32 @@
           </div>
 
           <!-- Bouton de complétion pour les étudiants -->
-          <div *ngIf="!authService.isFormateur()" class="mt-6 pt-6 border-t border-gray-200">
+          <div *ngIf="!authService.isFormateur() && isEnrolled" class="mt-6 pt-6 border-t border-gray-200">
             <button (click)="toggleLeconCompletion(lecon)"
-              [class]="lecon.completed ? 
+              [class]="isLeconCompleted(lecon.id!) ? 
                 'w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center justify-center gap-2' : 
                 'w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center justify-center gap-2'">
-              <svg *ngIf="lecon.completed" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg *ngIf="isLeconCompleted(lecon.id!)" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
-              <svg *ngIf="!lecon.completed" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg *ngIf="!isLeconCompleted(lecon.id!)" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{{ lecon.completed ? '✓ Leçon complétée' : 'Marquer comme complétée' }}</span>
+              <span>{{ isLeconCompleted(lecon.id!) ? '✓ Leçon complétée' : 'Marquer comme complétée' }}</span>
             </button>
+          </div>
+          
+          <!-- Message si pas inscrit -->
+          <div *ngIf="!authService.isFormateur() && !isEnrolled" class="mt-6 pt-6 border-t border-gray-200">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+              <p class="text-yellow-800 text-sm">
+                <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                Vous devez être inscrit au cours pour marquer les leçons comme complétées
+              </p>
+            </div>
           </div>
         </div>
       </div>

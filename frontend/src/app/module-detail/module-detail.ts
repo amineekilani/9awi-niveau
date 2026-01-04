@@ -6,6 +6,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ModuleService, Module } from '../module.service';
 import { LeconService, Lecon } from '../lecon.service';
 import { QuizService, Quiz, Question } from '../quiz.service';
+import { EnrollmentService } from '../enrollment.service';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
 
@@ -28,6 +29,10 @@ export class ModuleDetailComponent implements OnInit {
   loading = false;
   success = '';
   error = '';
+  
+  // État des leçons complétées
+  completedLeconIds: number[] = [];
+  isEnrolled = false;
 
   // Données pour le header unifié
   userInitials = 'ET';
@@ -67,6 +72,7 @@ export class ModuleDetailComponent implements OnInit {
     private moduleService: ModuleService,
     private leconService: LeconService,
     private quizService: QuizService,
+    private enrollmentService: EnrollmentService,
     public authService: AuthService,
     private gamificationService: UserGamificationService
   ) { }
@@ -89,11 +95,40 @@ export class ModuleDetailComponent implements OnInit {
         this.coursId = data.coursId!;
         this.loadLecons();
         this.loadQuiz();
+        this.checkEnrollmentAndLoadProgress();
         this.loading = false;
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement du module';
         this.loading = false;
+      }
+    });
+  }
+
+  checkEnrollmentAndLoadProgress() {
+    if (!this.authService.isFormateur()) {
+      this.enrollmentService.isEnrolled(this.coursId).subscribe({
+        next: (enrolled) => {
+          this.isEnrolled = enrolled;
+          if (enrolled) {
+            this.loadCompletedLecons();
+          }
+        },
+        error: (err) => {
+          console.error('Erreur lors de la vérification d\'inscription:', err);
+        }
+      });
+    }
+  }
+
+  loadCompletedLecons() {
+    this.enrollmentService.getCompletedLeconIds(this.coursId).subscribe({
+      next: (completedIds) => {
+        this.completedLeconIds = completedIds;
+        console.log('Leçons complétées chargées:', completedIds);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des leçons complétées:', err);
       }
     });
   }
@@ -225,15 +260,54 @@ export class ModuleDetailComponent implements OnInit {
     event.target.src = 'assets/placeholder-image.png';
   }
 
-  // Simplified: removing completion logic as it depends on missing LeconProgressionService
+  // Gestion de la completion des leçons
   toggleLeconCompletion(lecon: Lecon) {
-    // Logic removed to fix compilation errors
-    console.log('Toggling completion for lecon', lecon.id);
+    if (!this.isEnrolled || this.authService.isFormateur() || !lecon.id) {
+      return;
+    }
+
+    const isCompleted = this.isLeconCompleted(lecon.id);
+    
+    if (isCompleted) {
+      // Démarquer comme complétée
+      this.enrollmentService.unmarkLeconAsCompleted(this.coursId, lecon.id).subscribe({
+        next: (enrollment) => {
+          this.completedLeconIds = this.completedLeconIds.filter(id => id !== lecon.id);
+          this.success = 'Leçon marquée comme non complétée';
+          console.log('Leçon démarquée:', lecon.id);
+          setTimeout(() => this.success = '', 3000);
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la mise à jour de la progression';
+          console.error('Erreur démarquage leçon:', err);
+          setTimeout(() => this.error = '', 3000);
+        }
+      });
+    } else {
+      // Marquer comme complétée
+      this.enrollmentService.markLeconAsCompleted(this.coursId, lecon.id).subscribe({
+        next: (enrollment) => {
+          this.completedLeconIds.push(lecon.id!);
+          this.success = 'Leçon marquée comme complétée !';
+          console.log('Leçon marquée:', lecon.id, 'Progression:', enrollment.progress + '%');
+          setTimeout(() => this.success = '', 3000);
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la mise à jour de la progression';
+          console.error('Erreur marquage leçon:', err);
+          setTimeout(() => this.error = '', 3000);
+        }
+      });
+    }
+  }
+
+  isLeconCompleted(leconId: number): boolean {
+    return this.completedLeconIds.includes(leconId);
   }
 
   allLeconsCompleted(): boolean {
-    // Default to true for now since completion logic is simplified
-    return true;
+    if (!this.isEnrolled || this.lecons.length === 0) return false;
+    return this.lecons.every(lecon => lecon.id && this.isLeconCompleted(lecon.id));
   }
 
   openQuizForm() {

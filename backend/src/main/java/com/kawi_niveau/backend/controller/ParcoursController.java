@@ -246,4 +246,16 @@ public class ParcoursController {
             return ResponseEntity.badRequest().body("Erreur lors de la mise à jour: " + e.getMessage());
         }
     }
+
+    // NOUVEAU: Endpoint de debug pour diagnostiquer les problèmes de progression
+    @PostMapping("/{id}/debug-progression")
+    public ResponseEntity<?> debugProgression(@PathVariable Long id, Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            String debugInfo = parcoursService.debugProgression(id, userEmail);
+            return ResponseEntity.ok().body("{\"debug\": \"" + debugInfo + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors du debug: " + e.getMessage());
+        }
+    }
 }

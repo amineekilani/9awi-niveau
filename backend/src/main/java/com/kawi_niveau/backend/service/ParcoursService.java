@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,18 @@ public class ParcoursService {
 
     @Autowired
     private ParcoursValidationService validationService;
+
+    @Autowired
+    private GamificationService gamificationService;
+
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private QuizRepository quizRepository;
+
+    @Autowired
+    private ResultatQuizRepository resultatQuizRepository;
 
     // Créer un nouveau parcours
     public ParcoursResponse createParcours(ParcoursRequest request, String formateurEmail) {
@@ -486,5 +499,69 @@ public class ParcoursService {
         }
         
         inscriptionRepository.save(inscription);
+    }
+
+    // NOUVEAU: Méthode de debug pour diagnostiquer les problèmes de progression
+    public String debugProgression(Long parcoursId, String userEmail) {
+        try {
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            ParcoursApprentissage parcours = parcoursRepository.findById(parcoursId)
+                    .orElseThrow(() -> new RuntimeException("Parcours non trouvé"));
+
+            ParcoursInscription inscription = inscriptionRepository.findByParcoursAndUser(parcours, user)
+                    .orElseThrow(() -> new RuntimeException("Vous n'êtes pas inscrit à ce parcours"));
+
+            StringBuilder debug = new StringBuilder();
+            debug.append("=== DEBUG PROGRESSION PARCOURS ===\\n");
+            debug.append("Parcours: ").append(parcours.getTitre()).append("\\n");
+            debug.append("Utilisateur: ").append(userEmail).append("\\n");
+            debug.append("Progression actuelle: ").append(inscription.getProgressionPourcentage()).append("%\\n");
+            debug.append("Étape courante: ").append(inscription.getEtapeCourante()).append("\\n");
+            debug.append("Terminé: ").append(inscription.getIsCompleted()).append("\\n\\n");
+
+            List<ParcoursEtape> etapes = etapeRepository.findByParcoursOrderByOrdreEtape(parcours);
+            debug.append("=== DÉTAIL DES ÉTAPES ===\\n");
+            
+            for (ParcoursEtape etape : etapes) {
+                debug.append("Étape ").append(etape.getOrdreEtape()).append(": ").append(etape.getCours().getTitre()).append("\\n");
+                debug.append("  - Score minimum requis: ").append(etape.getScoreMinimum()).append("%\\n");
+                debug.append("  - Completion requise: ").append(etape.getPourcentageCompletionRequis()).append("%\\n");
+                debug.append("  - Quiz obligatoires: ").append(etape.getQuizObligatoires()).append("\\n");
+                
+                // Vérifier l'inscription au cours
+                Optional<Enrollment> enrollment = enrollmentRepository.findByUserAndCours(user, etape.getCours());
+                if (enrollment.isPresent()) {
+                    debug.append("  - Progression cours: ").append(enrollment.get().getProgress()).append("%\\n");
+                    
+                    // Vérifier les quiz
+                    List<Quiz> quizzes = quizRepository.findByCours(etape.getCours());
+                    if (!quizzes.isEmpty()) {
+                        double meilleurScore = 0;
+                        for (Quiz quiz : quizzes) {
+                            Optional<ResultatQuiz> resultat = resultatQuizRepository.findFirstByUserAndQuizOrderByScoreDesc(user, quiz);
+                            if (resultat.isPresent()) {
+                                meilleurScore = Math.max(meilleurScore, resultat.get().getScore());
+                            }
+                        }
+                        debug.append("  - Meilleur score quiz: ").append(meilleurScore).append("%\\n");
+                    } else {
+                        debug.append("  - Aucun quiz dans ce cours\\n");
+                    }
+                    
+                    // Validation finale
+                    boolean isComplete = validationService.isEtapeComplete(etape, user);
+                    debug.append("  - STATUT: ").append(isComplete ? "✅ VALIDÉE" : "❌ NON VALIDÉE").append("\\n");
+                } else {
+                    debug.append("  - ❌ PAS INSCRIT AU COURS\\n");
+                }
+                debug.append("\\n");
+            }
+
+            return debug.toString();
+        } catch (Exception e) {
+            return "Erreur lors du debug: " + e.getMessage();
+        }
     }
 }

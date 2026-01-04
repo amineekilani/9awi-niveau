@@ -15,7 +15,9 @@ import com.kawi_niveau.backend.repository.LeconRepository;
 import com.kawi_niveau.backend.repository.ModuleRepository;
 import com.kawi_niveau.backend.repository.UserRepository;
 import com.kawi_niveau.backend.repository.ResultatQuizRepository;
+import com.kawi_niveau.backend.event.CourseCompletedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +55,7 @@ public class EnrollmentService {
     private GamificationService gamificationService;
 
     @Autowired
-    private ParcoursProgressionService parcoursProgressionService;
+    private ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public EnrollmentResponse enrollInCourse(Long userId, EnrollmentRequest request) {
@@ -196,6 +198,10 @@ public class EnrollmentService {
                 // Déclencher l'événement de cours terminé pour la gamification
                 try {
                     gamificationService.onCourseCompleted(enrollment.getUser());
+                    
+                    // ✅ NOUVEAU: Publier l'événement pour les parcours
+                    eventPublisher.publishEvent(new CourseCompletedEvent(this, enrollment.getUser(), enrollment.getCours(), progress));
+                    
                 } catch (Exception e) {
                     // Log l'erreur mais ne pas faire échouer la mise à jour de progression
                     System.err.println("Erreur lors de la gamification: " + e.getMessage());
@@ -204,14 +210,6 @@ public class EnrollmentService {
         }
 
         enrollmentRepository.save(enrollment);
-        
-        // ✅ MISE À JOUR DES PARCOURS
-        // Déclencher la mise à jour de la progression des parcours
-        try {
-            parcoursProgressionService.updateProgressionParcours(enrollment.getUser(), enrollment.getCours());
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la mise à jour de la progression des parcours: " + e.getMessage());
-        }
     }
 
     public List<Long> getCompletedLeconIds(Long userId, Long coursId) {

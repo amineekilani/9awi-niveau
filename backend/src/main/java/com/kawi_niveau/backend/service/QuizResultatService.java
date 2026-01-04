@@ -5,7 +5,9 @@ import com.kawi_niveau.backend.dto.ResultatQuizResponse;
 import com.kawi_niveau.backend.dto.QuizAttemptResponse;
 import com.kawi_niveau.backend.entity.*;
 import com.kawi_niveau.backend.repository.*;
+import com.kawi_niveau.backend.event.QuizCompletedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +35,7 @@ public class QuizResultatService {
     private GamificationService gamificationService;
 
     @Autowired
-    private ParcoursProgressionService parcoursProgressionService;
+    private ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ResultatQuizResponse submitQuiz(Long userId, Long quizId, QuizSubmissionRequest request) {
@@ -87,17 +89,13 @@ public class QuizResultatService {
         // Déclencher les événements de gamification
         try {
             gamificationService.onQuizPassed(user, score);
+            
+            // ✅ NOUVEAU: Publier l'événement pour les parcours
+            eventPublisher.publishEvent(new QuizCompletedEvent(this, user, quiz, score));
+            
         } catch (Exception e) {
             // Log l'erreur mais ne pas faire échouer la soumission du quiz
             System.err.println("Erreur lors de la gamification: " + e.getMessage());
-        }
-
-        // ✅ MISE À JOUR DES PARCOURS
-        // Déclencher la mise à jour de la progression des parcours après un quiz
-        try {
-            parcoursProgressionService.updateProgressionParcours(user, quiz.getModule().getCours());
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la mise à jour de la progression des parcours après quiz: " + e.getMessage());
         }
 
         return new ResultatQuizResponse(

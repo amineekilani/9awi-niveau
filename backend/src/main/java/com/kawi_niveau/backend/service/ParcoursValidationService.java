@@ -23,6 +23,9 @@ public class ParcoursValidationService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ParcoursEtapeRepository parcoursEtapeRepository;
+
     /**
      * Valide si une étape est débloquée pour un utilisateur
      */
