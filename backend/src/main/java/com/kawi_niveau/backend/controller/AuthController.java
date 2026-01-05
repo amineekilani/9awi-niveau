@@ -123,7 +123,7 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
         try {
             if (userRepository.findByEmailAndArchivedFalse(registerRequest.getEmail()).isPresent()) {
-                return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
+                return ResponseEntity.badRequest().body(new MessageResponse("Cette adresse email a été déjà utilisée"));
             }
 
             com.kawi_niveau.backend.entity.User user = new com.kawi_niveau.backend.entity.User();
