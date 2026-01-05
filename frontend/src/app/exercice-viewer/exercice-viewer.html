@@ -1,0 +1,284 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-transparent">
+  <!-- Sub-Header for Exercice Info -->
+  <div class="bg-white border-b border-gray-200 sticky top-[64px] z-40" *ngIf="!exerciceStarted || exerciceFinished">
+    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-4">
+        <button (click)="goBack()"
+          class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex items-center gap-2 text-gray-600 hover:text-gray-900">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span class="hidden sm:inline font-medium">Retour</span>
+        </button>
+        <div class="h-6 w-px bg-gray-300"></div>
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate">{{ exercice?.titre }}</h1>
+          <p class="text-sm text-gray-500 truncate" *ngIf="exercice?.description">{{ exercice?.description }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <!-- Error Message -->
+    <div *ngIf="error" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
+      {{ error }}
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent">
+      </div>
+      <p class="text-gray-600 mt-4">Chargement...</p>
+    </div>
+
+    <!-- Exercice Not Started -->
+    <div *ngIf="!loading && !exerciceStarted && !exerciceFinished" class="max-w-3xl mx-auto">
+      <div class="bg-white rounded-xl shadow-lg p-8">
+        <div class="text-center mb-8">
+          <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ exercice?.titre }}</h2>
+          <p class="text-gray-600">{{ exercice?.description }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+          <div class="bg-blue-50 rounded-lg p-4 text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ elements.length }}</div>
+            <div class="text-sm text-gray-600">Éléments</div>
+          </div>
+          <div *ngIf="bestScore" class="bg-green-50 rounded-lg p-4 text-center">
+            <div class="text-3xl font-bold text-green-600">{{ bestScore.score }}%</div>
+            <div class="text-sm text-gray-600">Meilleur score</div>
+          </div>
+        </div>
+
+        <!-- Type d'exercice -->
+        <div class="mb-8">
+          <div class="flex items-center justify-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm font-medium text-gray-700">Type:</span>
+            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              {{ exercice?.typeExercice === 'FILL_BLANK' ? 'Texte à trous' : 
+                 exercice?.typeExercice === 'DRAG_DROP' ? 'Glisser-déposer' : 
+                 exercice?.typeExercice === 'MATCHING' ? 'Appariement' : exercice?.typeExercice }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Previous Attempts -->
+        <div *ngIf="previousAttempts.length > 0" class="mb-8">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Tentatives précédentes</h3>
+          <div class="space-y-2">
+            <div *ngFor="let attempt of previousAttempts.slice(0, 3)"
+              class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span class="text-sm text-gray-600">{{ formatDate(attempt.datePassed) }}</span>
+              <span class="font-semibold" [class]="getScoreColor(attempt.score)">{{ attempt.score }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <button (click)="startExercice()"
+          class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-semibold text-lg shadow-lg">
+          {{ previousAttempts.length > 0 ? 'Recommencer l\'exercice' : 'Commencer l\'exercice' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Exercice In Progress -->
+    <div *ngIf="exerciceStarted && !exerciceFinished" class="max-w-4xl mx-auto">
+      <!-- Progress Info -->
+      <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div class="flex justify-between items-center">
+          <span class="text-lg font-medium text-gray-700">{{ exercice?.titre }}</span>
+          <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            {{ exercice?.typeExercice === 'FILL_BLANK' ? 'Texte à trous' : 
+               exercice?.typeExercice === 'DRAG_DROP' ? 'Glisser-déposer' : 
+               exercice?.typeExercice === 'MATCHING' ? 'Appariement' : exercice?.typeExercice }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Exercice Content -->
+      <div class="bg-white rounded-xl shadow-lg p-8">
+        
+        <!-- FILL_BLANK: Texte à trous -->
+        <div *ngIf="exercice?.typeExercice === 'FILL_BLANK'" class="space-y-6">
+          <h3 class="text-2xl font-bold text-gray-900 mb-6">Complétez le texte</h3>
+          
+          <div class="text-lg leading-relaxed">
+            <ng-container *ngFor="let element of elements; let i = index">
+              <span *ngIf="element.typeElement === 'TEXT'" [innerHTML]="element.contenu"></span>
+              <input *ngIf="element.typeElement === 'BLANK'"
+                type="text"
+                [value]="reponses[element.id!] || ''"
+                (input)="updateBlankResponse(element.id!, $any($event.target).value)"
+                class="inline-block mx-2 px-3 py-1 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none min-w-[120px]"
+                [placeholder]="'Réponse ' + (i + 1)">
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- DRAG_DROP: Glisser-déposer -->
+        <div *ngIf="exercice?.typeExercice === 'DRAG_DROP'" class="space-y-8">
+          <h3 class="text-2xl font-bold text-gray-900 mb-6">Glissez les éléments dans les bonnes zones</h3>
+          
+          <!-- Éléments à glisser -->
+          <div class="mb-8">
+            <h4 class="text-lg font-semibold text-gray-700 mb-4">Éléments disponibles:</h4>
+            <div class="flex flex-wrap gap-3">
+              <div *ngFor="let item of getDraggableItems()"
+                draggable="true"
+                (dragstart)="onDragStart($event, item)"
+                class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg cursor-move hover:bg-blue-200 transition-colors border-2 border-blue-300">
+                {{ item }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Zones de dépôt -->
+          <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-700">Zones de dépôt:</h4>
+            <div *ngFor="let zone of getDropZones()" class="space-y-2">
+              <p class="text-gray-700">{{ zone.contenu }}</p>
+              <div 
+                (dragover)="onDragOver($event)"
+                (drop)="onDrop($event, zone.id!)"
+                class="min-h-[60px] p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:border-blue-400 hover:bg-blue-50 transition-colors flex items-center justify-center">
+                <span *ngIf="!reponses[zone.id!]" class="text-gray-500">Déposez un élément ici</span>
+                <span *ngIf="reponses[zone.id!]" 
+                  draggable="true"
+                  (dragstart)="onDragStart($event, reponses[zone.id!], zone.id!)"
+                  class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg cursor-move">
+                  {{ reponses[zone.id!] }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MATCHING: Appariement -->
+        <div *ngIf="exercice?.typeExercice === 'MATCHING'" class="space-y-6">
+          <h3 class="text-2xl font-bold text-gray-900 mb-6">Associez les éléments</h3>
+          
+          <div class="space-y-4">
+            <div *ngFor="let item of getMatchItems()" class="p-4 border border-gray-200 rounded-lg">
+              <p class="text-gray-700 mb-3 font-medium">{{ item.contenu }}</p>
+              <div class="grid grid-cols-2 gap-2">
+                <button *ngFor="let option of item.options"
+                  (click)="selectMatchItem(item.id!, option)"
+                  [class]="reponses[item.id!] === option ? 
+                    'bg-blue-600 text-white border-blue-600' : 
+                    'bg-white text-gray-700 border-gray-300 hover:border-blue-300'"
+                  class="p-3 border-2 rounded-lg transition-all text-left">
+                  {{ option }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="mt-8 text-center">
+          <button (click)="submitExercice()" [disabled]="!canSubmit()"
+            class="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold">
+            Valider l'exercice
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exercice Results -->
+    <div *ngIf="exerciceFinished && resultat" class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-xl shadow-lg p-8">
+        <!-- Score Display -->
+        <div class="text-center mb-8">
+          <div class="w-32 h-32 mx-auto mb-6 rounded-full flex items-center justify-center"
+            [class]="getScoreBgColor(resultat.score)">
+            <div class="text-5xl font-bold" [class]="getScoreColor(resultat.score)">
+              {{ resultat.score }}%
+            </div>
+          </div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            {{ resultat.score >= 80 ? 'Excellent !' : resultat.score >= 60 ? 'Bien joué !' : 'Continuez vos efforts !'
+            }}
+          </h2>
+          <p class="text-gray-600">{{ resultat.reponsesCorrectes }} / {{ resultat.nombreElements }} réponses correctes
+          </p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+          <div class="bg-blue-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-blue-600">{{ resultat.score }}%</div>
+            <div class="text-sm text-gray-600">Score</div>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-600">{{ resultat.reponsesCorrectes }}/{{ resultat.nombreElements
+              }}</div>
+            <div class="text-sm text-gray-600">Correctes</div>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-purple-600">{{ formatTime(resultat.tempsPasse) }}</div>
+            <div class="text-sm text-gray-600">Temps</div>
+          </div>
+        </div>
+
+        <!-- Detailed Results -->
+        <div *ngIf="resultat.details && resultat.details.length > 0" class="mb-8">
+          <h3 class="text-xl font-bold text-gray-900 mb-4">Détails des réponses</h3>
+          <div class="space-y-4">
+            <div *ngFor="let detail of resultat.details; let i = index" class="p-4 rounded-lg border-2"
+              [class]="detail.correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'">
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                  <div *ngIf="detail.correct"
+                    class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div *ngIf="!detail.correct" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="font-semibold text-gray-900 mb-2">{{ detail.contenu }}</p>
+                  <p class="text-sm text-gray-700 mb-1">
+                    <span class="font-medium">Votre réponse:</span>
+                    <span [class]="detail.correct ? 'text-green-700' : 'text-red-700'">{{ detail.reponseUtilisateur
+                      }}</span>
+                  </p>
+                  <p *ngIf="!detail.correct" class="text-sm text-gray-700">
+                    <span class="font-medium">Réponse correcte:</span>
+                    <span class="text-green-700">{{ detail.reponseCorrecte }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4">
+          <button (click)="retryExercice()"
+            class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-semibold">
+            Réessayer
+          </button>
+          <button (click)="goBack()"
+            class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-semibold">
+            Retour au module
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

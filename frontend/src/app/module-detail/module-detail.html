@@ -564,5 +564,279 @@
         <p class="text-gray-600 mb-4">Créez un quiz pour évaluer les connaissances des étudiants</p>
       </div>
     </div>
+
+    <!-- Exercice Section -->
+    <div class="mt-12 space-y-4">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <svg class="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          <h2 class="text-2xl font-bold text-gray-900">Exercice interactif</h2>
+        </div>
+        <button *ngIf="authService.isFormateur() && !exercice && !showExerciceForm" (click)="openExerciceForm()"
+          class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Créer un exercice</span>
+        </button>
+      </div>
+
+      <!-- Exercice Form -->
+      <div *ngIf="showExerciceForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-fade-in">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6">
+          {{ editingExercice ? 'Modifier l\'exercice' : 'Nouvel exercice interactif' }}
+        </h3>
+
+        <form (ngSubmit)="saveExercice()" #exerciceFormRef="ngForm">
+          <!-- Informations générales -->
+          <div class="mb-5">
+            <label for="exerciceTitre" class="block text-sm font-semibold text-gray-900 mb-2">
+              Titre de l'exercice <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="exerciceTitre" name="exerciceTitre" [(ngModel)]="exerciceForm.titre" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="Ex: Exercice de grammaire" />
+          </div>
+
+          <div class="mb-5">
+            <label for="exerciceDescription" class="block text-sm font-semibold text-gray-900 mb-2">
+              Description
+            </label>
+            <textarea id="exerciceDescription" name="exerciceDescription" [(ngModel)]="exerciceForm.description" rows="3"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+              placeholder="Décrivez l'objectif de cet exercice..."></textarea>
+          </div>
+
+          <div class="mb-6">
+            <label for="exerciceType" class="block text-sm font-semibold text-gray-900 mb-2">
+              Type d'exercice <span class="text-red-500">*</span>
+            </label>
+            <select id="exerciceType" name="exerciceType" [(ngModel)]="exerciceForm.typeExercice" (change)="onExerciceTypeChange()" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+              <option value="FILL_BLANK">Texte à trous</option>
+              <option value="DRAG_DROP">Glisser-déposer</option>
+              <option value="MATCHING">Appariement</option>
+            </select>
+          </div>
+
+          <!-- Configuration spécifique au type -->
+          <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Configuration de l'exercice</h4>
+
+            <!-- FILL_BLANK: Texte à trous -->
+            <div *ngIf="exerciceForm.typeExercice === 'FILL_BLANK'">
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h5 class="font-medium text-blue-900 mb-2">Instructions</h5>
+                <p class="text-blue-700 text-sm">
+                  Écrivez votre texte et utilisez <code>[BLANK:réponse]</code> pour créer des espaces à remplir.
+                  <br>Exemple: "Le chat [BLANK:mange] sa nourriture."
+                </p>
+              </div>
+              
+              <label class="block text-sm font-medium text-gray-700 mb-2">Texte avec blancs</label>
+              <textarea [(ngModel)]="fillBlankText" name="fillBlankText" rows="6"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                placeholder="Ex: Le chat [BLANK:mange] sa nourriture dans [BLANK:la cuisine]."></textarea>
+            </div>
+
+            <!-- DRAG_DROP: Glisser-déposer -->
+            <div *ngIf="exerciceForm.typeExercice === 'DRAG_DROP'">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Éléments déplaçables -->
+                <div>
+                  <h5 class="font-medium text-gray-900 mb-3">Éléments à glisser</h5>
+                  <div class="space-y-2">
+                    <div *ngFor="let item of draggableItems; let i = index" class="flex gap-2">
+                      <input type="text" [(ngModel)]="draggableItems[i]" [name]="'draggable_' + i"
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Élément déplaçable">
+                      <button type="button" (click)="removeDraggableItem(i)" *ngIf="draggableItems.length > 1"
+                        class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button type="button" (click)="addDraggableItem()"
+                      class="w-full py-2 border-2 border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors text-sm">
+                      + Ajouter un élément
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Zones de dépôt -->
+                <div>
+                  <h5 class="font-medium text-gray-900 mb-3">Zones de dépôt</h5>
+                  <div class="space-y-3">
+                    <div *ngFor="let zone of dropZones; let i = index" class="space-y-2">
+                      <input type="text" [(ngModel)]="dropZones[i].label" [name]="'zone_label_' + i"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Libellé de la zone">
+                      <div class="flex gap-2">
+                        <input type="text" [(ngModel)]="dropZones[i].correctAnswer" [name]="'zone_answer_' + i"
+                          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Réponse correcte">
+                        <button type="button" (click)="removeDropZone(i)" *ngIf="dropZones.length > 1"
+                          class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <button type="button" (click)="addDropZone()"
+                      class="w-full py-2 border-2 border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors text-sm">
+                      + Ajouter une zone
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MATCHING: Appariement -->
+            <div *ngIf="exerciceForm.typeExercice === 'MATCHING'">
+              <div class="space-y-4">
+                <div *ngFor="let pair of matchPairs; let i = index" class="border border-gray-200 rounded-lg p-4">
+                  <div class="flex justify-between items-center mb-3">
+                    <h5 class="font-medium text-gray-900">Paire {{ i + 1 }}</h5>
+                    <button type="button" (click)="removeMatchPair(i)" *ngIf="matchPairs.length > 1"
+                      class="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm">
+                      Supprimer
+                    </button>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Question</label>
+                      <input type="text" [(ngModel)]="matchPairs[i].question" [name]="'match_question_' + i"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ex: France">
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Réponse correcte</label>
+                      <input type="text" [(ngModel)]="matchPairs[i].answer" [name]="'match_answer_' + i"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ex: Paris">
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Options (incluant la bonne réponse)</label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <input *ngFor="let option of matchPairs[i].options; let j = index" 
+                          type="text" [(ngModel)]="matchPairs[i].options[j]" [name]="'match_option_' + i + '_' + j"
+                          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          [placeholder]="'Option ' + (j + 1)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <button type="button" (click)="addMatchPair()"
+                  class="w-full py-3 border-2 border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors">
+                  + Ajouter une paire
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-200 pt-4 flex flex-col sm:flex-row gap-3">
+            <button type="submit" [disabled]="!exerciceFormRef.form.valid"
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+              {{ editingExercice ? 'Enregistrer' : 'Créer l\'exercice' }}
+            </button>
+            <button type="button" (click)="cancelExerciceForm()"
+              class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Exercice Display -->
+      <div *ngIf="exercice && !showExerciceForm" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ exercice.titre }}</h3>
+              <p *ngIf="exercice.description" class="text-gray-600 mb-3">{{ exercice.description }}</p>
+              <div class="flex items-center gap-4">
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                  {{ getExerciceTypeLabel(exercice.typeExercice) }}
+                </span>
+                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                  {{ exercice.elements?.length || 0 }} élément(s)
+                </span>
+                <!-- Bouton Faire l'exercice pour les étudiants -->
+                <div *ngIf="!authService.isFormateur() && exercice.elements && exercice.elements.length > 0">
+                  <a *ngIf="allLeconsCompleted()" [routerLink]="['/exercice', exercice.id, 'module', moduleId]"
+                    class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2 font-medium">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span>Faire l'exercice</span>
+                  </a>
+                  <button *ngIf="!allLeconsCompleted()" disabled
+                    class="px-6 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed inline-flex items-center gap-2 font-medium opacity-60"
+                    title="Complétez toutes les leçons pour débloquer l'exercice">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Exercice verrouillé</span>
+                  </button>
+                  <p *ngIf="!allLeconsCompleted()" class="text-sm text-orange-600 mt-2">
+                    ⚠️ Complétez toutes les leçons pour débloquer l'exercice
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="authService.isFormateur()" class="flex gap-2 ml-4">
+              <button (click)="openExerciceForm()"
+                class="px-3 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
+                title="Modifier l'exercice">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Modifier</span>
+              </button>
+              <button (click)="deleteExercice()"
+                class="px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
+                title="Supprimer l'exercice">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Supprimer</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div *ngIf="!exercice.elements || exercice.elements.length === 0" class="text-center py-8 text-gray-500">
+            Aucun élément pour cet exercice. Modifiez-le pour ajouter du contenu.
+          </div>
+          <div *ngIf="exercice.elements && exercice.elements.length > 0" class="text-center py-4 text-gray-600">
+            Exercice configuré avec {{ exercice.elements.length }} élément(s)
+          </div>
+        </div>
+      </div>
+
+      <!-- No Exercice State -->
+      <div *ngIf="!exercice && !showExerciceForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun exercice pour ce module</h3>
+        <p class="text-gray-600 mb-4">Créez un exercice interactif pour enrichir l'apprentissage</p>
+      </div>
+    </div>
   </main>
 </div>

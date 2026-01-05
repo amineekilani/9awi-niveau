@@ -17,6 +17,7 @@ import { CoursListComponent } from './cours-list/cours-list';
 import { CoursDetailComponent } from './cours-detail/cours-detail';
 import { ModuleDetailComponent } from './module-detail/module-detail';
 import { QuizViewerComponent } from './quiz-viewer/quiz-viewer';
+import { ExerciceViewerComponent } from './exercice-viewer/exercice-viewer';
 import { AdminMainComponent } from './admin-main/admin-main';
 import { AdminDashboardMainComponent } from './admin-dashboard-main/admin-dashboard-main';
 import { AdminUsersComponent } from './admin-users/admin-users';
@@ -58,6 +59,7 @@ export const routes: Routes = [
   { path: 'cours/:id', component: CoursDetailComponent, canActivate: [authGuard] },
   { path: 'module/:id', component: ModuleDetailComponent, canActivate: [authGuard] },
   { path: 'quiz/:quizId/module/:moduleId', component: QuizViewerComponent, canActivate: [authGuard] },
+  { path: 'exercice/:exerciceId/module/:moduleId', component: ExerciceViewerComponent, canActivate: [authGuard] },
 
   // Routes pour les parcours d'apprentissage
   { path: 'parcours-dashboard', component: ParcoursDashboardComponent, canActivate: [authGuard] },

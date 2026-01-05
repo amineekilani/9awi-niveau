@@ -6,6 +6,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ModuleService, Module } from '../module.service';
 import { LeconService, Lecon } from '../lecon.service';
 import { QuizService, Quiz, Question } from '../quiz.service';
+import { ExerciceService, Exercice, ExerciceElement } from '../exercice.service';
 import { EnrollmentService } from '../enrollment.service';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
@@ -23,6 +24,7 @@ export class ModuleDetailComponent implements OnInit {
   module: Module | null = null;
   lecons: Lecon[] = [];
   quiz: Quiz | null = null;
+  exercice: Exercice | null = null;
   moduleId!: number;
   coursId!: number;
   uploadingFile = false;
@@ -66,12 +68,33 @@ export class ModuleDetailComponent implements OnInit {
     correctAnswer: ''
   };
 
+  // Exercice form
+  showExerciceForm = false;
+  editingExercice = false;
+  exerciceForm: Exercice = {
+    titre: '',
+    typeExercice: 'FILL_BLANK'
+  };
+
+  // Pour le texte à trous
+  fillBlankText = '';
+  
+  // Pour drag and drop
+  draggableItems: string[] = [''];
+  dropZones: { label: string; correctAnswer: string }[] = [{ label: '', correctAnswer: '' }];
+  
+  // Pour l'appariement
+  matchPairs: { question: string; answer: string; options: string[] }[] = [
+    { question: '', answer: '', options: ['', '', '', ''] }
+  ];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private moduleService: ModuleService,
     private leconService: LeconService,
     private quizService: QuizService,
+    private exerciceService: ExerciceService,
     private enrollmentService: EnrollmentService,
     public authService: AuthService,
     private gamificationService: UserGamificationService
@@ -95,6 +118,7 @@ export class ModuleDetailComponent implements OnInit {
         this.coursId = data.coursId!;
         this.loadLecons();
         this.loadQuiz();
+        this.loadExercice();
         this.checkEnrollmentAndLoadProgress();
         this.loading = false;
       },
@@ -152,6 +176,18 @@ export class ModuleDetailComponent implements OnInit {
       error: (err) => {
         // Pas de quiz pour ce module
         this.quiz = null;
+      }
+    });
+  }
+
+  loadExercice() {
+    this.exerciceService.getExerciceByModuleId(this.moduleId).subscribe({
+      next: (data) => {
+        this.exercice = data;
+      },
+      error: (err) => {
+        // Pas d'exercice pour ce module
+        this.exercice = null;
       }
     });
   }
@@ -436,5 +472,205 @@ export class ModuleDetailComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  // Méthodes pour les exercices
+  openExerciceForm() {
+    this.showExerciceForm = true;
+    this.editingExercice = this.exercice !== null;
+    this.exerciceForm = this.exercice ? { ...this.exercice } : { titre: '', typeExercice: 'FILL_BLANK' };
+    this.resetExerciceFormData();
+  }
+
+  cancelExerciceForm() {
+    this.showExerciceForm = false;
+    this.resetExerciceFormData();
+  }
+
+  resetExerciceFormData() {
+    this.fillBlankText = '';
+    this.draggableItems = [''];
+    this.dropZones = [{ label: '', correctAnswer: '' }];
+    this.matchPairs = [{ question: '', answer: '', options: ['', '', '', ''] }];
+  }
+
+  onExerciceTypeChange() {
+    this.resetExerciceFormData();
+  }
+
+  // Méthodes pour texte à trous
+  generateFillBlankElements(): ExerciceElement[] {
+    const elements: ExerciceElement[] = [];
+    let position = 1;
+    
+    const parts = this.fillBlankText.split(/(\[BLANK:([^\]]+)\])/);
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      
+      if (part.startsWith('[BLANK:')) {
+        const match = part.match(/\[BLANK:([^\]]+)\]/);
+        if (match) {
+          elements.push({
+            contenu: '',
+            typeElement: 'BLANK',
+            positionOrdre: position++,
+            reponseCorrecte: match[1].trim()
+          });
+        }
+      } else if (part && !part.startsWith('[BLANK')) {
+        elements.push({
+          contenu: part,
+          typeElement: 'TEXT',
+          positionOrdre: position++
+        });
+      }
+    }
+    
+    return elements;
+  }
+
+  // Méthodes pour drag and drop
+  addDraggableItem() {
+    this.draggableItems.push('');
+  }
+
+  removeDraggableItem(index: number) {
+    this.draggableItems.splice(index, 1);
+  }
+
+  addDropZone() {
+    this.dropZones.push({ label: '', correctAnswer: '' });
+  }
+
+  removeDropZone(index: number) {
+    this.dropZones.splice(index, 1);
+  }
+
+  generateDragDropElements(): ExerciceElement[] {
+    const elements: ExerciceElement[] = [];
+    let position = 1;
+
+    this.draggableItems.forEach(item => {
+      if (item.trim()) {
+        elements.push({
+          contenu: item.trim(),
+          typeElement: 'DRAGGABLE',
+          positionOrdre: position++
+        });
+      }
+    });
+
+    this.dropZones.forEach(zone => {
+      if (zone.label.trim()) {
+        elements.push({
+          contenu: zone.label.trim(),
+          typeElement: 'DROP_ZONE',
+          positionOrdre: position++,
+          reponseCorrecte: zone.correctAnswer.trim()
+        });
+      }
+    });
+
+    return elements;
+  }
+
+  // Méthodes pour l'appariement
+  addMatchPair() {
+    this.matchPairs.push({ question: '', answer: '', options: ['', '', '', ''] });
+  }
+
+  removeMatchPair(index: number) {
+    this.matchPairs.splice(index, 1);
+  }
+
+  generateMatchingElements(): ExerciceElement[] {
+    const elements: ExerciceElement[] = [];
+    let position = 1;
+
+    this.matchPairs.forEach(pair => {
+      if (pair.question.trim() && pair.answer.trim()) {
+        const validOptions = pair.options.filter(opt => opt.trim() !== '');
+        if (!validOptions.includes(pair.answer)) {
+          validOptions.push(pair.answer);
+        }
+
+        elements.push({
+          contenu: pair.question.trim(),
+          typeElement: 'MATCH_ITEM',
+          positionOrdre: position++,
+          reponseCorrecte: pair.answer.trim(),
+          options: validOptions
+        });
+      }
+    });
+
+    return elements;
+  }
+
+  saveExercice() {
+    if (!this.exerciceForm.titre.trim()) {
+      this.error = 'Le titre est obligatoire';
+      return;
+    }
+
+    // Générer les éléments selon le type
+    let elements: ExerciceElement[] = [];
+    switch (this.exerciceForm.typeExercice) {
+      case 'FILL_BLANK':
+        elements = this.generateFillBlankElements();
+        break;
+      case 'DRAG_DROP':
+        elements = this.generateDragDropElements();
+        break;
+      case 'MATCHING':
+        elements = this.generateMatchingElements();
+        break;
+    }
+
+    if (elements.length === 0) {
+      this.error = 'L\'exercice doit contenir au moins un élément';
+      return;
+    }
+
+    this.exerciceForm.elements = elements;
+
+    const operation = this.editingExercice
+      ? this.exerciceService.updateExercice(this.exercice!.id!, this.exerciceForm)
+      : this.exerciceService.createExercice(this.moduleId, this.exerciceForm);
+
+    operation.subscribe({
+      next: () => {
+        this.success = 'Exercice enregistré avec succès';
+        this.loadExercice();
+        this.cancelExerciceForm();
+      },
+      error: (err) => {
+        this.error = err.error?.message || 'Erreur lors de l\'enregistrement de l\'exercice';
+      }
+    });
+  }
+
+  deleteExercice() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet exercice ?')) {
+      this.exerciceService.deleteExercice(this.exercice!.id!).subscribe({
+        next: () => {
+          this.success = 'Exercice supprimé avec succès';
+          this.exercice = null;
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la suppression de l\'exercice';
+        }
+      });
+    }
+  }
+
+  getExerciceTypeLabel(type: string): string {
+    switch (type) {
+      case 'FILL_BLANK': return 'Texte à trous';
+      case 'DRAG_DROP': return 'Glisser-déposer';
+      case 'MATCHING': return 'Appariement';
+      default: return type;
+    }
   }
 }
