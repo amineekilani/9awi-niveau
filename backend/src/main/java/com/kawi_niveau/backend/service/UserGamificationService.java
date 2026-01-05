@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -56,27 +58,37 @@ public class UserGamificationService {
     @Autowired
     private ParcoursNotificationRepository parcoursNotificationRepository;
 
+    /**
+     * Méthode pour invalider le cache (non utilisée actuellement mais prête si besoin)
+     */
+    // @CacheEvict(value = "userStats", key = "#user.email")
+    public void invalidateUserStatsCache(User user) {
+        // Cette méthode pourrait vider le cache si on réactive le cache plus tard
+    }
+
+    // Option 1 : Pas de cache pour garantir des données toujours fraîches (important pour la gamification)
+    // @Cacheable(value = "userStats", key = "#user.email", unless = "#result == null")
     public UserGamificationStatsResponse getUserStats(User user) {
         try {
-            System.out.println("========================================");
-            System.out.println("getUserStats appelé pour: " + user.getEmail());
+            // System.out.println("========================================");
+            // System.out.println("getUserStats appelé pour: " + user.getEmail());
 
             // S'assurer que l'utilisateur a des données de gamification
             UserXP userXP = gamificationService.getUserXP(user);
-            System.out.println("UserXP récupéré: " + userXP.getTotalXP() + " XP, Niveau " + userXP.getCurrentLevel());
+            // System.out.println("UserXP récupéré: " + userXP.getTotalXP() + " XP, Niveau " + userXP.getCurrentLevel());
 
             // Vérification défensive des valeurs nulles
             int currentLevelVal = userXP.getCurrentLevel() != null ? userXP.getCurrentLevel() : 1;
             int totalXpVal = userXP.getTotalXP() != null ? userXP.getTotalXP() : 0;
-            System.out.println("Valeurs après vérification: " + totalXpVal + " XP, Niveau " + currentLevelVal);
+            // System.out.println("Valeurs après vérification: " + totalXpVal + " XP, Niveau " + currentLevelVal);
 
             // Compter les badges
             int badgesCount = (int) userBadgeRepository.countByUserId(user.getId());
-            System.out.println("Badges count: " + badgesCount);
+            // System.out.println("Badges count: " + badgesCount);
 
             // Compter les défis terminés
             int completedChallenges = (int) userChallengeRepository.countCompletedChallengesByUserId(user.getId());
-            System.out.println("Completed challenges: " + completedChallenges);
+            // System.out.println("Completed challenges: " + completedChallenges);
 
             // Créer une réponse simple
             UserGamificationStatsResponse response = new UserGamificationStatsResponse(
@@ -93,8 +105,8 @@ public class UserGamificationService {
                     new ArrayList<>(),
                     new ArrayList<>());
 
-            System.out.println("Réponse créée avec succès!");
-            System.out.println("========================================");
+            // System.out.println("Réponse créée avec succès!");
+            // System.out.println("========================================");
             return response;
         } catch (Exception e) {
             System.err.println("========================================");

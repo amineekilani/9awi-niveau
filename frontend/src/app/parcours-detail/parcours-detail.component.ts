@@ -4,6 +4,7 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AuthService } from '../auth';
 import { ParcoursService, ParcoursResponse, ParcoursEtapeResponse, NiveauDifficulte } from '../parcours.service';
+import { CertificateService } from '../certificate.service';
 
 declare const feather: any;
 
@@ -29,6 +30,7 @@ export class ParcoursDetailComponent implements OnInit {
   constructor(
     private parcoursService: ParcoursService,
     public authService: AuthService,
+    private certificateService: CertificateService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -301,5 +303,25 @@ export class ParcoursDetailComponent implements OnInit {
   getImageUrl(thumbnailUrl: string | undefined): string {
     if (!thumbnailUrl) return '/assets/images/default-parcours.jpg';
     return this.parcoursService.getImageUrl(thumbnailUrl);
+  }
+
+  telechargerCertificat() {
+    if (!this.parcours || !this.parcours.certificatGenere) {
+      this.error = 'Le certificat n\'est pas disponible pour ce parcours.';
+      return;
+    }
+
+    // Nous avons besoin de l'ID d'inscription pour télécharger le certificat
+    // Pour l'instant, nous utilisons l'ID du parcours comme approximation
+    // TODO: Récupérer le vrai ID d'inscription depuis l'API
+    const inscriptionId = this.parcours.id; // Temporaire
+    
+    // Générer un nom de fichier approprié
+    const currentProfile = this.authService.getCurrentProfile();
+    const userName = (currentProfile?.firstName || '') + '_' + (currentProfile?.lastName || '') || 'Utilisateur';
+    const fileName = this.certificateService.generateFileName(this.parcours.titre, userName);
+    
+    console.log('🏆 Téléchargement certificat:', this.parcours.titre);
+    this.certificateService.downloadAndSaveCertificate(inscriptionId, fileName);
   }
 }

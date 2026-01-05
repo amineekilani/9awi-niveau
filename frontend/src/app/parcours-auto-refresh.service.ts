@@ -42,8 +42,8 @@ export class ParcoursAutoRefreshService {
     // Vérifier immédiatement
     this.checkForUpdates();
     
-    // Puis vérifier toutes les 10 secondes
-    this.refreshInterval = interval(10000).subscribe(() => {
+    // Puis vérifier toutes les 60 secondes (au lieu de 10) pour réduire la charge
+    this.refreshInterval = interval(60000).subscribe(() => {
       this.checkForUpdates();
     });
   }
@@ -109,7 +109,7 @@ export class ParcoursAutoRefreshService {
         const currentTime = Date.now();
         
         // Vérifier s'il y a eu des changements significatifs
-        if (currentTime - this.lastStatsCheck > 30000) { // Toutes les 30 secondes max
+        if (currentTime - this.lastStatsCheck > 120000) { // Toutes les 2 minutes au lieu de 30 secondes
           console.log('📊 Mise à jour des statistiques utilisateur');
           this.statsUpdatedSubject.next(stats);
           this.lastStatsCheck = currentTime;

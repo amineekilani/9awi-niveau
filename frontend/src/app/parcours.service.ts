@@ -13,7 +13,6 @@ export interface ParcoursRequest {
   prerequis?: string;
   typeParcours: TypeParcours;
   pointsBonus?: number;
-  badgeCompletion?: string;
   certificatEnabled?: boolean;
   isPublished?: boolean;
   etapes?: ParcoursEtapeRequest[];
@@ -41,7 +40,6 @@ export interface ParcoursResponse {
   prerequis?: string;
   typeParcours: TypeParcours;
   pointsBonus?: number;
-  badgeCompletion?: string;
   certificatEnabled?: boolean;
   isPublished?: boolean;
   createdAt: string;

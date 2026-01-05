@@ -40,9 +40,6 @@ public class ParcoursApprentissage {
     @Column(name = "points_bonus")
     private Integer pointsBonus = 0;
 
-    @Column(name = "badge_completion")
-    private String badgeCompletion;
-
     @Column(name = "certificat_enabled")
     private Boolean certificatEnabled = false;
 
@@ -106,9 +103,6 @@ public class ParcoursApprentissage {
 
     public Integer getPointsBonus() { return pointsBonus; }
     public void setPointsBonus(Integer pointsBonus) { this.pointsBonus = pointsBonus; }
-
-    public String getBadgeCompletion() { return badgeCompletion; }
-    public void setBadgeCompletion(String badgeCompletion) { this.badgeCompletion = badgeCompletion; }
 
     public Boolean getCertificatEnabled() { return certificatEnabled; }
     public void setCertificatEnabled(Boolean certificatEnabled) { this.certificatEnabled = certificatEnabled; }

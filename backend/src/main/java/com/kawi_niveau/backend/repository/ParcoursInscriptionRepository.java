@@ -14,6 +14,10 @@ import java.util.Optional;
 @Repository
 public interface ParcoursInscriptionRepository extends JpaRepository<ParcoursInscription, Long> {
     
+    // Trouver l'inscription d'un utilisateur à un parcours par IDs
+    @Query("SELECT pi FROM ParcoursInscription pi WHERE pi.user.id = :userId AND pi.parcours.id = :parcoursId")
+    Optional<ParcoursInscription> findByUserIdAndParcoursId(@Param("userId") Long userId, @Param("parcoursId") Long parcoursId);
+    
     // Trouver l'inscription d'un utilisateur à un parcours
     Optional<ParcoursInscription> findByParcoursAndUser(ParcoursApprentissage parcours, User user);
     

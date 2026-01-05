@@ -371,17 +371,7 @@ public class ParcoursProgressionListener {
                 System.err.println("⚠️ Erreur synchronisation XP (non bloquante): " + e.getMessage());
             }
 
-            // 4. Attribuer le badge de completion personnalisé
-            if (parcours.getBadgeCompletion() != null && !parcours.getBadgeCompletion().trim().isEmpty()) {
-                try {
-                    awardCustomCompletionBadge(user, parcours);
-                    System.out.println("🏆 Badge personnalisé attribué");
-                } catch (Exception e) {
-                    System.err.println("⚠️ Erreur attribution badge (non bloquante): " + e.getMessage());
-                }
-            }
-
-            // 5. Générer le certificat si activé
+            // 4. Générer le certificat si activé
             boolean certificateGenerated = false;
             String certificateUrl = null;
             
@@ -409,52 +399,6 @@ public class ParcoursProgressionListener {
             System.err.println("❌ Erreur lors de l'attribution des récompenses: " + e.getMessage());
             e.printStackTrace();
             // Ne pas propager l'exception pour éviter le rollback
-        }
-    }
-
-    /**
-     * Attribue un badge personnalisé de completion de parcours (avec protection UTF-8)
-     */
-    private void awardCustomCompletionBadge(User user, ParcoursApprentissage parcours) {
-        try {
-            String badgeName = parcours.getBadgeCompletion();
-            
-            // Chercher un badge existant ou en créer un nouveau
-            Badge badge = badgeRepository.findAll().stream()
-                .filter(b -> badgeName.equals(b.getName()))
-                .findFirst()
-                .orElseGet(() -> createCustomBadge(badgeName, parcours));
-
-            // Vérifier si l'utilisateur n'a pas déjà ce badge
-            if (!userBadgeRepository.existsByUserIdAndBadgeId(user.getId(), badge.getId())) {
-                gamificationService.awardBadge(user, badge);
-                System.out.println("🏆 Badge personnalisé attribué: " + badgeName + " à " + user.getEmail());
-            }
-
-        } catch (Exception e) {
-            System.err.println("❌ Erreur lors de l'attribution du badge personnalisé: " + e.getMessage());
-            // Ne pas faire échouer la transaction
-        }
-    }
-
-    /**
-     * Crée un badge personnalisé pour un parcours (avec URL d'image au lieu d'emoji)
-     */
-    private Badge createCustomBadge(String badgeName, ParcoursApprentissage parcours) {
-        try {
-            Badge badge = new Badge();
-            badge.setName(badgeName);
-            badge.setDescription("Badge obtenu en terminant le parcours: " + parcours.getTitre());
-            badge.setIconUrl("/images/badges/course-completion.png"); // URL d'image au lieu d'emoji
-            badge.setCriteriaType(BadgeCriteriaType.COURS_COMPLETED);
-            badge.setCriteriaValue(1);
-            badge.setIsActive(true);
-            badge.setCreatedAt(System.currentTimeMillis());
-
-            return badgeRepository.save(badge);
-        } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la création du badge personnalisé: " + e.getMessage());
-            throw new RuntimeException("Impossible de créer le badge personnalisé", e);
         }
     }
 

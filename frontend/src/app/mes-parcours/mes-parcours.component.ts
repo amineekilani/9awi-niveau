@@ -5,6 +5,7 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AuthService } from '../auth';
 import { ParcoursService, ParcoursResponse, NiveauDifficulte, TypeParcours } from '../parcours.service';
+import { CertificateService } from '../certificate.service';
 import { GamificationNotificationService } from '../gamification-notification.service';
 
 declare const feather: any;
@@ -35,6 +36,7 @@ export class MesParcoursComponent implements OnInit {
   constructor(
     public parcoursService: ParcoursService,
     public authService: AuthService,
+    private certificateService: CertificateService,
     private notificationService: GamificationNotificationService,
     private router: Router,
     private route: ActivatedRoute
@@ -147,9 +149,21 @@ export class MesParcoursComponent implements OnInit {
   }
 
   voirCertificat(parcours: ParcoursResponse) {
-    if (parcours.certificatUrl) {
-      window.open(parcours.certificatUrl, '_blank');
+    if (!parcours.certificatGenere) {
+      alert('Le certificat n\'est pas encore généré pour ce parcours.');
+      return;
     }
+
+    // Utiliser l'ID du parcours avec la nouvelle API
+    const parcoursId = parcours.id;
+    
+    // Générer un nom de fichier approprié
+    const currentProfile = this.authService.getCurrentProfile();
+    const userName = (currentProfile?.firstName || '') + '_' + (currentProfile?.lastName || '') || 'Utilisateur';
+    const fileName = this.certificateService.generateFileName(parcours.titre, userName);
+    
+    console.log('🏆 Téléchargement certificat:', parcours.titre);
+    this.certificateService.downloadAndSaveCertificateByParcours(parcoursId, fileName);
   }
 
   explorerParcours() {

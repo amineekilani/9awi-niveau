@@ -40,6 +40,8 @@ public class GamificationService {
     @Autowired
     private UserLoginRepository userLoginRepository;
 
+    // Pas d'injection directe pour éviter la dépendance circulaire
+
     // Gestion des XP avec protection contre les erreurs
     public void awardXP(User user, Integer xpAmount, String reason) {
         try {

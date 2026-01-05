@@ -32,6 +32,9 @@ public class ParcoursProgressionService {
     @Autowired
     private ParcoursNotificationService notificationService;
 
+    @Autowired
+    private CertificateService certificateService;
+
     /**
      * Met à jour la progression d'un utilisateur dans tous ses parcours
      * Appelé quand l'utilisateur progresse dans un cours
@@ -149,10 +152,25 @@ public class ParcoursProgressionService {
                 }
             }
             
-            // 2. Créer la notification
+            // 2. Générer le certificat si activé
+            if (parcours.getCertificatEnabled()) {
+                try {
+                    System.out.println("🏆 Génération du certificat pour le parcours: " + parcours.getTitre());
+                    String certificatUrl = certificateService.generateCertificate(inscription);
+                    inscription.setCertificatGenere(true);
+                    inscription.setCertificatUrl(certificatUrl);
+                    System.out.println("✅ Certificat généré et URL mise à jour: " + certificatUrl);
+                } catch (Exception e) {
+                    System.err.println("⚠️ Erreur génération certificat: " + e.getMessage());
+                    // Ne pas faire échouer la completion pour une erreur de certificat
+                }
+            }
+            
+            // 3. Créer la notification
             try {
                 notificationService.createParcoursCompletionNotification(
-                    user, parcours, inscription.getPointsGagnes(), false, null
+                    user, parcours, inscription.getPointsGagnes(), 
+                    inscription.getCertificatGenere(), inscription.getCertificatUrl()
                 );
                 System.out.println("📢 Notification de parcours créée");
             } catch (Exception e) {

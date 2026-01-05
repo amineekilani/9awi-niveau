@@ -63,7 +63,7 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
             // Always trigger a load to ensure data is fresh
             this.authService.loadUserProfile();
 
-            // ✅ NOUVEAU: Démarrer le service de mise à jour automatique
+            // ✅ RÉACTIVÉ avec fréquence optimisée: Service de mise à jour automatique
             this.initializeAutoRefresh();
         }
 

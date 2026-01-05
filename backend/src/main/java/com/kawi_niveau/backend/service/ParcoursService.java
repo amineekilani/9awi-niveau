@@ -65,7 +65,6 @@ public class ParcoursService {
         parcours.setPrerequis(request.getPrerequis());
         parcours.setTypeParcours(request.getTypeParcours());
         parcours.setPointsBonus(request.getPointsBonus());
-        parcours.setBadgeCompletion(request.getBadgeCompletion());
         parcours.setCertificatEnabled(request.getCertificatEnabled());
         parcours.setIsPublished(request.getIsPublished());
         parcours.setFormateur(formateur);
@@ -97,7 +96,6 @@ public class ParcoursService {
         parcours.setPrerequis(request.getPrerequis());
         parcours.setTypeParcours(request.getTypeParcours());
         parcours.setPointsBonus(request.getPointsBonus());
-        parcours.setBadgeCompletion(request.getBadgeCompletion());
         parcours.setCertificatEnabled(request.getCertificatEnabled());
         parcours.setIsPublished(request.getIsPublished());
 
@@ -212,7 +210,6 @@ public class ParcoursService {
         response.setPrerequis(parcours.getPrerequis());
         response.setTypeParcours(parcours.getTypeParcours());
         response.setPointsBonus(parcours.getPointsBonus());
-        response.setBadgeCompletion(parcours.getBadgeCompletion());
         response.setCertificatEnabled(parcours.getCertificatEnabled());
         response.setIsPublished(parcours.getIsPublished());
         response.setCreatedAt(parcours.getCreatedAt());
