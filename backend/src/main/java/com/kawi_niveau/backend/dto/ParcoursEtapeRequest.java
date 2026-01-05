@@ -8,27 +8,27 @@ public class ParcoursEtapeRequest {
     
     @NotNull(message = "L'ID du cours est obligatoire")
     private Long coursId;
-    
+
     @NotNull(message = "L'ordre de l'étape est obligatoire")
-    @Min(value = 1, message = "L'ordre de l'étape doit être au minimum 1")
+    @Min(value = 1, message = "L'ordre de l'étape doit être supérieur à 0")
     private Integer ordreEtape;
-    
-    @Min(value = 1, message = "Le niveau d'étape doit être au minimum 1")
-    @Max(value = 3, message = "Le niveau d'étape doit être au maximum 3")
+
+    @Min(value = 1, message = "Le niveau de l'étape doit être entre 1 et 3")
+    @Max(value = 3, message = "Le niveau de l'étape doit être entre 1 et 3")
     private Integer niveauEtape = 1;
-    
+
     private Boolean isObligatoire = true;
-    
-    @Min(value = 0, message = "Le score minimum ne peut pas être négatif")
+
+    @Min(value = 0, message = "Le score minimum doit être positif")
     @Max(value = 100, message = "Le score minimum ne peut pas dépasser 100")
     private Integer scoreMinimum = 0;
-    
-    @Min(value = 0, message = "Le pourcentage de completion ne peut pas être négatif")
+
+    @Min(value = 0, message = "Le pourcentage de completion doit être positif")
     @Max(value = 100, message = "Le pourcentage de completion ne peut pas dépasser 100")
     private Integer pourcentageCompletionRequis = 100;
-    
+
     private Boolean quizObligatoires = false;
-    
+
     private String description;
 
     // Constructeurs

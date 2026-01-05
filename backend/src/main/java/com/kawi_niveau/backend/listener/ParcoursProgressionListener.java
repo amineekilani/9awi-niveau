@@ -5,17 +5,19 @@ import com.kawi_niveau.backend.event.CourseCompletedEvent;
 import com.kawi_niveau.backend.event.QuizCompletedEvent;
 import com.kawi_niveau.backend.repository.*;
 import com.kawi_niveau.backend.service.GamificationService;
+import com.kawi_niveau.backend.service.ParcoursNotificationService;
+import com.kawi_niveau.backend.service.XPSynchronizationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Component
-@Transactional
 public class ParcoursProgressionListener {
 
     @Autowired
@@ -37,22 +39,41 @@ public class ParcoursProgressionListener {
     private GamificationService gamificationService;
 
     @Autowired
+    private ParcoursNotificationService notificationService;
+
+    @Autowired
+    private ParcoursNotificationRepository parcoursNotificationRepository;
+
+    @Autowired
     private BadgeRepository badgeRepository;
 
     @Autowired
     private UserBadgeRepository userBadgeRepository;
 
+    @Autowired
+    private XPSynchronizationService xpSynchronizationService;
+
     /**
      * Écoute les événements de completion de cours pour mettre à jour les parcours
      */
     @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onCourseCompleted(CourseCompletedEvent event) {
         try {
-            System.out.println("🎯 Événement: Cours terminé - " + event.getCours().getTitre() + " par " + event.getUser().getEmail());
-            updateParcoursProgressionForUser(event.getUser(), event.getCours());
+            System.out.println("🎯 ÉVÉNEMENT REÇU: Cours terminé - " + event.getCours().getTitre() + " par " + event.getUser().getEmail());
+            System.out.println("📊 Progression finale: " + event.getFinalProgress() + "%");
+            
+            // Vérifier que le cours est vraiment terminé (100%)
+            if (event.getFinalProgress() >= 100.0f) {
+                updateParcoursProgressionForUser(event.getUser(), event.getCours());
+                System.out.println("✅ Mise à jour parcours terminée avec succès");
+            } else {
+                System.out.println("⚠️ Cours pas complètement terminé (" + event.getFinalProgress() + "%), pas de mise à jour parcours");
+            }
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de la mise à jour de progression parcours: " + e.getMessage());
             e.printStackTrace();
+            // Ne pas propager l'exception pour éviter le rollback de la transaction principale
         }
     }
 
@@ -60,13 +81,22 @@ public class ParcoursProgressionListener {
      * Écoute les événements de completion de quiz pour mettre à jour les parcours
      */
     @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = {})
     public void onQuizCompleted(QuizCompletedEvent event) {
+        System.out.println("🚨 ÉVÉNEMENT REÇU: Quiz terminé");
+        System.out.println("🚨 User: " + event.getUser().getEmail());
+        System.out.println("🚨 Quiz: " + event.getQuiz().getTitre());
+        System.out.println("🚨 Score: " + event.getScore() + "%");
+        System.out.println("🚨 Cours associé: " + event.getQuiz().getModule().getCours().getTitre());
+        
         try {
-            System.out.println("🎯 Événement: Quiz terminé - Score " + event.getScore() + "% par " + event.getUser().getEmail());
+            System.out.println("🎯 Début traitement événement quiz...");
             updateParcoursProgressionForUser(event.getUser(), event.getQuiz().getModule().getCours());
+            System.out.println("✅ LISTENER QUIZ TERMINÉ AVEC SUCCÈS");
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de la mise à jour de progression parcours (quiz): " + e.getMessage());
             e.printStackTrace();
+            // Ne pas propager l'exception pour éviter le rollback de la transaction principale
         }
     }
 
@@ -74,15 +104,28 @@ public class ParcoursProgressionListener {
      * Met à jour la progression de tous les parcours d'un utilisateur pour un cours donné
      */
     private void updateParcoursProgressionForUser(User user, Cours cours) {
+        System.out.println("🔍 Recherche des parcours contenant le cours: " + cours.getTitre() + " pour " + user.getEmail());
+        
         // Trouver toutes les inscriptions aux parcours qui contiennent ce cours
         List<ParcoursEtape> etapesAvecCeCours = etapeRepository.findByCours(cours);
+        System.out.println("📋 Nombre d'étapes trouvées avec ce cours: " + etapesAvecCeCours.size());
         
         for (ParcoursEtape etape : etapesAvecCeCours) {
             ParcoursApprentissage parcours = etape.getParcours();
+            System.out.println("🔍 Parcours trouvé: " + parcours.getTitre() + " (Étape " + etape.getOrdreEtape() + ")");
             
             // Vérifier si l'utilisateur est inscrit à ce parcours
-            inscriptionRepository.findByParcoursAndUser(parcours, user)
-                .ifPresent(inscription -> updateSingleParcoursProgression(inscription, parcours, user));
+            Optional<ParcoursInscription> inscriptionOpt = inscriptionRepository.findByParcoursAndUser(parcours, user);
+            if (inscriptionOpt.isPresent()) {
+                System.out.println("✅ Utilisateur inscrit au parcours: " + parcours.getTitre());
+                updateSingleParcoursProgression(inscriptionOpt.get(), parcours, user);
+            } else {
+                System.out.println("❌ Utilisateur non inscrit au parcours: " + parcours.getTitre());
+            }
+        }
+        
+        if (etapesAvecCeCours.isEmpty()) {
+            System.out.println("⚠️ Aucun parcours ne contient le cours: " + cours.getTitre());
         }
     }
 
@@ -97,7 +140,7 @@ public class ParcoursProgressionListener {
             System.out.println("📋 Nombre d'étapes dans le parcours: " + etapes.size());
             
             int etapesCompletes = 0;
-            int etapeCourante = 1;
+            int etapeCourante = 1; // Commencer à 1 par défaut
             boolean parcoursComplete = true;
             
             // Vérifier chaque étape
@@ -110,12 +153,31 @@ public class ParcoursProgressionListener {
                     System.out.println("✅ Étape " + etape.getOrdreEtape() + " complète");
                 } else {
                     parcoursComplete = false;
-                    if (etapeCourante == etape.getOrdreEtape()) {
+                    // Si c'est la première étape non complète et qu'on n'a pas encore défini l'étape courante
+                    if (etapeCourante == 1 && etapesCompletes == 0) {
+                        // Première étape non complète = étape courante
+                        etapeCourante = etape.getOrdreEtape();
+                    } else if (etapesCompletes > 0 && etapeCourante == 1) {
+                        // Il y a des étapes complètes, cette étape non complète devient l'étape courante
                         etapeCourante = etape.getOrdreEtape();
                     }
-                    System.out.println("❌ Étape " + etape.getOrdreEtape() + " incomplète");
+                    System.out.println("❌ Étape " + etape.getOrdreEtape() + " incomplète - Étape courante: " + etapeCourante);
                 }
             }
+            
+            // Si toutes les étapes sont complètes, l'étape courante est la dernière
+            if (parcoursComplete && !etapes.isEmpty()) {
+                etapeCourante = etapes.get(etapes.size() - 1).getOrdreEtape();
+                System.out.println("🎉 Toutes les étapes complètes - Étape courante: " + etapeCourante);
+            }
+            
+            // Sécurité : s'assurer que l'étape courante est valide
+            if (etapeCourante < 1 && !etapes.isEmpty()) {
+                etapeCourante = etapes.get(0).getOrdreEtape(); // Première étape par défaut
+                System.out.println("🔧 Correction étape courante: " + etapeCourante);
+            }
+            
+            System.out.println("📊 Résultat final: " + etapesCompletes + "/" + etapes.size() + " étapes complètes, étape courante: " + etapeCourante);
             
             // Calculer le pourcentage de progression
             int progressionPourcentage = etapes.isEmpty() ? 0 : (etapesCompletes * 100) / etapes.size();
@@ -131,10 +193,18 @@ public class ParcoursProgressionListener {
             if (parcoursComplete && !wasCompleted) {
                 inscription.setDateCompletion(LocalDateTime.now());
                 
-                // Attribuer les récompenses
-                awardParcoursCompletionRewards(inscription, user, parcours);
+                // Vérifier qu'il n'y a pas déjà une notification de completion pour éviter les doublons
+                boolean notificationExists = parcoursNotificationRepository
+                    .existsByUserAndParcoursAndType(user, parcours, 
+                        ParcoursNotification.NotificationType.PARCOURS_COMPLETED);
                 
-                System.out.println("🎉 Parcours terminé: " + parcours.getTitre() + " par " + user.getEmail());
+                if (!notificationExists) {
+                    // Attribuer les récompenses
+                    awardParcoursCompletionRewards(inscription, user, parcours);
+                    System.out.println("🎉 Parcours terminé: " + parcours.getTitre() + " par " + user.getEmail());
+                } else {
+                    System.out.println("⚠️ Notification de completion déjà existante pour " + parcours.getTitre() + " - " + user.getEmail());
+                }
             }
             
             inscriptionRepository.save(inscription);
@@ -148,7 +218,7 @@ public class ParcoursProgressionListener {
     }
 
     /**
-     * Valide si une étape est complète pour un utilisateur (version améliorée)
+     * Valide si une étape est complète pour un utilisateur (version robuste)
      */
     private boolean isEtapeComplete(ParcoursEtape etape, User user) {
         try {
@@ -161,39 +231,47 @@ public class ParcoursProgressionListener {
             Enrollment enroll = enrollment.get();
             System.out.println("🔍 Validation étape " + etape.getOrdreEtape() + " - Cours: " + etape.getCours().getTitre() + " - Progression: " + enroll.getProgress() + "%");
             
-            // Vérifier le pourcentage de completion requis
-            if (etape.getPourcentageCompletionRequis() > 0) {
-                float progressionRequise = etape.getPourcentageCompletionRequis().floatValue();
-                if (enroll.getProgress() < progressionRequise) {
-                    System.out.println("❌ Progression insuffisante: " + enroll.getProgress() + "% < " + progressionRequise + "%");
-                    return false;
-                }
-                System.out.println("✅ Progression suffisante: " + enroll.getProgress() + "% >= " + progressionRequise + "%");
+            // Afficher toutes les conditions de l'étape pour debug
+            System.out.println("📋 Conditions étape " + etape.getOrdreEtape() + ":");
+            System.out.println("   - Score minimum: " + (etape.getScoreMinimum() != null ? etape.getScoreMinimum() : "NULL"));
+            System.out.println("   - Completion requise: " + (etape.getPourcentageCompletionRequis() != null ? etape.getPourcentageCompletionRequis() : "NULL"));
+            System.out.println("   - Quiz obligatoires: " + (etape.getQuizObligatoires() != null ? etape.getQuizObligatoires() : "NULL"));
+            System.out.println("   - Étape obligatoire: " + (etape.getIsObligatoire() != null ? etape.getIsObligatoire() : "NULL"));
+            
+            // Vérifier le pourcentage de completion requis (gérer les valeurs NULL)
+            Integer completionRequis = etape.getPourcentageCompletionRequis();
+            float progressionRequise = (completionRequis != null && completionRequis > 0) ? completionRequis : 100.0f;
+            
+            if (enroll.getProgress() < progressionRequise) {
+                System.out.println("❌ Progression insuffisante: " + enroll.getProgress() + "% < " + progressionRequise + "%");
+                return false;
             }
+            System.out.println("✅ Progression suffisante: " + enroll.getProgress() + "% >= " + progressionRequise + "%");
 
-            // Vérifier le score minimum requis
-            if (etape.getScoreMinimum() > 0) {
-                double scoreObtenu = getMeilleurScoreQuizCours(user, etape.getCours());
-                if (scoreObtenu < etape.getScoreMinimum()) {
-                    System.out.println("❌ Score insuffisant: " + scoreObtenu + "% < " + etape.getScoreMinimum() + "%");
-                    return false;
-                }
-                System.out.println("✅ Score suffisant: " + scoreObtenu + "% >= " + etape.getScoreMinimum() + "%");
-            }
-
-            // Vérifier les quiz obligatoires (seulement si le cours a des quiz)
-            if (etape.getQuizObligatoires()) {
+            // Vérifier les quiz SEULEMENT s'ils sont obligatoires
+            Boolean quizObligatoires = etape.getQuizObligatoires();
+            if (quizObligatoires != null && quizObligatoires) {
+                System.out.println("🎯 Quiz obligatoires activés - Vérification requise");
+                
                 List<Quiz> quizzes = quizRepository.findByCours(etape.getCours());
                 if (quizzes.isEmpty()) {
                     System.out.println("⚠️ Quiz obligatoires requis mais aucun quiz dans le cours " + etape.getCours().getTitre());
                     // Si pas de quiz dans le cours, on considère la condition comme remplie
-                    // car on ne peut pas exiger de réussir des quiz qui n'existent pas
                 } else {
-                    if (!hasPassedRequiredQuizzes(user, etape.getCours())) {
-                        System.out.println("❌ Quiz obligatoires non réussis");
+                    Integer scoreMinimum = etape.getScoreMinimum();
+                    double seuilQuiz = (scoreMinimum != null && scoreMinimum > 0) ? scoreMinimum : 60.0;
+                    
+                    if (!hasPassedRequiredQuizzes(user, etape.getCours(), (int)seuilQuiz)) {
+                        System.out.println("❌ Quiz obligatoires non réussis avec seuil " + seuilQuiz + "%");
                         return false;
                     }
-                    System.out.println("✅ Quiz obligatoires réussis");
+                    System.out.println("✅ Quiz obligatoires réussis avec seuil " + seuilQuiz + "%");
+                }
+            } else {
+                System.out.println("ℹ️ Quiz non obligatoires - Validation basée uniquement sur la progression du cours");
+                Integer scoreMinimum = etape.getScoreMinimum();
+                if (scoreMinimum != null && scoreMinimum > 0) {
+                    System.out.println("⚠️ Score minimum (" + scoreMinimum + "%) défini mais quiz non obligatoires - IGNORÉ");
                 }
             }
 
@@ -233,17 +311,28 @@ public class ParcoursProgressionListener {
      * Vérifie si l'utilisateur a réussi tous les quiz obligatoires d'un cours
      */
     private boolean hasPassedRequiredQuizzes(User user, Cours cours) {
+        return hasPassedRequiredQuizzes(user, cours, 60); // Score par défaut 60%
+    }
+
+    /**
+     * Vérifie si l'utilisateur a réussi tous les quiz obligatoires d'un cours avec un score minimum
+     */
+    private boolean hasPassedRequiredQuizzes(User user, Cours cours, Integer scoreMinimum) {
         try {
             List<Quiz> quizzes = quizRepository.findByCours(cours);
+            
+            // Utiliser le score minimum fourni, ou 60% par défaut
+            double scoreRequis = (scoreMinimum != null && scoreMinimum > 0) ? scoreMinimum : 60.0;
             
             for (Quiz quiz : quizzes) {
                 Optional<ResultatQuiz> meilleurResultat = resultatQuizRepository
                         .findFirstByUserAndQuizOrderByScoreDesc(user, quiz);
                 
-                // Considérer qu'un quiz est réussi avec un score >= 60%
-                if (meilleurResultat.isEmpty() || meilleurResultat.get().getScore() < 60.0) {
+                if (meilleurResultat.isEmpty() || meilleurResultat.get().getScore() < scoreRequis) {
+                    System.out.println("❌ Quiz '" + quiz.getTitre() + "' non réussi - Score requis: " + scoreRequis + "%");
                     return false;
                 }
+                System.out.println("✅ Quiz '" + quiz.getTitre() + "' réussi - Score: " + meilleurResultat.get().getScore() + "%");
             }
 
             return true;
@@ -254,40 +343,77 @@ public class ParcoursProgressionListener {
     }
 
     /**
-     * Attribue les récompenses de completion d'un parcours
+     * Attribue les récompenses de completion d'un parcours (XP + Badges + Certificats)
      */
     private void awardParcoursCompletionRewards(ParcoursInscription inscription, User user, ParcoursApprentissage parcours) {
         try {
-            // 1. Attribuer les points bonus
-            if (parcours.getPointsBonus() != null && parcours.getPointsBonus() > 0) {
-                gamificationService.awardXP(user, parcours.getPointsBonus(), 
-                    "Parcours terminé: " + parcours.getTitre());
-                inscription.setPointsGagnes(parcours.getPointsBonus());
-                
-                System.out.println("💰 Points bonus attribués: +" + parcours.getPointsBonus() + " XP pour " + user.getEmail());
+            System.out.println("🎯 Attribution des récompenses de parcours pour: " + user.getEmail());
+            System.out.println("📋 Parcours: " + parcours.getTitre());
+            
+            // 1. Calculer les XP à attribuer
+            Integer xpToAward = parcours.getPointsBonus();
+            if (xpToAward == null || xpToAward <= 0) {
+                xpToAward = 100; // XP par défaut
+                System.out.println("💰 Utilisation XP par défaut: " + xpToAward);
+            } else {
+                System.out.println("💰 XP du parcours: " + xpToAward);
             }
 
-            // 2. Attribuer le badge de completion personnalisé
+            // 2. Enregistrer les points dans l'inscription
+            inscription.setPointsGagnes(xpToAward);
+            System.out.println("📝 Points enregistrés dans l'inscription: " + xpToAward);
+
+            // 3. Synchroniser les XP avec le système global
+            try {
+                xpSynchronizationService.synchronizeXPAfterParcoursCompletion(user, parcours, xpToAward);
+                System.out.println("✅ Synchronisation XP terminée");
+            } catch (Exception e) {
+                System.err.println("⚠️ Erreur synchronisation XP (non bloquante): " + e.getMessage());
+            }
+
+            // 4. Attribuer le badge de completion personnalisé
             if (parcours.getBadgeCompletion() != null && !parcours.getBadgeCompletion().trim().isEmpty()) {
-                awardCustomCompletionBadge(user, parcours);
+                try {
+                    awardCustomCompletionBadge(user, parcours);
+                    System.out.println("🏆 Badge personnalisé attribué");
+                } catch (Exception e) {
+                    System.err.println("⚠️ Erreur attribution badge (non bloquante): " + e.getMessage());
+                }
             }
 
-            // 3. Générer le certificat si activé (version simplifiée)
+            // 5. Générer le certificat si activé
+            boolean certificateGenerated = false;
+            String certificateUrl = null;
+            
             if (parcours.getCertificatEnabled() != null && parcours.getCertificatEnabled()) {
-                generateSimpleCertificate(inscription, user, parcours);
+                try {
+                    certificateUrl = generateSimpleCertificate(inscription, user, parcours);
+                    certificateGenerated = (certificateUrl != null);
+                    System.out.println("📜 Certificat généré: " + certificateUrl);
+                } catch (Exception e) {
+                    System.err.println("⚠️ Erreur génération certificat (non bloquante): " + e.getMessage());
+                }
             }
 
-            // 4. Déclencher l'événement de gamification standard
-            gamificationService.onCourseCompleted(user);
+            // 6. Créer la notification de completion
+            try {
+                createNotificationSafely(user, parcours, xpToAward, certificateGenerated, certificateUrl);
+                System.out.println("📢 Notification créée");
+            } catch (Exception e) {
+                System.err.println("⚠️ Erreur création notification (non bloquante): " + e.getMessage());
+            }
+
+            System.out.println("✅ Toutes les récompenses de parcours ont été traitées");
 
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de l'attribution des récompenses: " + e.getMessage());
             e.printStackTrace();
+            // Ne pas propager l'exception pour éviter le rollback
         }
     }
 
     /**
-     * Attribue un badge personnalisé de completion de parcours
+     * Attribue un badge personnalisé de completion de parcours (avec protection UTF-8)
      */
     private void awardCustomCompletionBadge(User user, ParcoursApprentissage parcours) {
         try {
@@ -307,21 +433,21 @@ public class ParcoursProgressionListener {
 
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de l'attribution du badge personnalisé: " + e.getMessage());
-            e.printStackTrace();
+            // Ne pas faire échouer la transaction
         }
     }
 
     /**
-     * Crée un badge personnalisé pour un parcours
+     * Crée un badge personnalisé pour un parcours (avec URL d'image au lieu d'emoji)
      */
     private Badge createCustomBadge(String badgeName, ParcoursApprentissage parcours) {
         try {
             Badge badge = new Badge();
             badge.setName(badgeName);
             badge.setDescription("Badge obtenu en terminant le parcours: " + parcours.getTitre());
-            badge.setIconUrl("🎓"); // Icône par défaut pour les parcours
-            badge.setCriteriaType(BadgeCriteriaType.COURS_COMPLETED); // Type générique
-            badge.setCriteriaValue(1); // Valeur par défaut
+            badge.setIconUrl("/images/badges/course-completion.png"); // URL d'image au lieu d'emoji
+            badge.setCriteriaType(BadgeCriteriaType.COURS_COMPLETED);
+            badge.setCriteriaValue(1);
             badge.setIsActive(true);
             badge.setCreatedAt(System.currentTimeMillis());
 
@@ -335,7 +461,7 @@ public class ParcoursProgressionListener {
     /**
      * Génère un certificat de completion (version simplifiée)
      */
-    private void generateSimpleCertificate(ParcoursInscription inscription, User user, ParcoursApprentissage parcours) {
+    private String generateSimpleCertificate(ParcoursInscription inscription, User user, ParcoursApprentissage parcours) {
         try {
             // Générer une URL simple pour le certificat
             String certificatUrl = "/certificates/parcours-" + parcours.getId() + "-user-" + user.getId() + ".pdf";
@@ -345,9 +471,54 @@ public class ParcoursProgressionListener {
             
             System.out.println("📜 Certificat généré: " + certificatUrl + " pour " + user.getEmail());
             
+            return certificatUrl;
+            
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de la génération du certificat: " + e.getMessage());
             e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Créer une notification de manière sécurisée (sans faire échouer la transaction principale)
+     */
+    private void createNotificationSafely(User user, ParcoursApprentissage parcours, Integer xpEarned, 
+                                         boolean certificateGenerated, String certificateUrl) {
+        try {
+            System.out.println("📢 Création notification pour: " + user.getEmail() + " - Parcours: " + parcours.getTitre());
+            
+            // Créer la notification avec des titres sans emojis
+            String title = "Parcours Terminé: " + parcours.getTitre();
+            String message = String.format(
+                "Félicitations ! Vous avez terminé le parcours \"%s\" et gagné %d points XP !",
+                parcours.getTitre(),
+                xpEarned != null ? xpEarned : 0
+            );
+
+            if (certificateGenerated) {
+                message += " Votre certificat est prêt à être téléchargé !";
+            }
+
+            ParcoursNotification notification = new ParcoursNotification(
+                user, parcours, ParcoursNotification.NotificationType.PARCOURS_COMPLETED,
+                title, message, xpEarned
+            );
+
+            notification.setCertificateReady(certificateGenerated);
+            notification.setCertificateUrl(certificateUrl);
+
+            // Sauvegarder directement sans passer par le service pour éviter les problèmes de transaction
+            ParcoursNotification savedNotification = parcoursNotificationRepository.save(notification);
+
+            System.out.println("✅ Notification créée avec succès - ID: " + savedNotification.getId());
+            System.out.println("📧 Titre: " + title);
+            System.out.println("💰 XP: " + xpEarned);
+
+        } catch (Exception e) {
+            System.err.println("❌ Erreur création notification sécurisée: " + e.getMessage());
+            e.printStackTrace();
+            // Ne pas propager l'exception
         }
     }
 }

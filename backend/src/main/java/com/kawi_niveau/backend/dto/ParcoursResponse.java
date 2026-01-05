@@ -2,10 +2,12 @@ package com.kawi_niveau.backend.dto;
 
 import com.kawi_niveau.backend.entity.NiveauDifficulte;
 import com.kawi_niveau.backend.entity.TypeParcours;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class ParcoursResponse {
+    
     private Long id;
     private String titre;
     private String description;
@@ -21,31 +23,31 @@ public class ParcoursResponse {
     private Boolean isPublished;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     // Informations du formateur
     private String formateurNom;
     private String formateurEmail;
-    
+
     // Statistiques
     private Integer nombreEtapes;
     private Integer nombreInscriptions;
     private Integer nombreCompletions;
     private Double progressionMoyenne;
-    
-    // Étapes du parcours
+
+    // Étapes
     private List<ParcoursEtapeResponse> etapes;
-    
-    // Pour l'apprenant connecté
+
+    // Informations pour l'utilisateur connecté
     private Boolean isInscrit = false;
     private Integer progressionUtilisateur;
     private Integer etapeCouranteUtilisateur;
-    
-    // Informations d'inscription (pour "Mes Parcours")
+
+    // Informations d'inscription (pour les vues utilisateur)
     private LocalDateTime dateInscription;
     private LocalDateTime dateCompletion;
     private Integer pointsGagnesUtilisateur;
-    private Boolean isCompletedUtilisateur = false;
-    private Boolean certificatGenere = false;
+    private Boolean isCompletedUtilisateur;
+    private Boolean certificatGenere;
     private String certificatUrl;
 
     // Constructeurs

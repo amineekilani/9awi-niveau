@@ -26,6 +26,12 @@ public class ParcoursProgressionService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private GamificationService gamificationService;
+
+    @Autowired
+    private ParcoursNotificationService notificationService;
+
     /**
      * Met à jour la progression d'un utilisateur dans tous ses parcours
      * Appelé quand l'utilisateur progresse dans un cours
@@ -61,8 +67,8 @@ public class ParcoursProgressionService {
         }
 
         int etapesCompletes = 0;
-        int etapeCourante = 1;
-        int pointsGagnes = 0;
+        int etapeCourante = 1; // Commencer à 1 par défaut
+        int pointsGagnes = 0; // Variable manquante
         boolean parcoursComplete = true;
 
         // Calculer la progression
@@ -77,17 +83,35 @@ public class ParcoursProgressionService {
                 }
             } else {
                 parcoursComplete = false;
-                if (etapeCourante == etape.getOrdreEtape()) {
-                    // Cette étape n'est pas complète, c'est l'étape courante
+                // Si c'est la première étape non complète et qu'on n'a pas encore défini l'étape courante
+                if (etapeCourante == 1 && etapesCompletes == 0) {
+                    // Première étape non complète = étape courante
+                    etapeCourante = etape.getOrdreEtape();
+                } else if (etapesCompletes > 0 && etapeCourante == 1) {
+                    // Il y a des étapes complètes, cette étape non complète devient l'étape courante
                     etapeCourante = etape.getOrdreEtape();
                 }
             }
         }
+        
+        // Si toutes les étapes sont complètes, l'étape courante est la dernière
+        if (parcoursComplete && !etapes.isEmpty()) {
+            etapeCourante = etapes.get(etapes.size() - 1).getOrdreEtape();
+        }
+        
+        // Sécurité : s'assurer que l'étape courante est valide
+        if (etapeCourante < 1 && !etapes.isEmpty()) {
+            etapeCourante = etapes.get(0).getOrdreEtape(); // Première étape par défaut
+        }
+        
+        System.out.println("📊 Calcul progression: " + etapesCompletes + "/" + etapes.size() + " étapes complètes");
+        System.out.println("📍 Étape courante calculée: " + etapeCourante);
 
         // Calculer le pourcentage de progression
         int progressionPourcentage = (etapesCompletes * 100) / etapes.size();
 
         // Mettre à jour l'inscription
+        boolean wasCompleted = inscription.getIsCompleted();
         inscription.setProgressionPourcentage(progressionPourcentage);
         inscription.setEtapeCourante(etapeCourante);
         inscription.setPointsGagnes(pointsGagnes);
@@ -95,9 +119,50 @@ public class ParcoursProgressionService {
 
         if (parcoursComplete && inscription.getDateCompletion() == null) {
             inscription.setDateCompletion(LocalDateTime.now());
+            
+            // NOUVEAU: Attribuer les récompenses et créer les notifications
+            if (!wasCompleted) {
+                onParcoursCompleted(inscription, user, parcours);
+            }
         }
 
         inscriptionRepository.save(inscription);
+        
+        System.out.println("📊 Progression parcours mise à jour: " + parcours.getTitre() + " - " + progressionPourcentage + "%");
+    }
+
+    /**
+     * Gère la completion d'un parcours (récompenses + notifications)
+     */
+    private void onParcoursCompleted(ParcoursInscription inscription, User user, ParcoursApprentissage parcours) {
+        try {
+            System.out.println("🎉 Parcours terminé: " + parcours.getTitre() + " par " + user.getEmail());
+            
+            // 1. Attribuer les XP au système global
+            if (parcours.getPointsBonus() != null && parcours.getPointsBonus() > 0) {
+                try {
+                    gamificationService.awardXP(user, parcours.getPointsBonus(), "Parcours terminé: " + parcours.getTitre());
+                    gamificationService.onParcoursCompleted(user, parcours.getTitre(), parcours.getPointsBonus());
+                    System.out.println("💰 Points bonus attribués: +" + parcours.getPointsBonus() + " XP");
+                } catch (Exception e) {
+                    System.err.println("⚠️ Erreur attribution XP: " + e.getMessage());
+                }
+            }
+            
+            // 2. Créer la notification
+            try {
+                notificationService.createParcoursCompletionNotification(
+                    user, parcours, inscription.getPointsGagnes(), false, null
+                );
+                System.out.println("📢 Notification de parcours créée");
+            } catch (Exception e) {
+                System.err.println("⚠️ Erreur création notification: " + e.getMessage());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors de la completion du parcours: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**

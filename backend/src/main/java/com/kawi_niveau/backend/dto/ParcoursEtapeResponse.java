@@ -1,9 +1,11 @@
 package com.kawi_niveau.backend.dto;
 
 import com.kawi_niveau.backend.entity.NiveauDifficulte;
+
 import java.time.LocalDateTime;
 
 public class ParcoursEtapeResponse {
+    
     private Long id;
     private Long coursId;
     private String coursTitle;
@@ -19,8 +21,8 @@ public class ParcoursEtapeResponse {
     private Boolean quizObligatoires;
     private String description;
     private LocalDateTime createdAt;
-    
-    // Statut pour l'utilisateur connecté
+
+    // Informations de validation pour l'utilisateur connecté
     private Boolean isDebloque = false;
     private Boolean isComplete = false;
     private Integer progressionCours = 0;

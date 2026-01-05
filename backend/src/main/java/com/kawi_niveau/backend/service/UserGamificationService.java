@@ -5,6 +5,7 @@ import com.kawi_niveau.backend.entity.Badge;
 import com.kawi_niveau.backend.entity.BadgeCriteriaType;
 import com.kawi_niveau.backend.entity.Challenge;
 import com.kawi_niveau.backend.entity.Level;
+import com.kawi_niveau.backend.entity.ParcoursNotification;
 import com.kawi_niveau.backend.entity.User;
 import com.kawi_niveau.backend.entity.UserBadge;
 import com.kawi_niveau.backend.entity.UserChallenge;
@@ -20,6 +21,7 @@ import java.util.Map; // Added import for Map
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +52,9 @@ public class UserGamificationService {
 
     @Autowired
     private GamificationService gamificationService;
+
+    @Autowired
+    private ParcoursNotificationRepository parcoursNotificationRepository;
 
     public UserGamificationStatsResponse getUserStats(User user) {
         try {
@@ -259,10 +264,30 @@ public class UserGamificationService {
         try {
             List<UserGamificationStatsResponse.RecentActivityResponse> activities = new ArrayList<>();
 
+            // Récupérer les notifications de parcours récentes
+            List<ParcoursNotification> recentParcoursNotifications = parcoursNotificationRepository
+                    .findByUserOrderByCreatedAtDesc(user).stream()
+                    .limit(limit / 3)
+                    .collect(Collectors.toList());
+
+            for (ParcoursNotification notification : recentParcoursNotifications) {
+                String icon = "🎉";
+                if (notification.getType() == ParcoursNotification.NotificationType.CERTIFICATE_READY) {
+                    icon = "📜";
+                }
+                
+                activities.add(new UserGamificationStatsResponse.RecentActivityResponse(
+                        "parcours",
+                        notification.getMessage(),
+                        notification.getXpEarned() != null ? notification.getXpEarned() : 0,
+                        formatTimeAgo(notification.getCreatedAt()),
+                        icon));
+            }
+
             // Récupérer les badges récents
             List<UserBadge> recentBadges = userBadgeRepository.findByUserId(user.getId()).stream()
                     .sorted((a, b) -> Long.compare(b.getEarnedAt(), a.getEarnedAt()))
-                    .limit(limit / 2)
+                    .limit(limit / 3)
                     .collect(Collectors.toList());
 
             for (UserBadge badge : recentBadges) {
@@ -278,7 +303,7 @@ public class UserGamificationService {
             List<UserChallenge> recentChallenges = userChallengeRepository.findByUserId(user.getId()).stream()
                     .filter(UserChallenge::isCompleted)
                     .sorted((a, b) -> Long.compare(b.getCompletedAt(), a.getCompletedAt()))
-                    .limit(limit / 2)
+                    .limit(limit / 3)
                     .collect(Collectors.toList());
 
             for (UserChallenge challenge : recentChallenges) {
@@ -478,6 +503,15 @@ public class UserGamificationService {
         } else {
             return "à l'instant";
         }
+    }
+
+    private String formatTimeAgo(LocalDateTime dateTime) {
+        if (dateTime == null)
+            return "récemment";
+
+        // Convertir LocalDateTime en timestamp
+        long timestamp = dateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        return formatTimeAgo(timestamp);
     }
 
     private void initializeUserChallengesIfNeeded(User user) {

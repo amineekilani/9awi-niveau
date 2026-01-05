@@ -13,33 +13,33 @@ public class ParcoursRequest {
     @NotBlank(message = "Le titre est obligatoire")
     @Size(max = 255, message = "Le titre ne peut pas dépasser 255 caractères")
     private String titre;
-    
-    @Size(max = 5000, message = "La description ne peut pas dépasser 5000 caractères")
+
+    @Size(max = 2000, message = "La description ne peut pas dépasser 2000 caractères")
     private String description;
-    
+
     private String thumbnailUrl;
-    
+
     @Size(max = 100, message = "La catégorie ne peut pas dépasser 100 caractères")
     private String categorie;
-    
+
     private NiveauDifficulte niveauDifficulte;
-    
+
     private Integer dureeEstimeeHeures;
-    
-    @Size(max = 2000, message = "Les prérequis ne peuvent pas dépasser 2000 caractères")
+
+    @Size(max = 1000, message = "Les prérequis ne peuvent pas dépasser 1000 caractères")
     private String prerequis;
-    
+
     @NotNull(message = "Le type de parcours est obligatoire")
     private TypeParcours typeParcours = TypeParcours.LINEAIRE;
-    
+
     private Integer pointsBonus = 0;
-    
+
     private String badgeCompletion;
-    
+
     private Boolean certificatEnabled = false;
-    
+
     private Boolean isPublished = false;
-    
+
     private List<ParcoursEtapeRequest> etapes;
 
     // Constructeurs

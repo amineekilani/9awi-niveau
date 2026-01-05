@@ -84,7 +84,7 @@
             </label>
             <select id="niveauDifficulte" formControlName="niveauDifficulte"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-              <option *ngFor="let niveau of niveauxDifficulte" [value]="niveau">
+              <option *ngFor="let niveau of niveaux" [value]="niveau">
                 {{ getNiveauDisplayName(niveau) }}
               </option>
             </select>
@@ -247,7 +247,7 @@
 
       <!-- Actions -->
       <div class="flex flex-col sm:flex-row gap-4 justify-end">
-        <button type="button" (click)="cancel()"
+        <button type="button" (click)="onCancel()"
           class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
           Annuler
         </button>

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
+import { ParcoursNotificationService, ParcoursNotification } from '../parcours-notification.service';
+import { ParcoursAutoRefreshService } from '../parcours-auto-refresh.service';
 import { EnrollmentService } from '../enrollment.service';
 import { Subscription } from 'rxjs';
 
@@ -22,12 +24,18 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
     userProfileImage = '';
     showNotifications = false;
     recentActivity: RecentActivity[] = [];
+    parcoursNotifications: ParcoursNotification[] = [];
+    unreadNotificationsCount = 0;
     private profileSub: Subscription | null = null;
+    private autoRefreshSub: Subscription | null = null;
+    private statsUpdateSub: Subscription | null = null;
 
     constructor(
         public authService: AuthService,
         private router: Router,
         private userStatsService: UserGamificationService,
+        private parcoursNotificationService: ParcoursNotificationService,
+        private parcoursAutoRefreshService: ParcoursAutoRefreshService,
         private enrollmentService: EnrollmentService
     ) { }
 
@@ -54,6 +62,9 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
 
             // Always trigger a load to ensure data is fresh
             this.authService.loadUserProfile();
+
+            // ✅ NOUVEAU: Démarrer le service de mise à jour automatique
+            this.initializeAutoRefresh();
         }
 
         // Close notifications on click outside
@@ -68,6 +79,16 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
         if (this.profileSub) {
             this.profileSub.unsubscribe();
         }
+        if (this.autoRefreshSub) {
+            this.autoRefreshSub.unsubscribe();
+        }
+        if (this.statsUpdateSub) {
+            this.statsUpdateSub.unsubscribe();
+        }
+        
+        // Arrêter le service auto-refresh
+        this.parcoursAutoRefreshService.stopAutoRefresh();
+        
         document.removeEventListener('click', this.onDocumentClick.bind(this));
     }
 
@@ -95,9 +116,24 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
 
     loadNotifications() {
         if (!this.authService.isFormateur()) {
+            // Charger les activités récentes (badges, défis)
             this.userStatsService.getRecentActivity(5).subscribe({
                 next: (activities) => {
                     this.recentActivity = activities;
+                }
+            });
+
+            // Charger les notifications de parcours
+            this.parcoursNotificationService.getUnreadNotifications().subscribe({
+                next: (notifications) => {
+                    this.parcoursNotifications = notifications;
+                }
+            });
+
+            // Charger le nombre de notifications non lues
+            this.parcoursNotificationService.getUnreadNotificationsCount().subscribe({
+                next: (response) => {
+                    this.unreadNotificationsCount = response.count;
                 }
             });
         }
@@ -115,7 +151,34 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
     toggleNotifications() {
         this.showNotifications = !this.showNotifications;
         if (this.showNotifications) {
+            // Recharger les notifications quand on ouvre le panneau
+            this.loadNotifications();
             this.refreshIcons();
+        }
+    }
+
+    markNotificationAsRead(notificationId: number) {
+        this.parcoursNotificationService.markNotificationAsRead(notificationId).subscribe({
+            next: () => {
+                // Retirer la notification de la liste des non lues
+                this.parcoursNotifications = this.parcoursNotifications.filter(n => n.id !== notificationId);
+                this.unreadNotificationsCount = Math.max(0, this.unreadNotificationsCount - 1);
+            }
+        });
+    }
+
+    markAllNotificationsAsRead() {
+        this.parcoursNotificationService.markAllNotificationsAsRead().subscribe({
+            next: () => {
+                this.parcoursNotifications = [];
+                this.unreadNotificationsCount = 0;
+            }
+        });
+    }
+
+    openCertificate(certificateUrl: string) {
+        if (certificateUrl) {
+            window.open(certificateUrl, '_blank');
         }
     }
 
@@ -146,5 +209,32 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
 
     logout() {
         this.authService.logout();
+    }
+
+    /**
+     * Initialise le service de mise à jour automatique
+     */
+    private initializeAutoRefresh() {
+        console.log('🔄 Initialisation du service auto-refresh dans navbar');
+        
+        // Démarrer le service
+        this.parcoursAutoRefreshService.startAutoRefresh();
+        
+        // S'abonner aux nouvelles notifications
+        this.autoRefreshSub = this.parcoursAutoRefreshService.newNotification$.subscribe(notification => {
+            if (notification) {
+                console.log('🆕 Nouvelle notification reçue dans navbar:', notification.title);
+                // Recharger les notifications
+                this.loadNotifications();
+            }
+        });
+        
+        // S'abonner aux mises à jour des stats
+        this.statsUpdateSub = this.parcoursAutoRefreshService.statsUpdated$.subscribe(stats => {
+            if (stats) {
+                console.log('📊 Stats mises à jour dans navbar');
+                this.userStats = stats;
+            }
+        });
     }
 }

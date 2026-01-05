@@ -17,7 +17,7 @@ public interface LevelRepository extends JpaRepository<Level, Long> {
     @Query("SELECT l FROM Level l WHERE l.xpRequired <= :xp ORDER BY l.level DESC")
     List<Level> findLevelsForXP(@Param("xp") Integer xp);
     
-    @Query("SELECT l FROM Level l WHERE l.xpRequired > :currentXp ORDER BY l.level ASC")
+    @Query("SELECT l FROM Level l WHERE l.xpRequired > :currentXp ORDER BY l.level ASC LIMIT 1")
     Optional<Level> findNextLevel(@Param("currentXp") Integer currentXp);
     
     @Query("SELECT l FROM Level l ORDER BY l.level ASC")

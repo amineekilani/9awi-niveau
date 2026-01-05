@@ -314,7 +314,9 @@ public class ParcoursService {
             throw new RuntimeException("Vous êtes déjà inscrit à ce parcours");
         }
 
-        // Créer l'inscription
+        System.out.println("🎯 INSCRIPTION PARCOURS: " + parcours.getTitre() + " pour " + user.getEmail());
+
+        // Créer l'inscription au parcours
         ParcoursInscription inscription = new ParcoursInscription();
         inscription.setParcours(parcours);
         inscription.setUser(user);
@@ -324,6 +326,32 @@ public class ParcoursService {
         inscription.setIsCompleted(false);
 
         inscriptionRepository.save(inscription);
+        System.out.println("✅ Inscription parcours créée");
+
+        // NOUVEAU: Auto-inscription aux cours des étapes
+        List<ParcoursEtape> etapes = etapeRepository.findByParcoursOrderByOrdreEtape(parcours);
+        System.out.println("📋 Nombre d'étapes à traiter: " + etapes.size());
+        
+        for (ParcoursEtape etape : etapes) {
+            Cours cours = etape.getCours();
+            System.out.println("🔍 Vérification cours: " + cours.getTitre() + " (ID: " + cours.getId() + ")");
+            
+            // Vérifier si pas déjà inscrit au cours
+            if (!enrollmentRepository.existsByUserAndCours(user, cours)) {
+                Enrollment enrollment = new Enrollment();
+                enrollment.setUser(user);
+                enrollment.setCours(cours);
+                enrollment.setProgress(0.0f);
+                // enrolledAt sera défini automatiquement par @PrePersist
+                enrollmentRepository.save(enrollment);
+                
+                System.out.println("✅ Auto-inscription créée pour cours: " + cours.getTitre());
+            } else {
+                System.out.println("ℹ️ Déjà inscrit au cours: " + cours.getTitre());
+            }
+        }
+        
+        System.out.println("🎉 Inscription parcours terminée avec auto-inscriptions cours");
     }
 
     // Se désinscrire d'un parcours
@@ -562,6 +590,81 @@ public class ParcoursService {
             return debug.toString();
         } catch (Exception e) {
             return "Erreur lors du debug: " + e.getMessage();
+        }
+    }
+
+    /**
+     * Forcer la vérification de tous les parcours d'un utilisateur
+     */
+    public void forceCheckAllParcoursCompletion(User user) {
+        System.out.println("🔧 DEBUT forceCheckAllParcoursCompletion pour: " + user.getEmail());
+        
+        try {
+            // Récupérer toutes les inscriptions de l'utilisateur
+            List<ParcoursInscription> inscriptions = inscriptionRepository.findByUser(user);
+            System.out.println("📋 Nombre d'inscriptions trouvées: " + inscriptions.size());
+            
+            for (ParcoursInscription inscription : inscriptions) {
+                ParcoursApprentissage parcours = inscription.getParcours();
+                System.out.println("🔍 Vérification parcours: " + parcours.getTitre());
+                
+                // Recalculer la progression
+                List<ParcoursEtape> etapes = etapeRepository.findByParcoursOrderByOrdreEtape(parcours);
+                int etapesCompletes = 0;
+                int etapeCourante = 1;
+                boolean parcoursComplete = true;
+                
+                for (ParcoursEtape etape : etapes) {
+                    boolean isComplete = validationService.isEtapeComplete(etape, user);
+                    if (isComplete) {
+                        etapesCompletes++;
+                    } else {
+                        parcoursComplete = false;
+                        if (etapeCourante == etape.getOrdreEtape()) {
+                            etapeCourante = etape.getOrdreEtape();
+                        }
+                    }
+                }
+                
+                // Calculer le pourcentage
+                int progressionPourcentage = etapes.isEmpty() ? 0 : (etapesCompletes * 100) / etapes.size();
+                
+                // Mettre à jour l'inscription
+                boolean wasCompleted = inscription.getIsCompleted();
+                inscription.setProgressionPourcentage(progressionPourcentage);
+                inscription.setEtapeCourante(etapeCourante);
+                inscription.setIsCompleted(parcoursComplete);
+                
+                // Si le parcours vient d'être terminé
+                if (parcoursComplete && !wasCompleted) {
+                    inscription.setDateCompletion(LocalDateTime.now());
+                    
+                    // Attribuer les points
+                    if (parcours.getPointsBonus() != null && parcours.getPointsBonus() > 0) {
+                        inscription.setPointsGagnes(parcours.getPointsBonus());
+                        
+                        // Attribuer les XP au système global
+                        try {
+                            gamificationService.awardXP(user, parcours.getPointsBonus(), "Parcours terminé: " + parcours.getTitre());
+                            System.out.println("💰 Points attribués: +" + parcours.getPointsBonus() + " XP");
+                        } catch (Exception e) {
+                            System.err.println("⚠️ Erreur attribution XP: " + e.getMessage());
+                        }
+                    }
+                    
+                    System.out.println("🎉 Parcours terminé: " + parcours.getTitre());
+                }
+                
+                inscriptionRepository.save(inscription);
+                System.out.println("📊 Progression mise à jour: " + progressionPourcentage + "%");
+            }
+            
+            System.out.println("✅ forceCheckAllParcoursCompletion terminé avec succès");
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erreur dans forceCheckAllParcoursCompletion: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 }

@@ -1,414 +1,421 @@
 <app-navbar></app-navbar>
 
 <div class="min-h-screen bg-gray-50">
-  <!-- Loading -->
+  <!-- Loading state -->
   <div *ngIf="loading" class="flex items-center justify-center min-h-screen">
     <div class="text-center">
-      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      <p class="mt-4 text-gray-600">Chargement du parcours...</p>
+      <div class="animate-spin rounded-full h-12 w-12 border-2 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+      <p class="text-gray-500">Chargement du parcours...</p>
     </div>
   </div>
 
-  <!-- Erreur -->
-  <div *ngIf="error && !loading" class="container mx-auto px-4 py-8">
-    <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+  <!-- Error state -->
+  <div *ngIf="!loading && error && !parcours" class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
       <i data-feather="alert-circle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i>
-      <h2 class="text-xl font-semibold text-red-800 mb-2">Erreur</h2>
-      <p class="text-red-600 mb-4">{{ error }}</p>
-      <button
-        (click)="retourCatalogue()"
-        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-      >
-        Retour au catalogue
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Erreur</h2>
+      <p class="text-gray-600 mb-4">{{ error }}</p>
+      <button (click)="loadParcours()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        Réessayer
       </button>
     </div>
   </div>
 
   <!-- Contenu principal -->
-  <div *ngIf="parcours && !loading && !error" class="container mx-auto px-4 py-8">
+  <main *ngIf="!loading && parcours" class="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
     
-    <!-- Breadcrumb -->
-    <nav class="mb-6">
-      <ol class="flex items-center space-x-2 text-sm text-gray-500">
-        <li>
-          <a (click)="retourCatalogue()" class="hover:text-indigo-600 cursor-pointer">Parcours</a>
-        </li>
-        <li>
-          <i data-feather="chevron-right" class="w-4 h-4"></i>
-        </li>
-        <li class="text-gray-900 font-medium">{{ parcours.titre }}</li>
-      </ol>
-    </nav>
-
-    <!-- En-tête du parcours -->
-    <div class="bg-white rounded-lg shadow-sm border mb-8">
-      <div class="relative">
-        <!-- Image de couverture -->
-        <div class="h-64 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-t-lg relative">
-          <img 
-            *ngIf="parcours.thumbnailUrl" 
-            [src]="parcoursService.getImageUrl(parcours.thumbnailUrl)" 
-            [alt]="parcours.titre"
-            class="w-full h-full object-cover rounded-t-lg"
-            (error)="$any($event.target).style.display='none'"
-          >
-          <div *ngIf="!parcours.thumbnailUrl" class="flex items-center justify-center h-full">
-            <i data-feather="map" class="w-16 h-16 text-white"></i>
-          </div>
-          
-          <!-- Overlay avec badges -->
-          <div class="absolute inset-0 bg-black bg-opacity-20 rounded-t-lg"></div>
-          <div class="absolute top-4 right-4 flex gap-2">
-            <span [class]="'px-3 py-1 text-sm font-medium rounded-full ' + getNiveauColor(parcours.niveauDifficulte)">
-              {{ getNiveauDisplayName(parcours.niveauDifficulte) }}
-            </span>
-            <span *ngIf="isInscrit" class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
-              <i data-feather="check" class="w-4 h-4 inline mr-1"></i>
-              Inscrit
-            </span>
-          </div>
+    <!-- Messages -->
+    <div *ngIf="success || error" class="mb-6">
+      <div *ngIf="success" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <div class="flex items-center">
+          <i data-feather="check-circle" class="w-5 h-5 mr-2"></i>
+          <span>{{ success }}</span>
         </div>
+        <button (click)="clearMessages()" class="text-green-600 hover:text-green-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <div class="flex items-center">
+          <i data-feather="alert-circle" class="w-5 h-5 mr-2"></i>
+          <span>{{ error }}</span>
+        </div>
+        <button (click)="clearMessages()" class="text-red-600 hover:text-red-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
 
-        <!-- Contenu de l'en-tête -->
-        <div class="p-8">
-          <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            
-            <!-- Informations principales -->
+    <!-- Header du parcours -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+      <div class="md:flex">
+        <!-- Image -->
+        <div class="md:w-1/3">
+          <img [src]="getImageUrl(parcours.thumbnailUrl)" [alt]="parcours.titre"
+            class="w-full h-64 md:h-full object-cover">
+        </div>
+        
+        <!-- Informations -->
+        <div class="md:w-2/3 p-6">
+          <div class="flex items-start justify-between mb-4">
             <div class="flex-1">
               <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ parcours.titre }}</h1>
-              <p class="text-lg text-indigo-600 mb-4">{{ parcours.categorie }}</p>
+              <p class="text-gray-600 mb-4">{{ parcours.description }}</p>
               
-              <!-- Description -->
-              <p class="text-gray-600 mb-6 leading-relaxed">
-                {{ parcours.description || 'Aucune description disponible' }}
-              </p>
-
-              <!-- Prérequis -->
-              <div *ngIf="parcours.prerequis" class="mb-6">
-                <h3 class="text-sm font-semibold text-gray-900 mb-2">
-                  <i data-feather="info" class="w-4 h-4 inline mr-1"></i>
-                  Prérequis
-                </h3>
-                <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">{{ parcours.prerequis }}</p>
-              </div>
-
-              <!-- Formateur -->
-              <div class="flex items-center mb-6">
-                <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-4">
-                  <i data-feather="user" class="w-6 h-6 text-gray-600"></i>
+              <!-- Métadonnées -->
+              <div class="flex flex-wrap gap-4 mb-4">
+                <div class="flex items-center text-sm text-gray-500">
+                  <i data-feather="user" class="w-4 h-4 mr-1"></i>
+                  {{ parcours.formateurNom }}
                 </div>
-                <div>
-                  <p class="font-medium text-gray-900">{{ parcours.formateurNom }}</p>
-                  <p class="text-sm text-gray-600">Formateur</p>
+                <div class="flex items-center text-sm text-gray-500">
+                  <i data-feather="clock" class="w-4 h-4 mr-1"></i>
+                  {{ formatDuree(parcours.dureeEstimeeHeures) }}
+                </div>
+                <div class="flex items-center text-sm text-gray-500">
+                  <i data-feather="users" class="w-4 h-4 mr-1"></i>
+                  {{ parcours.nombreInscriptions }} inscrits
+                </div>
+                <div class="flex items-center text-sm text-gray-500">
+                  <i data-feather="list" class="w-4 h-4 mr-1"></i>
+                  {{ parcours.nombreEtapes }} étapes
                 </div>
               </div>
 
-              <!-- Statistiques -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="text-center p-3 bg-gray-50 rounded-lg">
-                  <i data-feather="clock" class="w-6 h-6 text-indigo-600 mx-auto mb-1"></i>
-                  <p class="text-sm font-medium text-gray-900">{{ formatDuree(parcours.dureeEstimeeHeures) }}</p>
-                  <p class="text-xs text-gray-600">Durée</p>
-                </div>
-                <div class="text-center p-3 bg-gray-50 rounded-lg">
-                  <i data-feather="layers" class="w-6 h-6 text-indigo-600 mx-auto mb-1"></i>
-                  <p class="text-sm font-medium text-gray-900">{{ parcours.nombreEtapes }}</p>
-                  <p class="text-xs text-gray-600">Étapes</p>
-                </div>
-                <div class="text-center p-3 bg-gray-50 rounded-lg">
-                  <i data-feather="users" class="w-6 h-6 text-indigo-600 mx-auto mb-1"></i>
-                  <p class="text-sm font-medium text-gray-900">{{ parcours.nombreInscriptions }}</p>
-                  <p class="text-xs text-gray-600">Inscrits</p>
-                </div>
-                <div class="text-center p-3 bg-gray-50 rounded-lg">
-                  <i data-feather="award" class="w-6 h-6 text-indigo-600 mx-auto mb-1"></i>
-                  <p class="text-sm font-medium text-gray-900">{{ parcours.nombreCompletions }}</p>
-                  <p class="text-xs text-gray-600">Terminés</p>
-                </div>
+              <!-- Badges -->
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span *ngIf="parcours.niveauDifficulte" 
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [class]="getNiveauColor(parcours.niveauDifficulte)">
+                  {{ getNiveauDisplayName(parcours.niveauDifficulte) }}
+                </span>
+                <span *ngIf="parcours.categorie" 
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {{ parcours.categorie }}
+                </span>
+                <span *ngIf="parcours.certificatEnabled" 
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  <i data-feather="award" class="w-3 h-3 mr-1"></i>
+                  Certificat
+                </span>
               </div>
             </div>
+          </div>
 
-            <!-- Actions -->
-            <div class="lg:w-80">
-              <div class="bg-gray-50 rounded-lg p-6">
-                
-                <!-- Progression (si inscrit) -->
-                <div *ngIf="isInscrit && parcours.progressionUtilisateur !== undefined" class="mb-6">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-900">Votre progression</span>
-                    <span class="text-sm font-bold text-indigo-600">{{ parcours.progressionUtilisateur }}%</span>
-                  </div>
-                  <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      [class]="'h-3 rounded-full transition-all duration-300 ' + getProgressionColor(parcours.progressionUtilisateur || 0)"
-                      [style.width.%]="parcours.progressionUtilisateur || 0">
-                    </div>
-                  </div>
-                  <p class="text-xs text-gray-600 mt-1">
-                    Étape {{ parcours.etapeCouranteUtilisateur || 1 }} sur {{ parcours.nombreEtapes }}
-                  </p>
-                </div>
+          <!-- Progression (si inscrit) -->
+          <div *ngIf="parcours.isInscrit" class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700">Votre progression</span>
+              <span class="text-sm text-gray-500">{{ parcours.progressionUtilisateur || 0 }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full transition-all duration-300"
+                [class]="getProgressionColor(parcours.progressionUtilisateur || 0)"
+                [style.width.%]="parcours.progressionUtilisateur || 0"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>Étape {{ parcours.etapeCouranteUtilisateur || 1 }} / {{ parcours.nombreEtapes }}</span>
+              <span *ngIf="parcours.isCompletedUtilisateur" class="text-green-600 font-medium">
+                <i data-feather="check-circle" class="w-3 h-3 inline mr-1"></i>
+                Terminé
+              </span>
+            </div>
+          </div>
 
-                <!-- Boutons d'action -->
-                <div class="space-y-3">
-                  <!-- Non inscrit -->
-                  <button 
-                    *ngIf="!isInscrit"
-                    (click)="sInscrireAuParcours()"
-                    [disabled]="inscriptionLoading"
-                    class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                  >
-                    <i *ngIf="!inscriptionLoading" data-feather="plus" class="w-5 h-5 mr-2"></i>
-                    <div *ngIf="inscriptionLoading" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    {{ inscriptionLoading ? 'Inscription...' : 'S\'inscrire au parcours' }}
-                  </button>
+          <!-- Actions -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <!-- Inscription/Désinscription -->
+            <div *ngIf="!parcours.isInscrit">
+              <button (click)="sInscrire()" [disabled]="inscriptionLoading"
+                class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2">
+                <div *ngIf="inscriptionLoading" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <i *ngIf="!inscriptionLoading" data-feather="user-plus" class="w-4 h-4"></i>
+                <span>{{ inscriptionLoading ? 'Inscription...' : 'S\'inscrire au parcours' }}</span>
+              </button>
+            </div>
 
-                  <!-- Inscrit - Commencer -->
-                  <button 
-                    *ngIf="isInscrit && (!parcours.progressionUtilisateur || parcours.progressionUtilisateur === 0)"
-                    (click)="commencerParcours()"
-                    class="w-full px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
-                  >
-                    <i data-feather="play" class="w-5 h-5 mr-2"></i>
-                    Commencer le parcours
-                  </button>
-
-                  <!-- Inscrit - Continuer -->
-                  <button 
-                    *ngIf="isInscrit && parcours.progressionUtilisateur && parcours.progressionUtilisateur > 0 && parcours.progressionUtilisateur < 100"
-                    (click)="continuerParcours()"
-                    class="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-                  >
-                    <i data-feather="arrow-right" class="w-5 h-5 mr-2"></i>
-                    Continuer le parcours
-                  </button>
-
-                  <!-- Terminé -->
-                  <div 
-                    *ngIf="isInscrit && parcours.progressionUtilisateur === 100"
-                    class="w-full px-6 py-3 bg-green-100 text-green-800 font-medium rounded-lg text-center flex items-center justify-center"
-                  >
-                    <i data-feather="check-circle" class="w-5 h-5 mr-2"></i>
-                    Parcours terminé !
-                  </div>
-
-                  <!-- Retour au catalogue -->
-                  <button 
-                    (click)="retourCatalogue()"
-                    class="w-full px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
-                  >
-                    <i data-feather="arrow-left" class="w-5 h-5 mr-2"></i>
-                    Retour au catalogue
-                  </button>
-
-                  <!-- 🔧 BOUTON DE DEBUG TEMPORAIRE -->
-                  <button 
-                    *ngIf="isInscrit"
-                    (click)="forcerMiseAJourProgression()"
-                    class="w-full px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center"
-                  >
-                    <i data-feather="refresh-cw" class="w-4 h-4 mr-2"></i>
-                    🔧 Forcer Mise à Jour Progression
-                  </button>
-                </div>
-
-                <!-- Informations supplémentaires -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                  <div class="space-y-2 text-sm">
-                    <div class="flex items-center justify-between">
-                      <span class="text-gray-600">Type de parcours</span>
-                      <span class="font-medium text-gray-900">
-                        {{ parcours.typeParcours === 'LINEAIRE' ? 'Linéaire' : 'Flexible' }}
-                      </span>
-                    </div>
-                    <div *ngIf="parcours.pointsBonus" class="flex items-center justify-between">
-                      <span class="text-gray-600">Points bonus</span>
-                      <span class="font-medium text-indigo-600">+{{ parcours.pointsBonus }} XP</span>
-                    </div>
-                    <div *ngIf="parcours.certificatEnabled" class="flex items-center justify-between">
-                      <span class="text-gray-600">Certificat</span>
-                      <span class="font-medium text-green-600">
-                        <i data-feather="award" class="w-4 h-4 inline mr-1"></i>
-                        Disponible
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div *ngIf="parcours.isInscrit" class="flex flex-col sm:flex-row gap-3">
+              <button (click)="seDesinscrire()" [disabled]="inscriptionLoading"
+                class="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2">
+                <i data-feather="user-minus" class="w-4 h-4"></i>
+                <span>Se désinscrire</span>
+              </button>
+              
+              <button (click)="forcerMiseAJourProgression()"
+                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2">
+                <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                <span>Actualiser progression</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Roadmap des étapes -->
-    <div class="bg-white rounded-lg shadow-sm border">
+    <!-- Prérequis -->
+    <div *ngIf="parcours.prerequis" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+      <h3 class="text-lg font-medium text-yellow-800 mb-2 flex items-center">
+        <i data-feather="info" class="w-5 h-5 mr-2"></i>
+        Prérequis
+      </h3>
+      <p class="text-yellow-700">{{ parcours.prerequis }}</p>
+    </div>
+
+    <!-- Étapes du parcours -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
       <div class="p-6 border-b border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-          <i data-feather="map" class="w-6 h-6 mr-2 text-indigo-600"></i>
-          Roadmap du parcours
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+          <i data-feather="map" class="w-6 h-6 mr-2 text-blue-600"></i>
+          Étapes du parcours
         </h2>
-        <p class="text-gray-600 mt-1">{{ etapes.length }} étapes à suivre</p>
+        
+        <!-- Indicateur de type de parcours -->
+        <div class="mt-2 flex items-center gap-4">
+          <div *ngIf="parcours.typeParcours === 'LINEAIRE'" class="flex items-center text-sm text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
+            <i data-feather="arrow-right" class="w-4 h-4 mr-2"></i>
+            <span>Parcours linéaire - Suivez l'ordre des étapes</span>
+          </div>
+          
+          <div *ngIf="parcours.typeParcours === 'FLEXIBLE'" class="flex items-center text-sm text-green-700 bg-green-50 px-3 py-1 rounded-full">
+            <i data-feather="unlock" class="w-4 h-4 mr-2"></i>
+            <span>Parcours flexible - Apprenez dans l'ordre de votre choix</span>
+          </div>
+        </div>
+        
+        <p class="text-gray-600 mt-2 text-sm">
+          {{ parcours.typeParcours === 'LINEAIRE' ? 
+            'Chaque étape doit être terminée avant de passer à la suivante.' : 
+            'Toutes les étapes sont accessibles dès votre inscription au parcours.' }}
+        </p>
       </div>
 
-      <div class="p-6">
-        <!-- Timeline des étapes -->
-        <div class="space-y-6">
-          <div 
-            *ngFor="let etape of etapes; let i = index; let isLast = last"
-            class="relative"
-          >
-            <!-- Ligne de connexion -->
-            <div 
-              *ngIf="!isLast"
-              class="absolute left-6 top-12 w-0.5 h-16 bg-gray-200"
-              [class.bg-green-300]="getStatutEtape(etape) === 'completed'"
-              [class.bg-blue-300]="getStatutEtape(etape) === 'current'"
-            ></div>
+      <div *ngIf="!parcours.etapes || parcours.etapes.length === 0" class="p-8 text-center">
+        <i data-feather="inbox" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune étape</h3>
+        <p class="text-gray-500">Ce parcours n'a pas encore d'étapes définies.</p>
+      </div>
 
-            <!-- Étape -->
-            <div class="flex items-start space-x-4">
-              <!-- Icône de statut -->
-              <div 
-                class="flex-shrink-0 w-12 h-12 rounded-full border-2 flex items-center justify-center"
-                [class.bg-green-100]="getStatutEtape(etape) === 'completed'"
-                [class.border-green-300]="getStatutEtape(etape) === 'completed'"
-                [class.bg-blue-100]="getStatutEtape(etape) === 'current'"
-                [class.border-blue-300]="getStatutEtape(etape) === 'current'"
-                [class.bg-gray-50]="getStatutEtape(etape) === 'available'"
-                [class.border-gray-300]="getStatutEtape(etape) === 'available'"
-                [class.bg-gray-50]="getStatutEtape(etape) === 'locked'"
-                [class.border-gray-200]="getStatutEtape(etape) === 'locked'"
-              >
-                <i 
-                  [attr.data-feather]="getIconeStatut(getStatutEtape(etape))"
-                  [class]="'w-6 h-6 ' + getCouleurStatut(getStatutEtape(etape))"
-                ></i>
+      <div *ngIf="parcours.etapes && parcours.etapes.length > 0" class="divide-y divide-gray-200">
+        <div *ngFor="let etape of parcours.etapes; let i = index" 
+          class="p-6 hover:bg-gray-50 transition-colors relative"
+          [class.bg-blue-50]="isEtapeDebloquee(etape) && !etape.isComplete"
+          [class.bg-green-50]="etape.isComplete">
+          
+          <!-- Connecteur pour parcours linéaire -->
+          <div *ngIf="parcours.typeParcours === 'LINEAIRE' && i < parcours.etapes.length - 1" 
+            class="absolute left-11 top-16 w-0.5 h-8 bg-gray-300"
+            [class.bg-green-400]="etape.isComplete">
+          </div>
+          
+          <div class="flex items-start gap-4">
+            <!-- Numéro et statut -->
+            <div class="flex-shrink-0">
+              <div class="flex items-center justify-center w-10 h-10 rounded-full border-2"
+                [class.bg-green-500]="etape.isComplete"
+                [class.border-green-500]="etape.isComplete"
+                [class.text-white]="etape.isComplete"
+                [class.bg-blue-500]="isEtapeDebloquee(etape) && !etape.isComplete"
+                [class.border-blue-500]="isEtapeDebloquee(etape) && !etape.isComplete"
+                [class.text-white]="isEtapeDebloquee(etape) && !etape.isComplete"
+                [class.bg-gray-100]="!isEtapeDebloquee(etape)"
+                [class.border-gray-300]="!isEtapeDebloquee(etape)"
+                [class.text-gray-400]="!isEtapeDebloquee(etape)">
+                <i [attr.data-feather]="getEtapeStatusIcon(etape)" class="w-5 h-5"></i>
               </div>
+            </div>
 
-              <!-- Contenu de l'étape -->
-              <div 
-                class="flex-1 min-w-0 cursor-pointer"
-                [class.opacity-50]="getStatutEtape(etape) === 'locked'"
-                (click)="voirCours(etape)"
-              >
-                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <!-- En-tête de l'étape -->
-                      <div class="flex items-center gap-2 mb-2">
-                        <span class="text-sm font-medium text-gray-500">Étape {{ etape.ordreEtape }}</span>
-                        <span [class]="'px-2 py-1 text-xs font-medium rounded-full ' + getNiveauEtapeColor(etape.niveauEtape)">
-                          {{ getNiveauEtapeDisplayName(etape.niveauEtape) }}
-                        </span>
-                        <span *ngIf="etape.isObligatoire" class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                          Obligatoire
-                        </span>
+            <!-- Contenu -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <h3 class="text-lg font-medium text-gray-900 mb-1">
+                    {{ etape.ordreEtape }}. {{ etape.coursTitle }}
+                  </h3>
+                  
+                  <p *ngIf="etape.coursDescription" class="text-gray-600 text-sm mb-3">
+                    {{ etape.coursDescription }}
+                  </p>
+
+                  <p *ngIf="etape.description" class="text-gray-700 text-sm mb-3 italic">
+                    {{ etape.description }}
+                  </p>
+
+                  <!-- Badges et informations -->
+                  <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      [class]="getNiveauEtapeColor(etape.niveauEtape)">
+                      {{ getNiveauEtapeLabel(etape.niveauEtape) }}
+                    </span>
+                    
+                    <span *ngIf="etape.isObligatoire" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Obligatoire
+                    </span>
+
+                    <!-- Badge de statut amélioré -->
+                    <span *ngIf="etape.isComplete" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <i data-feather="check" class="w-3 h-3 mr-1"></i>
+                      Terminée
+                    </span>
+                    
+                    <span *ngIf="!etape.isComplete && isEtapeDebloquee(etape)" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <i data-feather="play" class="w-3 h-3 mr-1"></i>
+                      Disponible
+                    </span>
+                    
+                    <span *ngIf="!etape.isComplete && !isEtapeDebloquee(etape) && parcours.typeParcours === 'LINEAIRE'" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                      <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                      En attente
+                    </span>
+                  </div>
+
+                  <!-- Conditions et progression -->
+                  <div *ngIf="parcours.isInscrit" class="text-xs text-gray-500 space-y-1">
+                    <div *ngIf="etape.progressionCours !== undefined" class="flex items-center gap-2">
+                      <span>Progression du cours:</span>
+                      <div class="flex-1 bg-gray-200 rounded-full h-1.5 max-w-24">
+                        <div class="h-1.5 rounded-full bg-blue-500 transition-all duration-300"
+                          [style.width.%]="etape.progressionCours"></div>
                       </div>
-
-                      <!-- Titre et description du cours -->
-                      <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ etape.coursTitle }}</h3>
-                      <p class="text-gray-600 text-sm mb-3 line-clamp-2">
-                        {{ etape.coursDescription || 'Aucune description disponible' }}
-                      </p>
-
-                      <!-- Description de l'étape -->
-                      <p *ngIf="etape.description" class="text-sm text-indigo-600 mb-3">
-                        <i data-feather="info" class="w-4 h-4 inline mr-1"></i>
-                        {{ etape.description }}
-                      </p>
-
-                      <!-- Conditions -->
-                      <div *ngIf="etape.scoreMinimum || etape.pourcentageCompletionRequis || etape.quizObligatoires" 
-                           class="flex flex-wrap gap-2 mb-3">
-                        <span *ngIf="etape.scoreMinimum" class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                          <i data-feather="target" class="w-3 h-3 inline mr-1"></i>
-                          Score min: {{ etape.scoreMinimum }}%
-                        </span>
-                        <span *ngIf="etape.pourcentageCompletionRequis" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          <i data-feather="percent" class="w-3 h-3 inline mr-1"></i>
-                          Completion: {{ etape.pourcentageCompletionRequis }}%
-                        </span>
-                        <span *ngIf="etape.quizObligatoires" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-                          <i data-feather="help-circle" class="w-3 h-3 inline mr-1"></i>
-                          Quiz obligatoires
-                        </span>
-                      </div>
-
-                      <!-- Conditions manquantes (si étape verrouillée) -->
-                      <div *ngIf="getStatutEtape(etape) === 'locked' && getConditionsManquantes(etape).length > 0" 
-                           class="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
-                        <div class="flex items-center mb-1">
-                          <i data-feather="alert-circle" class="w-4 h-4 text-red-500 mr-1"></i>
-                          <span class="text-xs font-medium text-red-700">Conditions non remplies :</span>
-                        </div>
-                        <ul class="text-xs text-red-600 space-y-1">
-                          <li *ngFor="let condition of getConditionsManquantes(etape)" class="flex items-center">
-                            <i data-feather="x" class="w-3 h-3 mr-1"></i>
-                            {{ condition }}
-                          </li>
-                        </ul>
-                      </div>
-
-                      <!-- Progression du cours (si disponible) -->
-                      <div *ngIf="etape.progressionCours !== undefined && etape.progressionCours > 0" class="mb-3">
-                        <div class="flex items-center justify-between mb-1">
-                          <span class="text-xs text-gray-600">Progression du cours</span>
-                          <span class="text-xs font-medium text-gray-900">{{ etape.progressionCours }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                          <div 
-                            [class]="'h-1.5 rounded-full transition-all duration-300 ' + getProgressionColor(etape.progressionCours)"
-                            [style.width.%]="etape.progressionCours">
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Métadonnées du cours -->
-                      <div class="flex items-center gap-4 text-sm text-gray-500">
-                        <span class="flex items-center">
-                          <i data-feather="folder" class="w-4 h-4 mr-1"></i>
-                          {{ etape.coursCategorie }}
-                        </span>
-                        <span [class]="'flex items-center px-2 py-1 rounded-full text-xs ' + getNiveauColor(etape.coursNiveauDifficulte)">
-                          {{ getNiveauDisplayName(etape.coursNiveauDifficulte) }}
-                        </span>
-                      </div>
+                      <span>{{ etape.progressionCours }}%</span>
                     </div>
-
-                    <!-- Action -->
-                    <div class="ml-4">
-                      <button 
-                        *ngIf="getStatutEtape(etape) !== 'locked'"
-                        (click)="voirCours(etape)"
-                        class="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
-                      >
-                        {{ getStatutEtape(etape) === 'completed' ? 'Revoir' : 'Accéder' }}
-                        <i data-feather="arrow-right" class="w-4 h-4 inline ml-1"></i>
-                      </button>
-                      <div 
-                        *ngIf="getStatutEtape(etape) === 'locked'"
-                        class="px-4 py-2 text-sm text-gray-400 flex items-center"
-                      >
-                        <i data-feather="lock" class="w-4 h-4 mr-1"></i>
-                        Verrouillé
-                      </div>
+                    
+                    <div *ngIf="etape.scoreObtenu !== undefined && etape.scoreMinimum > 0" class="flex items-center gap-2">
+                      <span>Score obtenu: {{ etape.scoreObtenu }}% (min: {{ etape.scoreMinimum }}%)</span>
                     </div>
+                    
+                    <!-- Message d'aide pour étapes verrouillées -->
+                    <div *ngIf="!isEtapeDebloquee(etape) && parcours.typeParcours === 'LINEAIRE'" 
+                      class="text-amber-600 bg-amber-50 px-2 py-1 rounded text-xs mt-2">
+                      <i data-feather="info" class="w-3 h-3 inline mr-1"></i>
+                      Terminez l'étape {{ etape.ordreEtape - 1 }} pour débloquer cette étape
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action -->
+                <div class="ml-4 flex-shrink-0">
+                  <!-- Bouton toujours cliquable avec logique améliorée -->
+                  <button (click)="commencerEtape(etape)"
+                    [disabled]="!isEtapeButtonClickable(etape)"
+                    [class]="isEtapeButtonClickable(etape) ? 
+                      'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2' :
+                      'px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium flex items-center gap-2 cursor-not-allowed'">
+                    
+                    <!-- Icône dynamique -->
+                    <i *ngIf="etape.isComplete" data-feather="eye" class="w-4 h-4"></i>
+                    <i *ngIf="!etape.isComplete && (isEtapeDebloquee(etape) || !parcours.isInscrit)" data-feather="play" class="w-4 h-4"></i>
+                    <i *ngIf="!etape.isComplete && !isEtapeDebloquee(etape) && parcours.isInscrit && parcours.typeParcours === 'LINEAIRE'" data-feather="lock" class="w-4 h-4"></i>
+                    
+                    <!-- Texte dynamique -->
+                    <span>{{ getEtapeButtonText(etape) }}</span>
+                  </button>
+                  
+                  <!-- Message d'aide pour étapes verrouillées -->
+                  <div *ngIf="!isEtapeDebloquee(etape) && parcours.isInscrit && parcours.typeParcours === 'LINEAIRE'" 
+                    class="text-xs text-gray-500 mt-1 text-center">
+                    Étape {{ etape.ordreEtape - 1 }} requise
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Message si aucune étape -->
-        <div *ngIf="etapes.length === 0" class="text-center py-8">
-          <i data-feather="layers" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune étape configurée</h3>
-          <p class="text-gray-600">Ce parcours n'a pas encore d'étapes définies.</p>
+    <!-- Informations supplémentaires -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Statistiques -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <i data-feather="bar-chart-2" class="w-5 h-5 mr-2 text-blue-600"></i>
+          Statistiques
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Inscrits:</span>
+            <span class="font-medium">{{ parcours.nombreInscriptions }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Complétions:</span>
+            <span class="font-medium">{{ parcours.nombreCompletions }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Taux de réussite:</span>
+            <span class="font-medium">
+              {{ parcours.nombreInscriptions > 0 ? Math.round((parcours.nombreCompletions / parcours.nombreInscriptions) * 100) : 0 }}%
+            </span>
+          </div>
+          <div *ngIf="parcours.progressionMoyenne" class="flex justify-between">
+            <span class="text-gray-600">Progression moyenne:</span>
+            <span class="font-medium">{{ Math.round(parcours.progressionMoyenne) }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Récompenses -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <i data-feather="award" class="w-5 h-5 mr-2 text-blue-600"></i>
+          Récompenses
+        </h3>
+        <div class="space-y-3">
+          <div *ngIf="parcours.pointsBonus && parcours.pointsBonus > 0" class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+              <i data-feather="star" class="w-4 h-4 text-yellow-600"></i>
+            </div>
+            <div>
+              <p class="font-medium text-gray-900">{{ parcours.pointsBonus }} points bonus</p>
+              <p class="text-sm text-gray-500">À la completion du parcours</p>
+            </div>
+          </div>
+          
+          <div *ngIf="parcours.certificatEnabled" class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+              <i data-feather="award" class="w-4 h-4 text-purple-600"></i>
+            </div>
+            <div>
+              <p class="font-medium text-gray-900">Certificat de completion</p>
+              <p class="text-sm text-gray-500">Généré automatiquement</p>
+            </div>
+          </div>
+          
+          <div *ngIf="parcours.badgeCompletion" class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <i data-feather="shield" class="w-4 h-4 text-blue-600"></i>
+            </div>
+            <div>
+              <p class="font-medium text-gray-900">{{ parcours.badgeCompletion }}</p>
+              <p class="text-sm text-gray-500">Badge spécial</p>
+            </div>
+          </div>
+
+          <div *ngIf="(!parcours.pointsBonus || parcours.pointsBonus === 0) && !parcours.certificatEnabled && !parcours.badgeCompletion" 
+            class="text-center py-4">
+            <i data-feather="gift" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
+            <p class="text-gray-500 text-sm">Aucune récompense spéciale définie</p>
+          </div>
         </div>
       </div>
     </div>
 
-  </div>
+    <!-- Navigation -->
+    <div class="mt-8 flex justify-between">
+      <a routerLink="/parcours" 
+        class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+        <i data-feather="arrow-left" class="w-4 h-4 mr-2"></i>
+        Retour au catalogue
+      </a>
+      
+      <a *ngIf="parcours.isInscrit" routerLink="/mes-parcours"
+        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        <i data-feather="book-open" class="w-4 h-4 mr-2"></i>
+        Mes parcours
+      </a>
+    </div>
+  </main>
 </div>

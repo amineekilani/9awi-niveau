@@ -37,6 +37,9 @@ public class QuizResultatService {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+    @Autowired
+    private ParcoursIntegrationService parcoursIntegrationService;
+
     @Transactional
     public ResultatQuizResponse submitQuiz(Long userId, Long quizId, QuizSubmissionRequest request) {
         User user = userRepository.findById(userId)
@@ -86,16 +89,35 @@ public class QuizResultatService {
 
         resultat = resultatQuizRepository.save(resultat);
 
-        // Déclencher les événements de gamification
+        // Gamification réactivée avec gestion d'erreur robuste
         try {
-            gamificationService.onQuizPassed(user, score);
+            System.out.println("🎯 Attribution des récompenses de gamification");
+            gamificationService.awardXP(user, 10, "Quiz terminé: " + quiz.getTitre());
             
-            // ✅ NOUVEAU: Publier l'événement pour les parcours
-            eventPublisher.publishEvent(new QuizCompletedEvent(this, user, quiz, score));
+            // Vérifier les badges pour quiz réussi
+            if (score >= 60.0) {
+                gamificationService.onQuizPassed(user, score);
+            }
             
+            System.out.println("✅ Gamification appliquée avec succès");
         } catch (Exception e) {
-            // Log l'erreur mais ne pas faire échouer la soumission du quiz
-            System.err.println("Erreur lors de la gamification: " + e.getMessage());
+            System.err.println("⚠️ Erreur gamification (non bloquante): " + e.getMessage());
+            // Ne pas faire échouer la transaction pour une erreur de gamification
+        }
+        
+        // Publier l'événement pour les parcours (une seule méthode de validation)
+        try {
+            System.out.println("🎯 Publication événement QuizCompleted");
+            eventPublisher.publishEvent(new QuizCompletedEvent(this, user, quiz, score));
+            System.out.println("✅ Événement QuizCompleted publié avec succès");
+            
+            // ✅ INTÉGRATION PARCOURS: Mise à jour directe de la progression des parcours
+            System.out.println("🔄 Intégration parcours: Quiz terminé par " + user.getEmail() + ", quiz " + quiz.getTitre() + ", score " + score + "%");
+            parcoursIntegrationService.onCoursProgressUpdated(user.getId(), quiz.getModule().getCours().getId());
+            System.out.println("✅ Progression parcours mise à jour après quiz: " + quiz.getTitre());
+        } catch (Exception e) {
+            System.err.println("❌ Erreur événement QuizCompleted: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return new ResultatQuizResponse(

@@ -95,8 +95,12 @@
                         class="p-2 text-white hover:text-gray-200 relative focus:outline-none transition-colors">
                         <span class="sr-only">Notifications</span>
                         <i data-feather="bell" class="h-6 w-6"></i>
-                        <span *ngIf="recentActivity.length > 0"
+                        <span *ngIf="recentActivity.length > 0 || unreadNotificationsCount > 0"
                             class="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-blue-600 bg-red-500 animate-pulse"></span>
+                        <span *ngIf="unreadNotificationsCount > 0"
+                            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                            {{ unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount }}
+                        </span>
                     </button>
 
                     <!-- Dropdown Panel -->
@@ -105,10 +109,52 @@
                         <div class="py-1" role="menu">
                             <div
                                 class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
-                                <h3 class="text-sm font-bold text-gray-900">Activité Récente</h3>
+                                <h3 class="text-sm font-bold text-gray-900">Notifications</h3>
+                                <button *ngIf="unreadNotificationsCount > 0" 
+                                        (click)="markAllNotificationsAsRead()"
+                                        class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                    Tout marquer comme lu
+                                </button>
                             </div>
 
                             <div class="max-h-96 overflow-y-auto">
+                                <!-- Notifications de parcours -->
+                                <div *ngFor="let notification of parcoursNotifications"
+                                    class="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 group cursor-pointer"
+                                    (click)="markNotificationAsRead(notification.id)">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                                <i data-feather="award" class="w-4 h-4" *ngIf="notification.type === 'PARCOURS_COMPLETED'"></i>
+                                                <i data-feather="file-text" class="w-4 h-4" *ngIf="notification.type === 'CERTIFICATE_READY'"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 group-hover:text-green-600 transition-colors">
+                                                {{ notification.title }}
+                                            </p>
+                                            <p class="text-xs text-gray-600 mt-1">
+                                                {{ notification.message }}
+                                            </p>
+                                            <div class="flex items-center justify-between mt-2">
+                                                <p class="text-xs text-gray-500 flex items-center">
+                                                    <span class="font-bold text-green-600 mr-2" *ngIf="notification.xpEarned">
+                                                        +{{ notification.xpEarned }} XP
+                                                    </span>
+                                                    <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                                                    {{ notification.createdAt | date:'short' }}
+                                                </p>
+                                                <button *ngIf="notification.certificateReady && notification.certificateUrl"
+                                                        (click)="openCertificate(notification.certificateUrl); $event.stopPropagation()"
+                                                        class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md hover:bg-blue-200 transition-colors">
+                                                    📜 Certificat
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Activités récentes (badges, défis) -->
                                 <div *ngFor="let activity of recentActivity"
                                     class="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer">
                                     <div class="flex items-start space-x-3">
@@ -133,9 +179,10 @@
                                     </div>
                                 </div>
 
-                                <div *ngIf="recentActivity.length === 0" class="px-4 py-8 text-center text-gray-500">
+                                <div *ngIf="recentActivity.length === 0 && parcoursNotifications.length === 0" 
+                                     class="px-4 py-8 text-center text-gray-500">
                                     <i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
-                                    <p class="text-sm">Aucune nouvelle activité</p>
+                                    <p class="text-sm">Aucune nouvelle notification</p>
                                 </div>
                             </div>
 

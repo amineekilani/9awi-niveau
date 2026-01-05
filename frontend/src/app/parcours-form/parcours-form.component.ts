@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AuthService } from '../auth';
 import { ParcoursService, ParcoursRequest, ParcoursResponse, NiveauDifficulte, TypeParcours } from '../parcours.service';
+import { CoursService, Cours } from '../cours.service';
 import { DOMAINES_SPECIALISATION } from '../constants/domaines';
 
 declare const feather: any;
@@ -23,21 +24,26 @@ export class ParcoursFormComponent implements OnInit {
   success = '';
   isEditMode = false;
   parcoursId?: number;
-  
+
   // Options pour les sélecteurs
-  niveauxDifficulte = Object.values(NiveauDifficulte);
+  categories = DOMAINES_SPECIALISATION;
+  niveaux = Object.values(NiveauDifficulte);
   typesParcours = Object.values(TypeParcours);
-  categories = [...DOMAINES_SPECIALISATION];
+
+  // Cours disponibles pour les étapes
+  coursDisponibles: Cours[] = [];
+  loadingCours = false;
 
   // Upload d'image
   selectedFile?: File;
   imagePreview?: string;
-  uploadProgress = 0;
+  uploadingImage = false;
 
   constructor(
     private fb: FormBuilder,
     private parcoursService: ParcoursService,
-    private authService: AuthService,
+    private coursService: CoursService,
+    public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -50,33 +56,16 @@ export class ParcoursFormComponent implements OnInit {
       return;
     }
 
-    // Vérifier si on est en mode édition
+    // Vérifier si c'est un mode édition
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode = true;
         this.parcoursId = +params['id'];
         this.loadParcours();
-      } else {
-        // Pré-remplir la catégorie avec le domaine du formateur (seulement en mode création)
-        const domaineFormateur = this.authService.getDomaine();
-        console.log('Domaine du formateur:', domaineFormateur); // Debug
-        if (domaineFormateur) {
-          // Vérifier si le domaine du formateur existe dans nos catégories
-          const categorieCorrespondante = this.categories.includes(domaineFormateur) 
-            ? domaineFormateur 
-            : 'Autre'; // Fallback vers "Autre" si le domaine n'existe pas
-          
-          this.parcoursForm.patchValue({
-            categorie: categorieCorrespondante
-          });
-          console.log('Catégorie pré-remplie avec:', categorieCorrespondante); // Debug
-          
-          if (categorieCorrespondante === 'Autre') {
-            console.log('Domaine non reconnu, fallback vers "Autre"');
-          }
-        }
       }
     });
+
+    this.loadMesCours();
 
     // Initialiser Feather icons
     setTimeout(() => {
@@ -88,15 +77,15 @@ export class ParcoursFormComponent implements OnInit {
 
   createForm(): FormGroup {
     return this.fb.group({
-      titre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
-      description: ['', [Validators.maxLength(5000)]],
+      titre: ['', [Validators.required, Validators.maxLength(255)]],
+      description: ['', [Validators.maxLength(2000)]],
+      thumbnailUrl: [''],
       categorie: [''],
       niveauDifficulte: [NiveauDifficulte.DEBUTANT],
-      dureeEstimeeHeures: [null, [Validators.min(1), Validators.max(1000)]],
-      prerequis: ['', [Validators.maxLength(2000)]],
+      dureeEstimeeHeures: [null, [Validators.min(0)]],
+      prerequis: ['', [Validators.maxLength(1000)]],
       typeParcours: [TypeParcours.LINEAIRE, Validators.required],
-      pointsBonus: [0, [Validators.min(0), Validators.max(10000)]],
-      badgeCompletion: [''],
+      pointsBonus: [0, [Validators.min(0)]],
       certificatEnabled: [false],
       isPublished: [false]
     });
@@ -111,20 +100,19 @@ export class ParcoursFormComponent implements OnInit {
         this.parcoursForm.patchValue({
           titre: parcours.titre,
           description: parcours.description,
+          thumbnailUrl: parcours.thumbnailUrl,
           categorie: parcours.categorie,
           niveauDifficulte: parcours.niveauDifficulte,
           dureeEstimeeHeures: parcours.dureeEstimeeHeures,
           prerequis: parcours.prerequis,
           typeParcours: parcours.typeParcours,
           pointsBonus: parcours.pointsBonus,
-          badgeCompletion: parcours.badgeCompletion,
           certificatEnabled: parcours.certificatEnabled,
           isPublished: parcours.isPublished
         });
 
-        // Charger l'image si elle existe
         if (parcours.thumbnailUrl) {
-          this.imagePreview = `http://localhost:8080/images/parcours/${parcours.thumbnailUrl}`;
+          this.imagePreview = this.parcoursService.getImageUrl(parcours.thumbnailUrl);
         }
 
         this.loading = false;
@@ -137,112 +125,154 @@ export class ParcoursFormComponent implements OnInit {
     });
   }
 
+  loadMesCours() {
+    this.loadingCours = true;
+    this.coursService.getMesCours().subscribe({
+      next: (cours) => {
+        this.coursDisponibles = cours;
+        this.loadingCours = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des cours:', err);
+        this.loadingCours = false;
+      }
+    });
+  }
+
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
-      // Vérifier le type de fichier
-      if (!file.type.startsWith('image/')) {
-        this.error = 'Veuillez sélectionner un fichier image valide';
+      // Vérifications
+      if (file.size > 5 * 1024 * 1024) { // 5MB
+        this.error = 'Le fichier est trop volumineux (max 5MB)';
         return;
       }
 
-      // Vérifier la taille (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        this.error = 'L\'image ne doit pas dépasser 5MB';
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        this.error = 'Type de fichier non autorisé. Utilisez JPG, PNG, GIF ou WebP';
         return;
       }
 
       this.selectedFile = file;
 
-      // Créer un aperçu
+      // Prévisualisation
       const reader = new FileReader();
-      reader.onload = (e) => {
-        this.imagePreview = e.target?.result as string;
+      reader.onload = (e: any) => {
+        this.imagePreview = e.target.result;
       };
       reader.readAsDataURL(file);
     }
   }
 
-  uploadImage(): Promise<string | null> {
-    if (!this.selectedFile) {
-      return Promise.resolve(null);
-    }
+  async uploadImage(): Promise<string | null> {
+    if (!this.selectedFile) return null;
 
-    return new Promise((resolve, reject) => {
-      this.parcoursService.uploadParcoursImage(this.selectedFile!).subscribe({
-        next: (response) => {
-          console.log('Upload réussi:', response.filename);
-          resolve(response.filename);
-        },
-        error: (err) => {
-          console.error('Erreur upload:', err);
-          this.error = 'Erreur lors de l\'upload de l\'image';
-          reject(err);
-        }
-      });
-    });
-  }
-
-  removeImage() {
-    this.selectedFile = undefined;
-    this.imagePreview = undefined;
-    // Reset du champ file input
-    const fileInput = document.getElementById('thumbnail') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
+    this.uploadingImage = true;
+    try {
+      const response = await this.parcoursService.uploadParcoursImage(this.selectedFile).toPromise();
+      this.uploadingImage = false;
+      return response?.filename || null;
+    } catch (error) {
+      this.uploadingImage = false;
+      console.error('Erreur upload:', error);
+      throw error;
     }
   }
 
   async onSubmit() {
     if (this.parcoursForm.invalid) {
       this.markFormGroupTouched();
-      this.error = 'Veuillez corriger les erreurs dans le formulaire';
       return;
     }
 
     this.loading = true;
     this.error = '';
+    this.success = '';
 
     try {
-      // Upload de l'image d'abord si nécessaire
-      let thumbnailUrl = null;
+      // Upload de l'image si nécessaire
+      let thumbnailUrl = this.parcoursForm.get('thumbnailUrl')?.value;
       if (this.selectedFile) {
         thumbnailUrl = await this.uploadImage();
       }
 
-      const formData = this.parcoursForm.value as ParcoursRequest;
-      
-      // Ajouter l'URL de l'image si uploadée
-      if (thumbnailUrl) {
-        formData.thumbnailUrl = thumbnailUrl;
+      const parcoursData: ParcoursRequest = {
+        ...this.parcoursForm.value,
+        thumbnailUrl: thumbnailUrl
+      };
+
+      if (this.isEditMode && this.parcoursId) {
+        // Mode édition
+        this.parcoursService.updateParcours(this.parcoursId, parcoursData).subscribe({
+          next: (response) => {
+            this.success = 'Parcours mis à jour avec succès';
+            this.loading = false;
+            setTimeout(() => {
+              this.router.navigate(['/parcours/gerer', response.id]);
+            }, 1500);
+          },
+          error: (err) => {
+            this.error = this.extractErrorMessage(err);
+            this.loading = false;
+          }
+        });
+      } else {
+        // Mode création
+        this.parcoursService.createParcours(parcoursData).subscribe({
+          next: (response) => {
+            this.success = 'Parcours créé avec succès';
+            this.loading = false;
+            setTimeout(() => {
+              this.router.navigate(['/parcours/gerer', response.id]);
+            }, 1500);
+          },
+          error: (err) => {
+            this.error = this.extractErrorMessage(err);
+            this.loading = false;
+          }
+        });
       }
-
-      const request = this.isEditMode 
-        ? this.parcoursService.updateParcours(this.parcoursId!, formData)
-        : this.parcoursService.createParcours(formData);
-
-      request.subscribe({
-        next: (response) => {
-          this.success = this.isEditMode 
-            ? 'Parcours modifié avec succès' 
-            : 'Parcours créé avec succès';
-          
-          setTimeout(() => {
-            this.router.navigate(['/parcours/gerer', response.id]);
-          }, 1500);
-        },
-        error: (err) => {
-          this.error = this.isEditMode 
-            ? 'Erreur lors de la modification du parcours' 
-            : 'Erreur lors de la création du parcours';
-          this.loading = false;
-          console.error('Erreur:', err);
-        }
-      });
-    } catch (uploadError) {
+    } catch (error) {
+      this.error = 'Erreur lors de l\'upload de l\'image';
       this.loading = false;
-      // L'erreur d'upload est déjà gérée dans uploadImage()
     }
+  }
+
+  onCancel() {
+    if (this.isEditMode && this.parcoursId) {
+      this.router.navigate(['/parcours/gerer', this.parcoursId]);
+    } else {
+      this.router.navigate(['/parcours-dashboard']);
+    }
+  }
+
+  // Utilitaires de validation
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.parcoursForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.parcoursForm.get(fieldName);
+    if (field && field.errors) {
+      if (field.errors['required']) return `${this.getFieldLabel(fieldName)} est obligatoire`;
+      if (field.errors['maxlength']) return `${this.getFieldLabel(fieldName)} est trop long`;
+      if (field.errors['min']) return `${this.getFieldLabel(fieldName)} doit être positif`;
+    }
+    return '';
+  }
+
+  getFieldLabel(fieldName: string): string {
+    const labels: { [key: string]: string } = {
+      'titre': 'Le titre',
+      'description': 'La description',
+      'categorie': 'La catégorie',
+      'dureeEstimeeHeures': 'La durée estimée',
+      'prerequis': 'Les prérequis',
+      'pointsBonus': 'Les points bonus'
+    };
+    return labels[fieldName] || fieldName;
   }
 
   markFormGroupTouched() {
@@ -252,36 +282,17 @@ export class ParcoursFormComponent implements OnInit {
     });
   }
 
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.parcoursForm.get(fieldName);
-    return !!(field && field.invalid && (field.dirty || field.touched));
-  }
-
-  getFieldError(fieldName: string): string {
-    const field = this.parcoursForm.get(fieldName);
-    if (field?.errors) {
-      if (field.errors['required']) return `${this.getFieldLabel(fieldName)} est obligatoire`;
-      if (field.errors['minlength']) return `${this.getFieldLabel(fieldName)} doit contenir au moins ${field.errors['minlength'].requiredLength} caractères`;
-      if (field.errors['maxlength']) return `${this.getFieldLabel(fieldName)} ne peut pas dépasser ${field.errors['maxlength'].requiredLength} caractères`;
-      if (field.errors['min']) return `La valeur doit être au minimum ${field.errors['min'].min}`;
-      if (field.errors['max']) return `La valeur ne peut pas dépasser ${field.errors['max'].max}`;
+  extractErrorMessage(error: any): string {
+    if (error.error && typeof error.error === 'string') {
+      return error.error;
     }
-    return '';
+    if (error.message) {
+      return error.message;
+    }
+    return 'Une erreur est survenue';
   }
 
-  getFieldLabel(fieldName: string): string {
-    const labels: { [key: string]: string } = {
-      titre: 'Le titre',
-      description: 'La description',
-      categorie: 'La catégorie',
-      dureeEstimeeHeures: 'La durée estimée',
-      prerequis: 'Les prérequis',
-      pointsBonus: 'Les points bonus',
-      badgeCompletion: 'Le badge de completion'
-    };
-    return labels[fieldName] || fieldName;
-  }
-
+  // Utilitaires d'affichage
   getNiveauDisplayName(niveau: NiveauDifficulte): string {
     return this.parcoursService.getNiveauDisplayName(niveau);
   }
@@ -290,16 +301,14 @@ export class ParcoursFormComponent implements OnInit {
     return this.parcoursService.getTypeParcoursDisplayName(type);
   }
 
-  cancel() {
-    if (this.isEditMode && this.parcoursId) {
-      this.router.navigate(['/parcours/gerer', this.parcoursId]);
-    } else {
-      this.router.navigate(['/parcours-dashboard']);
-    }
-  }
-
   clearMessages() {
     this.error = '';
     this.success = '';
+  }
+
+  removeImage() {
+    this.selectedFile = undefined;
+    this.imagePreview = undefined;
+    this.parcoursForm.patchValue({ thumbnailUrl: '' });
   }
 }

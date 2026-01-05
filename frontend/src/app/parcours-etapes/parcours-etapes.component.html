@@ -1,0 +1,308 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-gray-50">
+  <main class="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <a routerLink="/parcours-dashboard" class="hover:text-blue-600">Mes Parcours</a>
+        <i data-feather="chevron-right" class="w-4 h-4"></i>
+        <a [routerLink]="['/parcours/gerer', parcoursId]" class="hover:text-blue-600">Gestion</a>
+        <i data-feather="chevron-right" class="w-4 h-4"></i>
+        <span>Étapes</span>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+            Gestion des étapes
+          </h1>
+          <p class="text-gray-500 mt-1" *ngIf="parcours">
+            {{ parcours.titre }}
+          </p>
+        </div>
+        <button (click)="showAddEtapeForm()" 
+          class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+          Ajouter une étape
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="success || error" class="mb-6">
+      <div *ngIf="success" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <div class="flex items-center">
+          <i data-feather="check-circle" class="w-5 h-5 mr-2"></i>
+          <span>{{ success }}</span>
+        </div>
+        <button (click)="clearMessages()" class="text-green-600 hover:text-green-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between">
+        <div class="flex items-center">
+          <i data-feather="alert-circle" class="w-5 h-5 mr-2"></i>
+          <span>{{ error }}</span>
+        </div>
+        <button (click)="clearMessages()" class="text-red-600 hover:text-red-800">
+          <i data-feather="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Formulaire d'ajout/modification d'étape -->
+    <div *ngIf="showAddForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i data-feather="plus-circle" class="w-5 h-5 mr-2 text-blue-600"></i>
+        {{ editingEtape ? 'Modifier l\'étape' : 'Ajouter une étape' }}
+      </h2>
+
+      <form [formGroup]="etapeForm" (ngSubmit)="onSubmitEtape()" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Cours -->
+          <div class="md:col-span-2">
+            <label for="coursId" class="block text-sm font-medium text-gray-700 mb-2">
+              Cours *
+            </label>
+            <select id="coursId" formControlName="coursId"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [class.border-red-500]="isFieldInvalid('coursId')">
+              <option value="">Sélectionner un cours</option>
+              <option *ngFor="let cours of coursDisponibles" [value]="cours.id">
+                {{ cours.titre }}
+              </option>
+            </select>
+            <div *ngIf="isFieldInvalid('coursId')" class="mt-1 text-sm text-red-600">
+              {{ getFieldError('coursId') }}
+            </div>
+          </div>
+
+          <!-- Ordre -->
+          <div>
+            <label for="ordreEtape" class="block text-sm font-medium text-gray-700 mb-2">
+              Ordre dans le parcours *
+            </label>
+            <input type="number" id="ordreEtape" formControlName="ordreEtape"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [class.border-red-500]="isFieldInvalid('ordreEtape')"
+              min="1" max="100">
+            <div *ngIf="isFieldInvalid('ordreEtape')" class="mt-1 text-sm text-red-600">
+              {{ getFieldError('ordreEtape') }}
+            </div>
+          </div>
+
+          <!-- Niveau -->
+          <div>
+            <label for="niveauEtape" class="block text-sm font-medium text-gray-700 mb-2">
+              Niveau de l'étape *
+            </label>
+            <select id="niveauEtape" formControlName="niveauEtape"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+              <option value="1">1 - Fondamental</option>
+              <option value="2">2 - Intermédiaire</option>
+              <option value="3">3 - Avancé</option>
+            </select>
+          </div>
+
+          <!-- Score minimum -->
+          <div>
+            <label for="scoreMinimum" class="block text-sm font-medium text-gray-700 mb-2">
+              Score minimum requis (%)
+            </label>
+            <input type="number" id="scoreMinimum" formControlName="scoreMinimum"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [class.border-red-500]="isFieldInvalid('scoreMinimum')"
+              min="0" max="100">
+            <div *ngIf="isFieldInvalid('scoreMinimum')" class="mt-1 text-sm text-red-600">
+              {{ getFieldError('scoreMinimum') }}
+            </div>
+          </div>
+
+          <!-- Pourcentage completion -->
+          <div>
+            <label for="pourcentageCompletionRequis" class="block text-sm font-medium text-gray-700 mb-2">
+              Completion requise (%) *
+            </label>
+            <input type="number" id="pourcentageCompletionRequis" formControlName="pourcentageCompletionRequis"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              [class.border-red-500]="isFieldInvalid('pourcentageCompletionRequis')"
+              min="0" max="100">
+            <div *ngIf="isFieldInvalid('pourcentageCompletionRequis')" class="mt-1 text-sm text-red-600">
+              {{ getFieldError('pourcentageCompletionRequis') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="space-y-4">
+          <div class="flex items-center">
+            <input type="checkbox" id="isObligatoire" formControlName="isObligatoire"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="isObligatoire" class="ml-2 block text-sm text-gray-700">
+              Étape obligatoire
+            </label>
+          </div>
+
+          <div class="flex items-center">
+            <input type="checkbox" id="quizObligatoires" formControlName="quizObligatoires"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="quizObligatoires" class="ml-2 block text-sm text-gray-700">
+              Quiz obligatoires pour valider l'étape
+            </label>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+            Description de l'étape (optionnel)
+          </label>
+          <textarea id="description" formControlName="description" rows="3"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            placeholder="Décrivez les objectifs spécifiques de cette étape..."></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-end">
+          <button type="button" (click)="cancelForm()"
+            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+            Annuler
+          </button>
+          <button type="submit" [disabled]="etapeForm.invalid"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
+            <i data-feather="save" class="w-4 h-4"></i>
+            <span>{{ editingEtape ? 'Modifier l\'étape' : 'Ajouter l\'étape' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Liste des étapes -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+          <i data-feather="list" class="w-5 h-5 mr-2 text-blue-600"></i>
+          Étapes du parcours ({{ etapes.length }})
+        </h2>
+        <p class="text-sm text-gray-500 mt-1">
+          Glissez-déposez les étapes pour les réorganiser
+        </p>
+      </div>
+
+      <div *ngIf="loading" class="p-8 text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+        <p class="text-gray-500">Chargement des étapes...</p>
+      </div>
+
+      <div *ngIf="!loading && etapes.length === 0" class="p-8 text-center">
+        <i data-feather="inbox" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune étape</h3>
+        <p class="text-gray-500 mb-4">Commencez par ajouter des cours à votre parcours</p>
+        <button (click)="showAddEtapeForm()" 
+          class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+          Ajouter la première étape
+        </button>
+      </div>
+
+      <div *ngIf="!loading && etapes.length > 0" class="divide-y divide-gray-200">
+        <div *ngFor="let etape of etapes; trackBy: trackByEtapeId" 
+          class="p-6 hover:bg-gray-50 transition-colors cursor-move"
+          draggable="true"
+          (dragstart)="onDragStart($event, etape)"
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop($event, etape)">
+          
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <!-- Ordre -->
+                <div class="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                  {{ etape.ordreEtape }}
+                </div>
+                
+                <!-- Titre du cours -->
+                <h3 class="text-lg font-medium text-gray-900">
+                  {{ etape.coursTitle }}
+                </h3>
+                
+                <!-- Niveau -->
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [class]="getNiveauEtapeColor(etape.niveauEtape)">
+                  {{ getNiveauEtapeLabel(etape.niveauEtape) }}
+                </span>
+                
+                <!-- Obligatoire -->
+                <span *ngIf="etape.isObligatoire" 
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  Obligatoire
+                </span>
+              </div>
+
+              <!-- Description du cours -->
+              <p *ngIf="etape.coursDescription" class="text-gray-600 text-sm mb-2">
+                {{ etape.coursDescription }}
+              </p>
+
+              <!-- Description de l'étape -->
+              <p *ngIf="etape.description" class="text-gray-700 text-sm mb-3 italic">
+                {{ etape.description }}
+              </p>
+
+              <!-- Conditions -->
+              <div class="flex flex-wrap gap-4 text-xs text-gray-500">
+                <span *ngIf="etape.pourcentageCompletionRequis > 0">
+                  <i data-feather="target" class="w-3 h-3 inline mr-1"></i>
+                  Completion: {{ etape.pourcentageCompletionRequis }}%
+                </span>
+                <span *ngIf="etape.scoreMinimum > 0">
+                  <i data-feather="award" class="w-3 h-3 inline mr-1"></i>
+                  Score min: {{ etape.scoreMinimum }}%
+                </span>
+                <span *ngIf="etape.quizObligatoires">
+                  <i data-feather="help-circle" class="w-3 h-3 inline mr-1"></i>
+                  Quiz obligatoires
+                </span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 ml-4">
+              <button (click)="editEtape(etape)"
+                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Modifier l'étape">
+                <i data-feather="edit-2" class="w-4 h-4"></i>
+              </button>
+              <button (click)="deleteEtape(etape)"
+                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Supprimer l'étape">
+                <i data-feather="trash-2" class="w-4 h-4"></i>
+              </button>
+              <div class="p-2 text-gray-400 cursor-move" title="Glisser pour réorganiser">
+                <i data-feather="move" class="w-4 h-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions du parcours -->
+    <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-between">
+      <a [routerLink]="['/parcours/gerer', parcoursId]"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+        <i data-feather="arrow-left" class="w-4 h-4 mr-2"></i>
+        Retour à la gestion
+      </a>
+      
+      <div class="flex gap-4">
+        <a [routerLink]="['/parcours', parcoursId]"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <i data-feather="eye" class="w-4 h-4 mr-2"></i>
+          Prévisualiser
+        </a>
+      </div>
+    </div>
+  </main>
+</div>

@@ -65,8 +65,34 @@ public class EnrollmentController {
         String email = authentication.getName();
         User user = userRepository.findByEmailAndArchivedFalse(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        
+        System.out.println("🎯 API APPELÉE: markLeconAsCompleted - Cours: " + coursId + " - Leçon: " + request.getLeconId() + " - User: " + email);
+        
         EnrollmentResponse response = enrollmentService.markLeconAsCompleted(user.getId(), coursId, request);
         return ResponseEntity.ok(response);
+    }
+
+    // NOUVEAU: Endpoint de debug pour forcer la mise à jour de progression
+    @PostMapping("/cours/{coursId}/force-update-progress")
+    public ResponseEntity<?> forceUpdateProgress(
+            @PathVariable Long coursId,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            User user = userRepository.findByEmailAndArchivedFalse(email)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            
+            System.out.println("🔧 FORCE UPDATE PROGRESS - Cours: " + coursId + " - User: " + email);
+            
+            // Obtenir l'enrollment et forcer la mise à jour
+            EnrollmentResponse response = enrollmentService.getEnrollmentDetails(user.getId(), coursId);
+            
+            return ResponseEntity.ok().body("{\"message\": \"Progression vérifiée\", \"progress\": " + response.getProgress() + "}");
+        } catch (Exception e) {
+            System.err.println("❌ Erreur force update: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Erreur: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/cours/{coursId}/lecons/{leconId}/completion")

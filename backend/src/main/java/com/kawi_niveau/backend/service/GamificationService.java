@@ -106,12 +106,28 @@ public class GamificationService {
                     int oldLevel = userXP.getCurrentLevel();
                     userXP.setCurrentLevel(currentLevel.getLevel());
 
-                    // Calculer XP pour le prochain niveau
-                    Optional<Level> nextLevel = levelRepository.findNextLevel(userXP.getTotalXP());
-                    if (nextLevel.isPresent()) {
-                        userXP.setXpToNextLevel(nextLevel.get().getXpRequired() - userXP.getTotalXP());
-                    } else {
-                        userXP.setXpToNextLevel(0); // Niveau maximum atteint
+                    // Calculer XP pour le prochain niveau avec gestion d'erreur
+                    try {
+                        Optional<Level> nextLevel = levelRepository.findNextLevel(userXP.getTotalXP());
+                        if (nextLevel.isPresent()) {
+                            userXP.setXpToNextLevel(nextLevel.get().getXpRequired() - userXP.getTotalXP());
+                        } else {
+                            userXP.setXpToNextLevel(0); // Niveau maximum atteint
+                        }
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Erreur lors de la recherche du niveau suivant: " + e.getMessage());
+                        // Calculer manuellement le prochain niveau
+                        List<Level> allLevels = levelRepository.findAllOrderByLevel();
+                        Level nextLevel = allLevels.stream()
+                            .filter(l -> l.getXpRequired() > userXP.getTotalXP())
+                            .findFirst()
+                            .orElse(null);
+                        
+                        if (nextLevel != null) {
+                            userXP.setXpToNextLevel(nextLevel.getXpRequired() - userXP.getTotalXP());
+                        } else {
+                            userXP.setXpToNextLevel(0); // Niveau maximum atteint
+                        }
                     }
 
                     userXP.setLastUpdated(System.currentTimeMillis());
@@ -172,117 +188,16 @@ public class GamificationService {
         checkBadgeEligibility(user, BadgeCriteriaType.LEVEL_REACHED, level);
     }
 
-    // Méthodes pour les événements d'apprentissage avec protection
+    // Méthodes pour les événements d'apprentissage simplifiées (XP seulement)
     public void onCourseCompleted(User user) {
         try {
             // Attribuer des XP pour terminer un cours
             awardXP(user, 50, "Cours terminé");
 
-            // Vérifier les badges de cours
-            long completedCourses = getCompletedCoursesCount(user);
-            checkBadgeEligibility(user, BadgeCriteriaType.COURS_COMPLETED, (int) completedCourses);
-
-            // Badge pour le premier cours
-            if (completedCourses == 1) {
-                checkBadgeEligibility(user, BadgeCriteriaType.FIRST_COURSE, 1);
-            }
-
-            // Vérifier les défis automatiquement
-            checkAllActiveChallenges(user);
-
-            System.out.println(
-                    "Gamification: Cours terminé pour " + user.getEmail() + " (Total: " + completedCourses + " cours)");
+            System.out.println("Gamification: Cours terminé pour " + user.getEmail());
         } catch (Exception e) {
             System.err.println(
                     "Erreur lors du traitement de cours terminé pour " + user.getEmail() + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public void onLessonCompleted(User user) {
-        try {
-            // Attribuer des XP pour terminer une leçon
-            awardXP(user, 5, "Leçon terminée");
-
-            // Vérifier si c'est la première leçon
-            long completedLessons = getCompletedLessonsCount(user);
-            if (completedLessons == 1) {
-                checkBadgeEligibility(user, BadgeCriteriaType.FIRST_COURSE, 1); // Réutiliser pour "Premier Pas"
-            }
-
-            System.out.println("Gamification: Leçon terminée pour " + user.getEmail() + " (Total: " + completedLessons
-                    + " leçons)");
-        } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors du traitement de leçon terminée pour " + user.getEmail() + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public void onCourseEnrollment(User user) {
-        try {
-            // Attribuer des XP d'encouragement pour l'inscription
-            awardXP(user, 5, "Inscription à un cours");
-
-            // Vérifier si c'est la première inscription
-            long enrollments = getEnrollmentsCount(user);
-            if (enrollments == 1) {
-                checkBadgeEligibility(user, BadgeCriteriaType.FIRST_COURSE, 1); // Badge "Débutant Motivé"
-            }
-
-            System.out.println("Gamification: Inscription cours pour " + user.getEmail() + " (Total: " + enrollments
-                    + " inscriptions)");
-        } catch (Exception e) {
-            System.err
-                    .println("Erreur lors du traitement d'inscription pour " + user.getEmail() + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public void onFirstLogin(User user) {
-        try {
-            // Vérifier si c'est vraiment la première connexion
-            long loginCount = userLoginRepository.countByUser(user);
-            if (loginCount <= 1) { // Première connexion (le login actuel est déjà enregistré)
-                // Attribuer des XP de bienvenue
-                awardXP(user, 10, "Première connexion");
-
-                // Badge de bienvenue (réutiliser FIRST_COURSE pour l'instant)
-                checkBadgeEligibility(user, BadgeCriteriaType.FIRST_COURSE, 1);
-
-                System.out.println("Gamification: Première connexion pour " + user.getEmail());
-            }
-        } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors du traitement de première connexion pour " + user.getEmail() + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public void onDailyLogin(User user) {
-        try {
-            // Vérifier les connexions quotidiennes consécutives
-            long consecutiveDays = getConsecutiveLoginDays(user);
-
-            // Badge pour 7 jours consécutifs
-            if (consecutiveDays >= 7) {
-                checkBadgeEligibility(user, BadgeCriteriaType.STREAK_DAYS, (int) consecutiveDays);
-            }
-
-            // XP quotidien pour encourager la régularité
-            if (consecutiveDays > 1) {
-                int bonusXP = Math.min((int) consecutiveDays, 10); // Max 10 XP de bonus
-                awardXP(user, bonusXP, "Connexion quotidienne (Jour " + consecutiveDays + ")");
-            }
-
-            // Vérifier les défis automatiquement
-            checkAllActiveChallenges(user);
-
-            System.out.println("Gamification: Connexion quotidienne pour " + user.getEmail() + " (Streak: "
-                    + consecutiveDays + " jours)");
-        } catch (Exception e) {
-            System.err.println("Erreur lors du traitement de connexion quotidienne pour " + user.getEmail() + ": "
-                    + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -319,25 +234,21 @@ public class GamificationService {
         }
     }
 
-    public void onChallengeCompleted(User user, Challenge challenge) {
+    public void onParcoursCompleted(User user, String parcoursTitle, Integer bonusXP) {
         try {
-            // Attribuer les XP du défi
-            awardXP(user, challenge.getXpReward(), "Défi terminé: " + challenge.getName());
-
-            // Vérifier les badges de défi
-            long completedChallenges = userChallengeRepository.countCompletedChallengesByUser(user);
-            checkBadgeEligibility(user, BadgeCriteriaType.CHALLENGE_COMPLETED, (int) completedChallenges);
-
-            System.out.println("Gamification: Défi '" + challenge.getName() + "' terminé pour " + user.getEmail()
-                    + " (+" + challenge.getXpReward() + " XP)");
+            if (bonusXP != null && bonusXP > 0) {
+                awardXP(user, bonusXP, "Parcours terminé: " + parcoursTitle);
+                System.out.println("Gamification: Parcours '" + parcoursTitle + "' terminé pour " + user.getEmail()
+                        + " (+" + bonusXP + " XP)");
+            }
         } catch (Exception e) {
             System.err.println(
-                    "Erreur lors du traitement de défi terminé pour " + user.getEmail() + ": " + e.getMessage());
+                    "Erreur lors du traitement de parcours terminé pour " + user.getEmail() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // Méthodes utilitaires avec protection contre les erreurs
+    // Méthodes utilitaires simplifiées
     private long getCompletedCoursesCount(User user) {
         try {
             return enrollmentRepository.countByUserIdAndProgressGreaterThanEqual(user.getId(), 100.0f);
@@ -358,69 +269,83 @@ public class GamificationService {
         }
     }
 
-    private long getCompletedLessonsCount(User user) {
-        try {
-            // Compter toutes les leçons terminées par l'utilisateur
-            // Pour l'instant placeholder, mais on peut utiliser l'ID si implémenté
-            return enrollmentRepository.findByUserId(user.getId()).stream()
-                    .mapToLong(enrollment -> {
-                        // Cette logique sera implémentée avec LeconCompletionRepository
-                        return 0; // Placeholder pour l'instant
-                    })
-                    .sum();
-        } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors du comptage des leçons terminées pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
-        }
+    // Méthodes publiques pour obtenir les statistiques simplifiées
+    public long getTotalXPAwarded() {
+        Long total = userXPRepository.findTotalXPAwarded();
+        return total != null ? total : 0L;
     }
 
-    private long getEnrollmentsCount(User user) {
-        try {
-            return enrollmentRepository.findByUserId(user.getId()).size();
-        } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors du comptage des inscriptions pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
-        }
+    public double getAverageUserXP() {
+        Double average = userXPRepository.getAverageXP();
+        return average != null ? average : 0.0;
     }
 
-    private long getConsecutiveLoginDays(User user) {
-        try {
-            // Calculer les jours consécutifs de connexion
-            long currentTime = System.currentTimeMillis();
-            long oneDayMs = 24 * 60 * 60 * 1000L;
-
-            // Compter les jours distincts de connexion dans les 30 derniers jours
-            long thirtyDaysAgo = currentTime - (30 * oneDayMs);
-            return userLoginRepository.countDistinctDaysByUserIdAndLoginTimeAfter(user.getId(), thirtyDaysAgo);
-        } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors du calcul des jours consécutifs pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
-        }
+    public long getTotalUsersWithXP() {
+        return userXPRepository.count();
     }
 
-    // Méthode pour enregistrer une connexion
-    public void recordLogin(User user, String ipAddress, String userAgent) {
+    // Méthodes simplifiées pour compatibilité (sans fonctionnalité)
+    public void onCourseEnrollment(User user) {
         try {
-            UserLogin login = new UserLogin();
-            login.setUser(user);
-            login.setIpAddress(ipAddress);
-            login.setUserAgent(userAgent);
-            userLoginRepository.save(login);
-
-            // Déclencher les événements de gamification
-            onFirstLogin(user);
-            onDailyLogin(user);
+            // Attribuer des XP d'encouragement pour l'inscription
+            awardXP(user, 5, "Inscription à un cours");
+            System.out.println("Gamification: Inscription cours pour " + user.getEmail());
         } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors de l'enregistrement de connexion pour " + user.getEmail() + ": " + e.getMessage());
+            System.err.println("Erreur lors du traitement d'inscription pour " + user.getEmail() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // Système automatique de vérification des défis
+    public void onLessonCompleted(User user) {
+        try {
+            // Attribuer des XP pour terminer une leçon
+            awardXP(user, 5, "Leçon terminée");
+            System.out.println("Gamification: Leçon terminée pour " + user.getEmail());
+        } catch (Exception e) {
+            System.err.println("Erreur lors du traitement de leçon terminée pour " + user.getEmail() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void recordLogin(User user, String ipAddress, String userAgent) {
+        try {
+            // Enregistrer la connexion dans user_logins si la table existe
+            try {
+                UserLogin login = new UserLogin();
+                login.setUser(user);
+                login.setIpAddress(ipAddress);
+                login.setUserAgent(userAgent);
+                userLoginRepository.save(login);
+            } catch (Exception e) {
+                System.err.println("Erreur enregistrement login (non bloquant): " + e.getMessage());
+            }
+
+            // Vérifier si c'est la première connexion pour attribuer le badge
+            try {
+                long loginCount = userLoginRepository.countByUser(user);
+                if (loginCount <= 1) { // Première connexion
+                    // Attribuer des XP de bienvenue
+                    awardXP(user, 10, "Première connexion");
+
+                    // Badge de première connexion
+                    checkBadgeEligibility(user, BadgeCriteriaType.FIRST_COURSE, 1); // Réutiliser pour "Premier Pas"
+                    
+                    System.out.println("Gamification: Première connexion pour " + user.getEmail() + " - Badge Premier Pas attribué");
+                } else {
+                    // XP quotidien pour les connexions suivantes
+                    awardXP(user, 1, "Connexion quotidienne");
+                    System.out.println("Gamification: Connexion enregistrée pour " + user.getEmail());
+                }
+            } catch (Exception e) {
+                System.err.println("Erreur gamification première connexion (non bloquant): " + e.getMessage());
+            }
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de l'enregistrement de connexion pour " + user.getEmail() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     public void checkAllActiveChallenges(User user) {
         try {
             List<Challenge> activeChallenges = challengeRepository
@@ -493,24 +418,6 @@ public class GamificationService {
                     UserXP userXP = getUserXP(user);
                     return userXP.getTotalXP();
 
-                case DAILY_LOGIN:
-                    return (int) getConsecutiveLoginDays(user);
-
-                case PERFECT_SCORES:
-                    return (int) getPerfectScoresCount(user);
-
-                case EARN_BADGES:
-                    return (int) getEarnedBadgesCount(user);
-
-                case COMPLETE_MODULE:
-                    return (int) getCompletedModulesCount(user);
-
-                case WEEKLY_ACTIVITY:
-                    return (int) getWeeklyActivityScore(user);
-
-                case MONTHLY_GOAL:
-                    return (int) getMonthlyGoalProgress(user);
-
                 default:
                     return 0;
             }
@@ -521,98 +428,17 @@ public class GamificationService {
         }
     }
 
-    private long getPerfectScoresCount(User user) {
+    public void onChallengeCompleted(User user, Challenge challenge) {
         try {
-            return resultatQuizRepository.countByUserIdAndScoreGreaterThanEqual(user.getId(), 100.0);
+            // Attribuer les XP du défi
+            awardXP(user, challenge.getXpReward(), "Défi terminé: " + challenge.getName());
+
+            System.out.println("Gamification: Défi '" + challenge.getName() + "' terminé pour " + user.getEmail()
+                    + " (+" + challenge.getXpReward() + " XP)");
         } catch (Exception e) {
             System.err.println(
-                    "Erreur lors du comptage des scores parfaits pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
+                    "Erreur lors du traitement de défi terminé pour " + user.getEmail() + ": " + e.getMessage());
+            e.printStackTrace();
         }
-    }
-
-    private long getEarnedBadgesCount(User user) {
-        try {
-            return userBadgeRepository.countByUserId(user.getId());
-        } catch (Exception e) {
-            System.err.println("Erreur lors du comptage des badges pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
-        }
-    }
-
-    private long getCompletedModulesCount(User user) {
-        try {
-            // Pour l'instant, approximation basée sur les cours terminés
-            // Une implémentation plus précise nécessiterait de tracker les modules
-            // individuellement
-            return getCompletedCoursesCount(user) * 3; // Estimation moyenne de 3 modules par cours
-        } catch (Exception e) {
-            System.err.println("Erreur lors du comptage des modules pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
-        }
-    }
-
-    private long getWeeklyActivityScore(User user) {
-        try {
-            // Calculer l'activité de la semaine (connexions + quiz + leçons)
-            long weekStart = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000L);
-            long weeklyLogins = userLoginRepository.findByUserIdAndLoginTimeAfter(user.getId(), weekStart).size();
-            long weeklyQuizzes = getPassedQuizzesCount(user); // Approximation
-            return (int) (weeklyLogins + weeklyQuizzes);
-        } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors du calcul d'activité hebdomadaire pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
-        }
-    }
-
-    private long getMonthlyGoalProgress(User user) {
-        try {
-            // Calculer la progression mensuelle (XP + cours + badges)
-            UserXP userXP = getUserXP(user);
-            long monthlyXP = userXP.getTotalXP(); // Approximation
-            long monthlyCourses = getCompletedCoursesCount(user);
-            long monthlyBadges = getEarnedBadgesCount(user);
-            return (int) (monthlyXP / 10 + monthlyCourses * 20 + monthlyBadges * 5); // Score composite
-        } catch (Exception e) {
-            System.err.println(
-                    "Erreur lors du calcul d'objectif mensuel pour " + user.getEmail() + ": " + e.getMessage());
-            return 0;
-        }
-    }
-
-    // Méthodes publiques pour obtenir les statistiques
-    public long getTotalBadges() {
-        return badgeRepository.count();
-    }
-
-    public long getActiveBadges() {
-        return badgeRepository.countActiveBadges();
-    }
-
-    public long getTotalChallenges() {
-        return challengeRepository.count();
-    }
-
-    public long getActiveChallenges() {
-        return challengeRepository.countActiveChallenges();
-    }
-
-    public long getTotalXPAwarded() {
-        Long total = userXPRepository.findTotalXPAwarded();
-        return total != null ? total : 0L;
-    }
-
-    public double getAverageUserXP() {
-        Double average = userXPRepository.getAverageXP();
-        return average != null ? average : 0.0;
-    }
-
-    public long getTotalBadgesEarned() {
-        return userBadgeRepository.countTotalBadgesEarned();
-    }
-
-    public long getTotalChallengesCompleted() {
-        return userChallengeRepository.countTotalChallengesCompleted();
     }
 }

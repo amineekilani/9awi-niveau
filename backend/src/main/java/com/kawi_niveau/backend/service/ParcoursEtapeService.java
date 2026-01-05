@@ -32,6 +32,27 @@ public class ParcoursEtapeService {
 
     // Ajouter une étape à un parcours
     @Transactional
+    public ParcoursEtapeResponse addEtape(Long parcoursId, ParcoursEtapeRequest request, String formateurEmail) {
+        return addEtapeToParcours(parcoursId, request, formateurEmail);
+    }
+
+    // Obtenir une étape par ID
+    public ParcoursEtapeResponse getEtapeById(Long etapeId, String userEmail) {
+        ParcoursEtape etape = etapeRepository.findById(etapeId)
+                .orElseThrow(() -> new RuntimeException("Étape non trouvée"));
+
+        User user = null;
+        if (userEmail != null) {
+            user = userRepository.findByEmail(userEmail).orElse(null);
+        }
+
+        List<ParcoursEtape> toutesEtapes = etapeRepository.findByParcoursOrderByOrdreEtape(etape.getParcours());
+        
+        return convertToResponseWithValidation(etape, user, toutesEtapes);
+    }
+
+    // Ajouter une étape à un parcours
+    @Transactional
     public ParcoursEtapeResponse addEtapeToParcours(Long parcoursId, ParcoursEtapeRequest request, String formateurEmail) {
         User formateur = userRepository.findByEmail(formateurEmail)
                 .orElseThrow(() -> new RuntimeException("Formateur non trouvé"));

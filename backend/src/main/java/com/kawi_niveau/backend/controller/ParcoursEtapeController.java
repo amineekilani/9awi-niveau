@@ -10,9 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/parcours")
@@ -24,12 +22,12 @@ public class ParcoursEtapeController {
 
     // Ajouter une étape à un parcours
     @PostMapping("/{parcoursId}/etapes")
-    public ResponseEntity<?> addEtapeToParcours(@PathVariable Long parcoursId,
-                                               @Valid @RequestBody ParcoursEtapeRequest request,
-                                               Authentication authentication) {
+    public ResponseEntity<?> addEtape(@PathVariable Long parcoursId,
+                                     @Valid @RequestBody ParcoursEtapeRequest request,
+                                     Authentication authentication) {
         try {
             String formateurEmail = authentication.getName();
-            ParcoursEtapeResponse response = etapeService.addEtapeToParcours(parcoursId, request, formateurEmail);
+            ParcoursEtapeResponse response = etapeService.addEtape(parcoursId, request, formateurEmail);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erreur lors de l'ajout de l'étape: " + e.getMessage());
@@ -38,7 +36,8 @@ public class ParcoursEtapeController {
 
     // Obtenir toutes les étapes d'un parcours
     @GetMapping("/{parcoursId}/etapes")
-    public ResponseEntity<?> getEtapesByParcours(@PathVariable Long parcoursId, Authentication authentication) {
+    public ResponseEntity<?> getEtapesByParcours(@PathVariable Long parcoursId,
+                                                Authentication authentication) {
         try {
             String userEmail = authentication.getName();
             List<ParcoursEtapeResponse> etapes = etapeService.getEtapesByParcours(parcoursId, userEmail);
@@ -64,19 +63,14 @@ public class ParcoursEtapeController {
 
     // Supprimer une étape
     @DeleteMapping("/etapes/{etapeId}")
-    public ResponseEntity<?> deleteEtape(@PathVariable Long etapeId, Authentication authentication) {
+    public ResponseEntity<?> deleteEtape(@PathVariable Long etapeId,
+                                        Authentication authentication) {
         try {
             String formateurEmail = authentication.getName();
             etapeService.deleteEtape(etapeId, formateurEmail);
-            
-            // Retourner un objet Map au lieu d'une string JSON
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Étape supprimée avec succès");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok().body("{\"message\": \"Étape supprimée avec succès\"}");
         } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Erreur lors de la suppression de l'étape: " + e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.badRequest().body("Erreur lors de la suppression de l'étape: " + e.getMessage());
         }
     }
 
@@ -91,6 +85,19 @@ public class ParcoursEtapeController {
             return ResponseEntity.ok(etapes);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erreur lors de la réorganisation des étapes: " + e.getMessage());
+        }
+    }
+
+    // Obtenir une étape par ID
+    @GetMapping("/etapes/{etapeId}")
+    public ResponseEntity<?> getEtapeById(@PathVariable Long etapeId,
+                                         Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            ParcoursEtapeResponse etape = etapeService.getEtapeById(etapeId, userEmail);
+            return ResponseEntity.ok(etape);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération de l'étape: " + e.getMessage());
         }
     }
 }

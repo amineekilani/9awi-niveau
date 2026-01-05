@@ -5,6 +5,7 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AuthService } from '../auth';
 import { ParcoursService, ParcoursResponse, NiveauDifficulte, TypeParcours } from '../parcours.service';
+import { GamificationNotificationService } from '../gamification-notification.service';
 
 declare const feather: any;
 
@@ -34,11 +35,15 @@ export class MesParcoursComponent implements OnInit {
   constructor(
     public parcoursService: ParcoursService,
     public authService: AuthService,
+    private notificationService: GamificationNotificationService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
+    // Vérifier les nouvelles notifications de parcours
+    this.notificationService.checkForNewAchievements();
+    
     // Écouter les paramètres de requête pour le filtrage initial
     this.route.queryParams.subscribe(params => {
       if (params['filter']) {

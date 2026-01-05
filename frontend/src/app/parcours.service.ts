@@ -275,6 +275,11 @@ export class ParcoursService {
     return this.http.post<{message: string}>(`${this.apiUrl}/${parcoursId}/forcer-mise-a-jour`, {}, { headers: this.getHeaders() });
   }
 
+  // NOUVEAU: Déclencher manuellement la mise à jour de progression
+  triggerProgressionUpdate(parcoursId: number): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/${parcoursId}/trigger-progression-update`, {}, { headers: this.getHeaders() });
+  }
+
   // Utilitaire pour construire l'URL complète de l'image
   getImageUrl(thumbnailUrl: string | undefined): string {
     if (!thumbnailUrl) return '';

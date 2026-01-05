@@ -52,17 +52,23 @@ public class ParcoursIntegrationService {
      */
     public void onQuizCompleted(Long userId, Long quizId, double score) {
         try {
-            User user = userRepository.findById(userId).orElse(null);
-            if (user == null) return;
-
-            // Trouver le cours associé au quiz
-            // Note: Cette logique dépend de votre structure de données
-            // Vous devrez peut-être adapter selon votre modèle
+            System.out.println("🔄 Intégration parcours: Quiz terminé par user " + userId + ", quiz " + quizId + ", score " + score + "%");
             
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                System.err.println("❌ Utilisateur non trouvé: " + userId);
+                return;
+            }
+
+            // Trouver le cours associé au quiz via les modules
+            // Cette logique dépend de votre structure de données
             // Pour l'instant, on recalcule toute la progression de l'utilisateur
             progressionService.recalculerProgressionUtilisateur(user);
+            
+            System.out.println("✅ Progression parcours recalculée pour " + user.getEmail());
         } catch (Exception e) {
-            System.err.println("Erreur lors de la mise à jour de la progression des parcours après quiz: " + e.getMessage());
+            System.err.println("❌ Erreur lors de la mise à jour de la progression des parcours après quiz: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

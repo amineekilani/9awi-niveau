@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import Swal from 'sweetalert2';
 import { UserGamificationService, UserBadge } from './user-gamification.service';
+import { ParcoursNotificationService, ParcoursNotification } from './parcours-notification.service';
 
 @Injectable({
     providedIn: 'root'
@@ -8,11 +9,12 @@ import { UserGamificationService, UserBadge } from './user-gamification.service'
 export class GamificationNotificationService {
 
     constructor(
-        private gamificationService: UserGamificationService
+        private gamificationService: UserGamificationService,
+        private parcoursNotificationService: ParcoursNotificationService
     ) { }
 
     /**
-     * Vérifie s'il y a de nouveaux badges ou défis et affiche des alertes
+     * Vérifie s'il y a de nouveaux badges, défis ou parcours et affiche des alertes
      */
     checkForNewAchievements() {
         // 1. Vérifier les badges
@@ -33,6 +35,71 @@ export class GamificationNotificationService {
                 }
             }
         });
+
+        // 3. Vérifier les notifications de parcours
+        this.parcoursNotificationService.getUnreadNotifications().subscribe({
+            next: (notifications) => {
+                if (notifications && notifications.length > 0) {
+                    this.showParcoursNotifications(notifications);
+                }
+            }
+        });
+    }
+
+    private async showParcoursNotifications(notifications: ParcoursNotification[]) {
+        for (const notification of notifications) {
+            let icon: 'success' | 'info' = 'success';
+            let title = notification.title;
+            let message = notification.message;
+
+            // Personnaliser selon le type de notification
+            if (notification.type === 'PARCOURS_COMPLETED') {
+                icon = 'success';
+                title = '🎉 ' + title;
+                if (notification.certificateReady) {
+                    message += '\n\n📜 Votre certificat est prêt à être téléchargé !';
+                }
+            } else if (notification.type === 'CERTIFICATE_READY') {
+                icon = 'info';
+                title = '📜 ' + title;
+            }
+
+            const result = await Swal.fire({
+                title: title,
+                html: message.replace(/\n/g, '<br>'), // Convertir les retours à la ligne en HTML
+                icon: icon,
+                confirmButtonText: notification.certificateReady ? 'Voir le certificat' : 'Génial !',
+                showCancelButton: notification.certificateReady,
+                cancelButtonText: notification.certificateReady ? 'Plus tard' : undefined,
+                confirmButtonColor: '#063cdf',
+                cancelButtonColor: '#6b7280',
+                background: '#ffffff',
+                padding: '2rem',
+                backdrop: `rgba(0,123,0,0.1)`,
+                customClass: {
+                    popup: 'rounded-xl shadow-2xl',
+                    title: 'text-2xl font-bold text-gray-900',
+                    confirmButton: 'font-bold px-6 py-2 rounded-lg',
+                    cancelButton: 'font-bold px-6 py-2 rounded-lg'
+                }
+            });
+
+            // Gérer les actions après fermeture de l'alerte
+            if (result.isConfirmed && notification.certificateReady && notification.certificateUrl) {
+                // Ouvrir le certificat dans un nouvel onglet
+                window.open(notification.certificateUrl, '_blank');
+            }
+
+            // Marquer comme lue après que l'utilisateur ait cliqué
+            this.parcoursNotificationService.markNotificationAsRead(notification.id).subscribe({
+                next: () => {
+                    console.log('Notification de parcours marquée comme lue:', notification.id);
+                },
+                error: (error) => {
+                    console.error('Erreur lors du marquage de la notification:', error);
+                }
+            });
+        }
     }
 
     private async showBadgeNotifications(badges: UserBadge[]) {
