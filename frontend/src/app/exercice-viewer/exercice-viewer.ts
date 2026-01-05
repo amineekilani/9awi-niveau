@@ -224,13 +224,6 @@ export class ExerciceViewerComponent implements OnInit {
     return [];
   }
 
-  getMatchItems(): ExerciceElement[] {
-    if (this.exercice?.typeExercice === 'MATCHING') {
-      return this.elements.filter(e => e.typeElement === 'MATCH_ITEM');
-    }
-    return [];
-  }
-
   getTextElements(): ExerciceElement[] {
     return this.elements.filter(e => e.typeElement === 'TEXT');
   }

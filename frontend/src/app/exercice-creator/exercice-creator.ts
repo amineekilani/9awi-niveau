@@ -27,11 +27,6 @@ export class ExerciceCreatorComponent implements OnInit {
   // Pour drag and drop
   draggableItems: string[] = [''];
   dropZones: { label: string; correctAnswer: string }[] = [{ label: '', correctAnswer: '' }];
-  
-  // Pour l'appariement
-  matchPairs: { question: string; answer: string; options: string[] }[] = [
-    { question: '', answer: '', options: ['', '', '', ''] }
-  ];
 
   loading = false;
   error = '';
@@ -129,47 +124,12 @@ export class ExerciceCreatorComponent implements OnInit {
     this.exercice.elements = elements;
   }
 
-  // Méthodes pour l'appariement
-  addMatchPair() {
-    this.matchPairs.push({ question: '', answer: '', options: ['', '', '', ''] });
-  }
-
-  removeMatchPair(index: number) {
-    this.matchPairs.splice(index, 1);
-  }
-
-  generateMatchingElements() {
-    const elements: ExerciceElement[] = [];
-    let position = 1;
-
-    this.matchPairs.forEach(pair => {
-      if (pair.question.trim() && pair.answer.trim()) {
-        // Filtrer les options vides et s'assurer que la bonne réponse est incluse
-        const validOptions = pair.options.filter(opt => opt.trim() !== '');
-        if (!validOptions.includes(pair.answer)) {
-          validOptions.push(pair.answer);
-        }
-
-        elements.push({
-          contenu: pair.question.trim(),
-          typeElement: 'MATCH_ITEM',
-          positionOrdre: position++,
-          reponseCorrecte: pair.answer.trim(),
-          options: validOptions
-        });
-      }
-    });
-
-    this.exercice.elements = elements;
-  }
-
   onTypeChange() {
     // Réinitialiser les éléments quand le type change
     this.exercice.elements = [];
     this.fillBlankText = '';
     this.draggableItems = [''];
     this.dropZones = [{ label: '', correctAnswer: '' }];
-    this.matchPairs = [{ question: '', answer: '', options: ['', '', '', ''] }];
   }
 
   saveExercice() {
@@ -185,9 +145,6 @@ export class ExerciceCreatorComponent implements OnInit {
         break;
       case 'DRAG_DROP':
         this.generateDragDropElements();
-        break;
-      case 'MATCHING':
-        this.generateMatchingElements();
         break;
     }
 

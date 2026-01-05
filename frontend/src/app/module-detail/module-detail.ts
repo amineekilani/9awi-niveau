@@ -82,11 +82,6 @@ export class ModuleDetailComponent implements OnInit {
   // Pour drag and drop
   draggableItems: string[] = [''];
   dropZones: { label: string; correctAnswer: string }[] = [{ label: '', correctAnswer: '' }];
-  
-  // Pour l'appariement
-  matchPairs: { question: string; answer: string; options: string[] }[] = [
-    { question: '', answer: '', options: ['', '', '', ''] }
-  ];
 
   constructor(
     private route: ActivatedRoute,
@@ -491,7 +486,6 @@ export class ModuleDetailComponent implements OnInit {
     this.fillBlankText = '';
     this.draggableItems = [''];
     this.dropZones = [{ label: '', correctAnswer: '' }];
-    this.matchPairs = [{ question: '', answer: '', options: ['', '', '', ''] }];
   }
 
   onExerciceTypeChange() {
@@ -575,39 +569,6 @@ export class ModuleDetailComponent implements OnInit {
     return elements;
   }
 
-  // Méthodes pour l'appariement
-  addMatchPair() {
-    this.matchPairs.push({ question: '', answer: '', options: ['', '', '', ''] });
-  }
-
-  removeMatchPair(index: number) {
-    this.matchPairs.splice(index, 1);
-  }
-
-  generateMatchingElements(): ExerciceElement[] {
-    const elements: ExerciceElement[] = [];
-    let position = 1;
-
-    this.matchPairs.forEach(pair => {
-      if (pair.question.trim() && pair.answer.trim()) {
-        const validOptions = pair.options.filter(opt => opt.trim() !== '');
-        if (!validOptions.includes(pair.answer)) {
-          validOptions.push(pair.answer);
-        }
-
-        elements.push({
-          contenu: pair.question.trim(),
-          typeElement: 'MATCH_ITEM',
-          positionOrdre: position++,
-          reponseCorrecte: pair.answer.trim(),
-          options: validOptions
-        });
-      }
-    });
-
-    return elements;
-  }
-
   saveExercice() {
     if (!this.exerciceForm.titre.trim()) {
       this.error = 'Le titre est obligatoire';
@@ -622,9 +583,6 @@ export class ModuleDetailComponent implements OnInit {
         break;
       case 'DRAG_DROP':
         elements = this.generateDragDropElements();
-        break;
-      case 'MATCHING':
-        elements = this.generateMatchingElements();
         break;
     }
 
@@ -669,7 +627,6 @@ export class ModuleDetailComponent implements OnInit {
     switch (type) {
       case 'FILL_BLANK': return 'Texte à trous';
       case 'DRAG_DROP': return 'Glisser-déposer';
-      case 'MATCHING': return 'Appariement';
       default: return type;
     }
   }

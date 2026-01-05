@@ -99,7 +99,6 @@ public class ExerciceElement {
         TEXT,          // Texte normal
         BLANK,         // Espace à remplir
         DRAGGABLE,     // Élément déplaçable
-        DROP_ZONE,     // Zone de dépôt
-        MATCH_ITEM     // Élément à apparier
+        DROP_ZONE      // Zone de dépôt
     }
 }

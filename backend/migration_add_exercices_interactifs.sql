@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS exercice (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     titre VARCHAR(255) NOT NULL,
     description TEXT,
-    type_exercice ENUM('FILL_BLANK', 'DRAG_DROP', 'MATCHING') NOT NULL,
+    type_exercice ENUM('FILL_BLANK', 'DRAG_DROP') NOT NULL,
     module_id BIGINT NOT NULL,
     created_at BIGINT,
     updated_at BIGINT,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS exercice (
 CREATE TABLE IF NOT EXISTS exercice_element (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     contenu TEXT NOT NULL,
-    type_element ENUM('TEXT', 'BLANK', 'DRAGGABLE', 'DROP_ZONE', 'MATCH_ITEM') NOT NULL,
+    type_element ENUM('TEXT', 'BLANK', 'DRAGGABLE', 'DROP_ZONE') NOT NULL,
     position_ordre INT NOT NULL,
     reponse_correcte VARCHAR(500),
     options TEXT, -- JSON pour les options multiples

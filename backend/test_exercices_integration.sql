@@ -37,17 +37,6 @@ INSERT INTO exercice_element (contenu, type_element, position_ordre, reponse_cor
 ('Mammifères:', 'DROP_ZONE', 4, 'Chat', @exercice_id2, UNIX_TIMESTAMP() * 1000),
 ('Oiseaux:', 'DROP_ZONE', 5, 'Aigle', @exercice_id2, UNIX_TIMESTAMP() * 1000);
 
--- Exercice d'appariement
-INSERT INTO exercice (titre, description, type_exercice, module_id, created_at, updated_at) 
-VALUES ('Capitales du monde', 'Associez chaque pays à sa capitale', 'MATCHING', 3, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
-
-SET @exercice_id3 = LAST_INSERT_ID();
-
-INSERT INTO exercice_element (contenu, type_element, position_ordre, reponse_correcte, options, exercice_id, created_at) VALUES
-('France', 'MATCH_ITEM', 1, 'Paris', '["Paris", "Londres", "Berlin", "Madrid"]', @exercice_id3, UNIX_TIMESTAMP() * 1000),
-('Allemagne', 'MATCH_ITEM', 2, 'Berlin', '["Paris", "Londres", "Berlin", "Madrid"]', @exercice_id3, UNIX_TIMESTAMP() * 1000),
-('Espagne', 'MATCH_ITEM', 3, 'Madrid', '["Paris", "Londres", "Berlin", "Madrid"]', @exercice_id3, UNIX_TIMESTAMP() * 1000);
-
 -- 4. Vérifier les données insérées
 SELECT * FROM exercice;
 SELECT * FROM exercice_element ORDER BY exercice_id, position_ordre;

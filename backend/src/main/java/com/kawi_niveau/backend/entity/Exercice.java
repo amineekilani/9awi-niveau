@@ -51,7 +51,6 @@ public class Exercice {
 
     public enum TypeExercice {
         FILL_BLANK,    // Texte à trous
-        DRAG_DROP,     // Glisser-déposer
-        MATCHING       // Appariement
+        DRAG_DROP      // Glisser-déposer
     }
 }

@@ -2,11 +2,10 @@
 
 ## Vue d'ensemble
 
-Le système d'exercices interactifs permet aux formateurs de créer trois types d'exercices engageants :
+Le système d'exercices interactifs permet aux formateurs de créer deux types d'exercices engageants :
 
 1. **Texte à trous (FILL_BLANK)** - Les étudiants complètent des phrases avec des mots manquants
 2. **Glisser-déposer (DRAG_DROP)** - Les étudiants glissent des éléments dans les bonnes zones
-3. **Appariement (MATCHING)** - Les étudiants associent des questions à leurs réponses
 
 ## Installation
 
@@ -49,12 +48,6 @@ SOURCE backend/test_exercices_complet.sql;
 1. Sélectionnez "Glisser-déposer"
 2. Ajoutez les éléments déplaçables
 3. Créez les zones de dépôt avec leurs réponses correctes
-
-#### Appariement
-
-1. Sélectionnez "Appariement"
-2. Créez des paires question-réponse
-3. Ajoutez des options de réponse (incluant la bonne réponse)
 
 ## Utilisation pour les Étudiants
 
@@ -139,7 +132,7 @@ interface Exercice {
   id?: number;
   titre: string;
   description?: string;
-  typeExercice: "FILL_BLANK" | "DRAG_DROP" | "MATCHING";
+  typeExercice: "FILL_BLANK" | "DRAG_DROP";
   moduleId?: number;
   elements?: ExerciceElement[];
 }
@@ -151,7 +144,7 @@ interface Exercice {
 interface ExerciceElement {
   id?: number;
   contenu: string;
-  typeElement: "TEXT" | "BLANK" | "DRAGGABLE" | "DROP_ZONE" | "MATCH_ITEM";
+  typeElement: "TEXT" | "BLANK" | "DRAGGABLE" | "DROP_ZONE";
   positionOrdre: number;
   reponseCorrecte?: string;
   options?: string[];
@@ -170,12 +163,6 @@ Le chat [BLANK:mange] sa nourriture dans [BLANK:la cuisine] tous les [BLANK:mati
 
 Éléments : `Chat`, `Chien`, `Aigle`, `Poisson`
 Zones : `Mammifères`, `Oiseaux`, `Poissons`
-
-### Appariement - Géographie
-
-- France → Paris, Londres, Berlin, Madrid
-- Allemagne → Paris, Londres, Berlin, Madrid
-- Espagne → Paris, Londres, Berlin, Madrid
 
 ## Dépannage
 

@@ -6,7 +6,7 @@ import { environment } from '../environments/environment';
 export interface ExerciceElement {
   id?: number;
   contenu: string;
-  typeElement: 'TEXT' | 'BLANK' | 'DRAGGABLE' | 'DROP_ZONE' | 'MATCH_ITEM';
+  typeElement: 'TEXT' | 'BLANK' | 'DRAGGABLE' | 'DROP_ZONE';
   positionOrdre: number;
   reponseCorrecte?: string;
   options?: string[];
@@ -17,7 +17,7 @@ export interface Exercice {
   id?: number;
   titre: string;
   description?: string;
-  typeExercice: 'FILL_BLANK' | 'DRAG_DROP' | 'MATCHING';
+  typeExercice: 'FILL_BLANK' | 'DRAG_DROP';
   moduleId?: number;
   elements?: ExerciceElement[];
   createdAt?: number;
