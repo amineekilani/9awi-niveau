@@ -3,6 +3,8 @@ import { LoginComponent } from './login/login';
 import { HomeComponent } from './home/home';
 import { authGuard } from './auth-guard';
 import { adminGuard } from './admin-guard';
+import { rootGuard } from './root.guard';
+import { loginGuard } from './login.guard';
 import { RegisterComponent } from './register/register';
 import { VerifyEmailComponent } from './verify-email/verify-email';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password';
@@ -35,9 +37,9 @@ import { ParcoursEtapesComponent } from './parcours-etapes/parcours-etapes.compo
 import { ParcoursProgressionDetailsComponent } from './parcours-progression-details/parcours-progression-details.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
+  { path: '', canActivate: [rootGuard], children: [] },
+  { path: 'login', component: LoginComponent, canActivate: [loginGuard] },
+  { path: 'register', component: RegisterComponent, canActivate: [loginGuard] },
   { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
