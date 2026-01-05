@@ -54,4 +54,7 @@ public interface ParcoursInscriptionRepository extends JpaRepository<ParcoursIns
     
     // Trouver les inscriptions par étape courante
     List<ParcoursInscription> findByParcoursAndEtapeCourante(ParcoursApprentissage parcours, Integer etapeCourante);
+    
+    // Trouver toutes les inscriptions d'un parcours par ID
+    List<ParcoursInscription> findByParcoursId(Long parcoursId);
 }

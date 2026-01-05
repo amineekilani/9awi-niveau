@@ -32,6 +32,8 @@ import { MesParcoursComponent } from './mes-parcours/mes-parcours.component';
 import { ParcoursDetailComponent } from './parcours-detail/parcours-detail.component';
 import { ParcoursEtapesComponent } from './parcours-etapes/parcours-etapes.component';
 
+import { ParcoursProgressionDetailsComponent } from './parcours-progression-details/parcours-progression-details.component';
+
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
@@ -63,6 +65,7 @@ export const routes: Routes = [
   { path: 'parcours/modifier/:id', component: ParcoursFormComponent, canActivate: [authGuard] },
   { path: 'parcours/gerer/:id', component: ParcoursManagerComponent, canActivate: [authGuard] },
   { path: 'parcours/:id/etapes', component: ParcoursEtapesComponent, canActivate: [authGuard] },
+  { path: 'parcours/:id/progression', component: ParcoursProgressionDetailsComponent, canActivate: [authGuard] }, // Nouvelle route
   { path: 'parcours/:id', component: ParcoursDetailComponent, canActivate: [authGuard] }, // Détail pour apprenants
 
   // Routes Admin avec layout unifié

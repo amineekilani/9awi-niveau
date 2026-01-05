@@ -1,0 +1,278 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-gray-50">
+  <!-- Loading state -->
+  <div *ngIf="loading" class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-2 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+      <p class="text-gray-500">Chargement des données de progression...</p>
+    </div>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="!loading && error" class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+      <i data-feather="alert-circle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Erreur</h2>
+      <p class="text-gray-600 mb-4">{{ error }}</p>
+      <button (click)="chargerDonnees()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        Réessayer
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <main *ngIf="!loading && !error" class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <a routerLink="/parcours-dashboard" class="hover:text-blue-600">Mes Parcours</a>
+        <i data-feather="chevron-right" class="w-4 h-4"></i>
+        <a [routerLink]="['/parcours/gerer', parcoursId]" class="hover:text-blue-600">Gestion du parcours</a>
+        <i data-feather="chevron-right" class="w-4 h-4"></i>
+        <span>Détails de progression</span>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+            Détails de progression
+          </h1>
+          <p class="text-gray-500 mt-1">
+            Suivi détaillé des apprenants inscrits au parcours
+          </p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+          <button (click)="retourGestion()" 
+            class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+            <i data-feather="arrow-left" class="w-4 h-4 mr-2"></i>
+            Retour à la gestion
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div *ngIf="statistiques" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i data-feather="users" class="w-5 h-5 text-blue-600"></i>
+          </div>
+          <span class="text-2xl font-bold text-gray-900">{{ statistiques.totalInscrits }}</span>
+        </div>
+        <h3 class="text-sm font-medium text-gray-900">Total inscrits</h3>
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <i data-feather="check-circle" class="w-5 h-5 text-green-600"></i>
+          </div>
+          <span class="text-2xl font-bold text-gray-900">{{ statistiques.termines }}</span>
+        </div>
+        <h3 class="text-sm font-medium text-gray-900">Terminés</h3>
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+            <i data-feather="clock" class="w-5 h-5 text-yellow-600"></i>
+          </div>
+          <span class="text-2xl font-bold text-gray-900">{{ statistiques.enCours }}</span>
+        </div>
+        <h3 class="text-sm font-medium text-gray-900">En cours</h3>
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <i data-feather="award" class="w-5 h-5 text-purple-600"></i>
+          </div>
+          <span class="text-2xl font-bold text-gray-900">{{ statistiques.certificats }}</span>
+        </div>
+        <h3 class="text-sm font-medium text-gray-900">Certificats</h3>
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i data-feather="trending-up" class="w-5 h-5 text-indigo-600"></i>
+          </div>
+          <span class="text-2xl font-bold text-gray-900">{{ statistiques.progressionMoyenne }}%</span>
+        </div>
+        <h3 class="text-sm font-medium text-gray-900">Progression moyenne</h3>
+      </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher un apprenant</label>
+          <div class="relative">
+            <i data-feather="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+            <input 
+              type="text" 
+              [(ngModel)]="rechercheTexte" 
+              (input)="onFiltreChange()"
+              placeholder="Nom, prénom ou email..."
+              class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Filtrer par statut</label>
+          <select [(ngModel)]="filtreStatut" (change)="onFiltreChange()"
+            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="tous">Tous les apprenants</option>
+            <option value="termines">Terminés</option>
+            <option value="en-cours">En cours</option>
+            <option value="non-commences">Non commencés</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau des progressions -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+          <i data-feather="list" class="w-5 h-5 mr-2 text-blue-600"></i>
+          Liste des apprenants
+          <span class="ml-2 text-sm font-normal text-gray-500">({{ progressionsFiltrees.length }} résultat{{ progressionsFiltrees.length > 1 ? 's' : '' }})</span>
+        </h3>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th (click)="changerTri('nom')" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                <div class="flex items-center gap-1">
+                  Apprenant
+                  <span class="text-gray-400">{{ getIconeTri('nom') }}</span>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th (click)="changerTri('dateInscription')" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                <div class="flex items-center gap-1">
+                  Date inscription
+                  <span class="text-gray-400">{{ getIconeTri('dateInscription') }}</span>
+                </div>
+              </th>
+              <th (click)="changerTri('progression')" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                <div class="flex items-center gap-1">
+                  Progression
+                  <span class="text-gray-400">{{ getIconeTri('progression') }}</span>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Étapes
+              </th>
+              <th (click)="changerTri('points')" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                <div class="flex items-center gap-1">
+                  Points XP
+                  <span class="text-gray-400">{{ getIconeTri('points') }}</span>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Statut
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let progression of progressionsFiltrees" class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-gray-600">
+                      {{ progression.prenom.charAt(0) }}{{ progression.nom.charAt(0) }}
+                    </span>
+                  </div>
+                  <div class="ml-3">
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ progression.prenom }} {{ progression.nom }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {{ progression.email }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {{ formatDate(progression.dateInscription) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-16 bg-gray-200 rounded-full h-2 mr-3">
+                    <div 
+                      class="h-2 rounded-full transition-all duration-300"
+                      [style.width.%]="progression.progressionPourcentage"
+                      [style.background-color]="getProgressionColor(progression.progressionPourcentage)">
+                    </div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">{{ progression.progressionPourcentage }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {{ progression.etapeCourante }}/{{ progression.totalEtapes }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {{ progression.pointsGagnes }} XP
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="getStatutClass(progression.statut)">
+                  {{ progression.statut }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button 
+                  (click)="contacterApprenant(progression.email)" 
+                  class="inline-flex items-center px-3 py-1 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  title="Contacter par email">
+                  <i data-feather="mail" class="w-4 h-4 mr-1"></i>
+                  Contacter
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Message si aucun résultat -->
+      <div *ngIf="progressionsFiltrees.length === 0" class="text-center py-12">
+        <i data-feather="users" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun apprenant trouvé</h3>
+        <p class="text-gray-500">Aucun apprenant ne correspond aux critères de recherche.</p>
+      </div>
+    </div>
+
+    <!-- Résumé -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center text-sm text-gray-600">
+          <i data-feather="info" class="w-4 h-4 mr-2"></i>
+          Affichage de {{ progressionsFiltrees.length }} apprenant(s) sur {{ progressions.length }} total
+        </div>
+        <button (click)="retourGestion()" 
+          class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <i data-feather="arrow-left" class="w-4 h-4 mr-2"></i>
+          Retour à la gestion
+        </button>
+      </div>
+    </div>
+  </main>
+</div>

@@ -327,7 +327,10 @@ public class EnrollmentService {
                                     quiz.getTitre(),
                                     meilleurScore,
                                     resultats.size(),
-                                    dernierResultat.getDatePassed(),
+                                    java.time.LocalDateTime.ofInstant(
+                                        java.time.Instant.ofEpochMilli(dernierResultat.getDatePassed()),
+                                        java.time.ZoneId.systemDefault()
+                                    ),
                                     meilleurScore >= 50.0 // Score minimum par défaut de 50%
                             );
                         }
@@ -336,9 +339,10 @@ public class EnrollmentService {
                     return new com.kawi_niveau.backend.dto.ApprenantProgressionResponse.ModuleProgressionDetail(
                             module.getId(),
                             module.getTitre(),
-                            totalLeconsModule,
-                            (int) leconsCompleteesModule,
-                            progressionModule,
+                            module.getOrdre(), // ordreModule
+                            progressionModule, // progressionPourcentage
+                            totalLeconsModule, // totalLecons
+                            (int) leconsCompleteesModule, // leconsCompletees
                             quizDetail
                     );
                 })
@@ -368,26 +372,46 @@ public class EnrollmentService {
                             quiz.getTitre(),
                             meilleurScore,
                             resultats.size(),
-                            dernierResultat.getDatePassed(),
+                            java.time.LocalDateTime.ofInstant(
+                                java.time.Instant.ofEpochMilli(dernierResultat.getDatePassed()),
+                                java.time.ZoneId.systemDefault()
+                            ),
                             meilleurScore >= 50.0 // Score minimum par défaut de 50%
                     );
                 })
                 .filter(detail -> detail != null)
                 .collect(Collectors.toList());
 
-        return new com.kawi_niveau.backend.dto.ApprenantProgressionResponse(
-                user.getId(),
-                user.getLastName(),
-                user.getFirstName(),
-                user.getEmail(),
-                user.getProfileImage(),
-                enrollment.getProgress(),
-                totalLecons,
-                leconsCompletees,
-                enrollment.getEnrolledAt(),
-                enrollment.getLastAccessedAt(),
-                modulesProgression,
-                quizResultats
-        );
+        // Créer la réponse avec le constructeur par défaut et les setters
+        com.kawi_niveau.backend.dto.ApprenantProgressionResponse response = 
+            new com.kawi_niveau.backend.dto.ApprenantProgressionResponse();
+        
+        response.setUserId(user.getId());
+        response.setNom(user.getLastName());
+        response.setPrenom(user.getFirstName());
+        response.setEmail(user.getEmail());
+        response.setProgressionPourcentage((int) Math.round(enrollment.getProgress()));
+        response.setEtapeCourante(1); // Valeur par défaut
+        response.setTotalEtapes(totalLecons);
+        response.setPointsGagnes(leconsCompletees * 10); // Points par défaut
+        response.setIsCompleted(enrollment.getProgress() >= 100.0f);
+        response.setCertificatGenere(false);
+        
+        // Convertir les timestamps en LocalDateTime
+        if (enrollment.getEnrolledAt() != null) {
+            response.setDateInscription(java.time.LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(enrollment.getEnrolledAt()),
+                java.time.ZoneId.systemDefault()
+            ));
+        }
+        
+        if (enrollment.getLastAccessedAt() != null && enrollment.getProgress() >= 100.0f) {
+            response.setDateCompletion(java.time.LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(enrollment.getLastAccessedAt()),
+                java.time.ZoneId.systemDefault()
+            ));
+        }
+        
+        return response;
     }
 }

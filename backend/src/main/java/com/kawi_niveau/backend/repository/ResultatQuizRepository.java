@@ -25,4 +25,10 @@ public interface ResultatQuizRepository extends JpaRepository<ResultatQuiz, Long
 
     @Query("SELECT COUNT(rq) FROM ResultatQuiz rq WHERE rq.user.id = :userId AND rq.score >= :score")
     long countByUserIdAndScoreGreaterThanEqual(@Param("userId") Long userId, @Param("score") Double score);
+    
+    // Méthodes supplémentaires pour la progression des parcours
+    @Query("SELECT q FROM Quiz q WHERE q.module.cours.id = :coursId")
+    List<Quiz> findQuizzesByCoursId(@Param("coursId") Long coursId);
+    
+    List<ResultatQuiz> findByUserIdAndQuizIdOrderByDatePassedDesc(Long userId, Long quizId);
 }

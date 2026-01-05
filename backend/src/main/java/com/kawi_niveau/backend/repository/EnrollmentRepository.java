@@ -28,4 +28,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     @Query("SELECT e FROM Enrollment e WHERE e.user.id = :userId")
     List<Enrollment> findByUserId(@Param("userId") Long userId);
+    
+    // Méthode pour vérifier l'inscription par IDs
+    @Query("SELECT COUNT(e) > 0 FROM Enrollment e WHERE e.user.id = :userId AND e.cours.id = :coursId")
+    boolean existsByUserIdAndCoursId(@Param("userId") Long userId, @Param("coursId") Long coursId);
 }

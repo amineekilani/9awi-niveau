@@ -50,4 +50,7 @@ public interface ParcoursEtapeRepository extends JpaRepository<ParcoursEtape, Lo
            "ORDER BY e.ordreEtape DESC")
     List<ParcoursEtape> findPreviousEtapes(@Param("parcours") ParcoursApprentissage parcours, 
                                            @Param("ordreActuel") Integer ordreActuel);
+    
+    // Trouver les étapes par ID de parcours
+    List<ParcoursEtape> findByParcoursIdOrderByOrdreEtape(Long parcoursId);
 }

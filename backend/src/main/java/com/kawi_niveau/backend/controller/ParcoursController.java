@@ -2,7 +2,9 @@ package com.kawi_niveau.backend.controller;
 
 import com.kawi_niveau.backend.dto.ParcoursRequest;
 import com.kawi_niveau.backend.dto.ParcoursResponse;
+import com.kawi_niveau.backend.dto.ApprenantProgressionResponse;
 import com.kawi_niveau.backend.service.ParcoursService;
+import com.kawi_niveau.backend.service.ParcoursProgressionDetailsService;
 import com.kawi_niveau.backend.entity.*;
 import com.kawi_niveau.backend.repository.*;
 import com.kawi_niveau.backend.event.CourseCompletedEvent;
@@ -15,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -24,6 +27,9 @@ public class ParcoursController {
 
     @Autowired
     private ParcoursService parcoursService;
+
+    @Autowired
+    private ParcoursProgressionDetailsService progressionDetailsService;
 
     @Autowired
     private UserRepository userRepository;
@@ -261,6 +267,50 @@ public class ParcoursController {
             return ResponseEntity.ok(parcours);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erreur lors de la récupération des statistiques: " + e.getMessage());
+        }
+    }
+
+    // Détails de progression des apprenants (pour le formateur)
+    @GetMapping("/{id}/progression-details")
+    public ResponseEntity<?> getProgressionDetails(@PathVariable Long id, Authentication authentication) {
+        try {
+            String formateurEmail = authentication.getName();
+            
+            // Vérifier que l'utilisateur est le formateur du parcours
+            ParcoursApprentissage parcours = parcoursRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Parcours non trouvé"));
+            
+            if (!parcours.getFormateur().getEmail().equals(formateurEmail)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Vous n'êtes pas autorisé à voir les détails de progression de ce parcours");
+            }
+            
+            List<ApprenantProgressionResponse> progressions = progressionDetailsService.getProgressionDetails(id);
+            return ResponseEntity.ok(progressions);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des détails de progression: " + e.getMessage());
+        }
+    }
+
+    // Statistiques globales d'un parcours (pour le formateur)
+    @GetMapping("/{id}/statistiques-globales")
+    public ResponseEntity<?> getStatistiquesGlobales(@PathVariable Long id, Authentication authentication) {
+        try {
+            String formateurEmail = authentication.getName();
+            
+            // Vérifier que l'utilisateur est le formateur du parcours
+            ParcoursApprentissage parcours = parcoursRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Parcours non trouvé"));
+            
+            if (!parcours.getFormateur().getEmail().equals(formateurEmail)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Vous n'êtes pas autorisé à voir les statistiques de ce parcours");
+            }
+            
+            Map<String, Object> stats = progressionDetailsService.getStatistiquesGlobales(id);
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des statistiques globales: " + e.getMessage());
         }
     }
 

@@ -132,10 +132,9 @@ export class ParcoursManagerComponent implements OnInit {
     this.router.navigate(['/parcours', this.parcoursId]);
   }
 
-  viewStatistics() {
-    // TODO: Implémenter la vue des statistiques détaillées
-    this.error = 'Statistiques détaillées à venir';
-    setTimeout(() => this.error = '', 3000);
+  viewProgressionDetails() {
+    // Naviguer vers une page de détails de progression similaire à celle des cours
+    this.router.navigate(['/parcours', this.parcoursId, 'progression']);
   }
 
   // Utilitaires d'affichage
