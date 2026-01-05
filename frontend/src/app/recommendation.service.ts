@@ -1,215 +1,311 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../environments/environment';
+import { tap, catchError } from 'rxjs/operators';
+import { NiveauDifficulte } from './parcours.service';
 
-export interface Recommendation {
-  type: 'LECON' | 'QUIZ' | 'CHALLENGE' | 'COURS';
-  id: number;
-  title: string;
-  reason: string;
-  priority: number;
-  confidenceScore: number;
+export interface UserPreferences {
+  id?: number;
+  preferredCategories?: string; // JSON string
+  preferredDifficulty?: NiveauDifficulte;
+  learningStyle?: string;
+  timeAvailabilityHours?: number;
+  learningGoals?: string; // JSON string
+  interests?: string; // JSON string
+  careerFocus?: string;
+  preferredDurationMin?: number;
+  preferredDurationMax?: number;
+  challengePreference?: string;
+  certificationImportant?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface RecommendationResponse {
-  userId: number;
-  generatedAt: string;
-  recommendations: Recommendation[];
-}
-
-export interface CustomRecommendationParams {
+export interface RecommendationRequest {
+  preferredCategories?: string[];
+  preferredDifficulty?: NiveauDifficulte;
+  learningStyle?: string;
+  timeAvailabilityHours?: number;
+  learningGoals?: string[];
+  interests?: string[];
+  careerFocus?: string;
+  preferredDurationMin?: number;
+  preferredDurationMax?: number;
+  challengePreference?: string;
+  certificationImportant?: boolean;
   maxRecommendations?: number;
-  includeCompleted?: boolean;
-  focusArea?: string;
 }
 
-/**
- * Service Angular pour l'API de recommandations pédagogiques
- * Intègre l'agent IA de recommandation avec l'interface utilisateur
- */
+export interface ParcoursRecommendation {
+  id: number;
+  titre: string;
+  description?: string;
+  thumbnailUrl?: string;
+  categorie?: string;
+  niveauDifficulte?: NiveauDifficulte;
+  dureeEstimeeHeures?: number;
+  prerequis?: string;
+  typeParcours: string;
+  pointsBonus?: number;
+  certificatEnabled?: boolean;
+  formateurNom: string;
+  nombreEtapes: number;
+  nombreInscriptions: number;
+  progressionMoyenne?: number;
+  
+  // Données de recommandation
+  scoreRecommendation: number;
+  raisonsRecommandation: string[];
+  niveauCorrespondance: string;
+  isInscrit?: boolean;
+  progressionUtilisateur?: number;
+  
+  // Scores détaillés
+  scoreCategorie?: number;
+  scoreDifficulte?: number;
+  scoreDuree?: number;
+  scorePopularite?: number;
+  scorePerformance?: number;
+  scorePrerequisMatch?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class RecommendationService {
-  private apiUrl = `${environment.apiUrl}/recommendations`;
+  private apiUrl = 'http://localhost:8080/api/recommendations';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  /**
-   * Récupère les recommandations personnalisées pour l'utilisateur connecté
-   */
-  getMyRecommendations(): Observable<RecommendationResponse> {
-    return this.http.get<RecommendationResponse>(`${this.apiUrl}/me`);
-  }
-
-  /**
-   * Récupère les recommandations pour un utilisateur spécifique (admin/formateur)
-   */
-  getUserRecommendations(userId: number): Observable<RecommendationResponse> {
-    return this.http.get<RecommendationResponse>(`${this.apiUrl}/user/${userId}`);
-  }
-
-  /**
-   * Récupère des recommandations personnalisées avec paramètres
-   */
-  getCustomRecommendations(params: CustomRecommendationParams = {}): Observable<RecommendationResponse> {
-    let httpParams = new HttpParams();
-
-    if (params.maxRecommendations) {
-      httpParams = httpParams.set('maxRecommendations', params.maxRecommendations.toString());
-    }
-
-    if (params.includeCompleted !== undefined) {
-      httpParams = httpParams.set('includeCompleted', params.includeCompleted.toString());
-    }
-
-    if (params.focusArea) {
-      httpParams = httpParams.set('focusArea', params.focusArea);
-    }
-
-    return this.http.get<RecommendationResponse>(`${this.apiUrl}/me/custom`, { params: httpParams });
-  }
-
-  /**
-   * Test du moteur de recommandation (admin uniquement)
-   */
-  testRecommendationEngine(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/test`);
-  }
-
-  /**
-   * Méthodes utilitaires pour l'interface utilisateur
-   */
-
-  /**
-   * Groupe les recommandations par type
-   */
-  groupRecommendationsByType(recommendations: Recommendation[]): Map<string, Recommendation[]> {
-    const grouped = new Map<string, Recommendation[]>();
-
-    recommendations.forEach(rec => {
-      if (!grouped.has(rec.type)) {
-        grouped.set(rec.type, []);
-      }
-      grouped.get(rec.type)!.push(rec);
-    });
-
-    return grouped;
-  }
-
-  /**
-   * Filtre les recommandations par niveau de confiance
-   */
-  filterByConfidence(recommendations: Recommendation[], minConfidence: number = 0.5): Recommendation[] {
-    return recommendations.filter(rec => rec.confidenceScore >= minConfidence);
-  }
-
-  /**
-   * Trie les recommandations par priorité et confiance
-   */
-  sortRecommendations(recommendations: Recommendation[]): Recommendation[] {
-    return recommendations.sort((a, b) => {
-      // Trier par priorité (1 = haute priorité)
-      if (a.priority !== b.priority) {
-        return a.priority - b.priority;
-      }
-      // Puis par score de confiance (décroissant)
-      return b.confidenceScore - a.confidenceScore;
+  private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     });
   }
 
   /**
-   * Obtient l'icône appropriée pour le type de recommandation
-   * Utilise des emojis pour une compatibilité maximale et un design ludique
+   * Obtenir des recommandations personnalisées
    */
-  /**
-   * Obtient l'icône appropriée pour le type de recommandation
-   * Utilise des icônes Feather (SVG)
-   */
-  getRecommendationIcon(type: string): string {
-    switch (type) {
-      case 'COURS':
-        return 'book';
-      case 'LECON':
-        return 'play-circle';
-      case 'QUIZ':
-        return 'check-square';
-      case 'CHALLENGE':
-        return 'award';
-      default:
-        return 'zap'; // Pour les autres types
-    }
+  getPersonalizedRecommendations(maxResults: number = 5): Observable<ParcoursRecommendation[]> {
+    return this.http.get<ParcoursRecommendation[]>(
+      `${this.apiUrl}/personalized?maxResults=${maxResults}`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(recommendations => {
+        console.log('🤖 Recommandations personnalisées reçues:', recommendations.length);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des recommandations:', error);
+        throw error;
+      })
+    );
   }
 
   /**
-   * Obtient la couleur appropriée pour le niveau de priorité
-   * Retourne des couleurs modernes compatibles avec le thème sombre
+   * Obtenir des recommandations basées sur des critères
    */
-  getPriorityColor(priority: number): string {
-    switch (priority) {
-      case 1:
-        return '#ef4444'; // Rouge vif (Tailwind red-500)
-      case 2:
-        return '#f97316'; // Orange (Tailwind orange-500)
-      case 3:
-        return '#3b82f6'; // Bleu (Tailwind blue-500)
-      case 4:
-        return '#22c55e'; // Vert (Tailwind green-500)
-      default:
-        return '#94a3b8'; // Gris (Tailwind slate-400)
-    }
+  getRecommendationsByCriteria(criteria: RecommendationRequest): Observable<ParcoursRecommendation[]> {
+    return this.http.post<ParcoursRecommendation[]>(
+      `${this.apiUrl}/by-criteria`,
+      criteria,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(recommendations => {
+        console.log('🎯 Recommandations par critères reçues:', recommendations.length);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des recommandations par critères:', error);
+        throw error;
+      })
+    );
   }
 
   /**
-   * Obtient le label de priorité en français
+   * Obtenir des recommandations rapides (top 3)
    */
-  getPriorityLabel(priority: number): string {
-    switch (priority) {
-      case 1:
-        return 'Priorité haute';
-      case 2:
-        return 'Priorité moyenne-haute';
-      case 3:
-        return 'Priorité moyenne';
-      case 4:
-        return 'Priorité basse';
-      default:
-        return 'Priorité inconnue';
-    }
+  getQuickRecommendations(): Observable<ParcoursRecommendation[]> {
+    return this.http.get<ParcoursRecommendation[]>(
+      `${this.apiUrl}/quick`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(recommendations => {
+        console.log('⚡ Recommandations rapides reçues:', recommendations.length);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des recommandations rapides:', error);
+        throw error;
+      })
+    );
   }
 
   /**
-   * Formate le score de confiance en pourcentage
+   * Obtenir les préférences utilisateur
    */
-  formatConfidenceScore(score: number): string {
-    return `${Math.round(score * 100)}%`;
+  getUserPreferences(): Observable<UserPreferences> {
+    return this.http.get<UserPreferences>(
+      `${this.apiUrl}/preferences`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(preferences => {
+        console.log('👤 Préférences utilisateur récupérées');
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des préférences:', error);
+        throw error;
+      })
+    );
   }
 
   /**
-   * Détermine si une recommandation est "hautement recommandée"
+   * Sauvegarder les préférences utilisateur
    */
-  isHighlyRecommended(recommendation: Recommendation): boolean {
-    return recommendation.priority <= 2 && recommendation.confidenceScore >= 0.8;
+  saveUserPreferences(preferences: UserPreferences): Observable<UserPreferences> {
+    return this.http.post<UserPreferences>(
+      `${this.apiUrl}/preferences`,
+      preferences,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(savedPrefs => {
+        console.log('💾 Préférences utilisateur sauvegardées');
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la sauvegarde des préférences:', error);
+        throw error;
+      })
+    );
   }
 
   /**
-   * Génère un message d'encouragement basé sur les recommandations
+   * Utilitaires pour les préférences
    */
-  generateEncouragementMessage(recommendations: Recommendation[]): string {
-    if (recommendations.length === 0) {
-      return "Excellent travail ! Vous êtes à jour avec vos apprentissages.";
+  parseJsonArray(jsonString?: string): string[] {
+    if (!jsonString || jsonString.trim() === '') {
+      return [];
     }
-
-    const highPriorityCount = recommendations.filter(r => r.priority <= 2).length;
-    const avgConfidence = recommendations.reduce((sum, r) => sum + r.confidenceScore, 0) / recommendations.length;
-
-    if (highPriorityCount >= 3) {
-      return "Plusieurs opportunités d'apprentissage vous attendent ! Commencez par les recommandations prioritaires.";
-    } else if (avgConfidence >= 0.8) {
-      return "Nos recommandations sont parfaitement adaptées à votre profil. C'est le moment idéal pour progresser !";
-    } else {
-      return "Continuez votre excellent parcours d'apprentissage avec ces suggestions personnalisées.";
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error('Erreur parsing JSON:', e);
+      return [];
     }
+  }
+
+  stringifyArray(array: string[]): string {
+    if (!array || array.length === 0) {
+      return '';
+    }
+    return JSON.stringify(array);
+  }
+
+  /**
+   * Obtenir les catégories disponibles
+   */
+  getAvailableCategories(): string[] {
+    return [
+      'Programmation',
+      'Web Development',
+      'Mobile Development',
+      'Data Science',
+      'Intelligence Artificielle',
+      'Cybersécurité',
+      'DevOps',
+      'Design UI/UX',
+      'Base de données',
+      'Cloud Computing',
+      'Blockchain',
+      'IoT',
+      'Game Development',
+      'Marketing Digital',
+      'Gestion de projet'
+    ];
+  }
+
+  /**
+   * Obtenir les styles d'apprentissage disponibles
+   */
+  getLearningStyles(): { value: string, label: string }[] {
+    return [
+      { value: 'VISUAL', label: 'Visuel (diagrammes, images)' },
+      { value: 'AUDITORY', label: 'Auditif (vidéos, podcasts)' },
+      { value: 'KINESTHETIC', label: 'Kinesthésique (pratique, exercices)' },
+      { value: 'READING', label: 'Lecture/Écriture (textes, notes)' }
+    ];
+  }
+
+  /**
+   * Obtenir les niveaux de défi disponibles
+   */
+  getChallengePreferences(): { value: string, label: string }[] {
+    return [
+      { value: 'LOW', label: 'Faible - Je préfère apprendre progressivement' },
+      { value: 'MEDIUM', label: 'Moyen - J\'aime un défi raisonnable' },
+      { value: 'HIGH', label: 'Élevé - Je veux être challengé au maximum' }
+    ];
+  }
+
+  /**
+   * Obtenir les objectifs d'apprentissage disponibles
+   */
+  getLearningGoals(): string[] {
+    return [
+      'Changer de carrière',
+      'Améliorer mes compétences actuelles',
+      'Obtenir une certification',
+      'Créer mon propre projet',
+      'Augmenter mon salaire',
+      'Apprendre par passion',
+      'Rester à jour avec les technologies',
+      'Développer une expertise spécialisée',
+      'Créer ma startup',
+      'Enseigner à d\'autres'
+    ];
+  }
+
+  /**
+   * Obtenir les centres d'intérêt disponibles
+   */
+  getInterests(): string[] {
+    return [
+      'Applications web',
+      'Applications mobiles',
+      'Jeux vidéo',
+      'Intelligence artificielle',
+      'Analyse de données',
+      'Sécurité informatique',
+      'Automatisation',
+      'Design d\'interface',
+      'E-commerce',
+      'Réseaux sociaux',
+      'Fintech',
+      'Healthtech',
+      'Edtech',
+      'Environnement',
+      'Robotique'
+    ];
+  }
+
+  /**
+   * Obtenir les orientations professionnelles disponibles
+   */
+  getCareerFocuses(): string[] {
+    return [
+      'Développeur Frontend',
+      'Développeur Backend',
+      'Développeur Full-Stack',
+      'Développeur Mobile',
+      'Data Scientist',
+      'DevOps Engineer',
+      'Cybersecurity Specialist',
+      'UI/UX Designer',
+      'Product Manager',
+      'Technical Lead',
+      'Architect Solution',
+      'Consultant IT',
+      'Entrepreneur Tech',
+      'Formateur/Enseignant',
+      'Freelance'
+    ];
   }
 }

@@ -31,4 +31,8 @@ public interface ResultatQuizRepository extends JpaRepository<ResultatQuiz, Long
     List<Quiz> findQuizzesByCoursId(@Param("coursId") Long coursId);
     
     List<ResultatQuiz> findByUserIdAndQuizIdOrderByDatePassedDesc(Long userId, Long quizId);
+    
+    // Méthode pour les statistiques utilisateur (recommandations IA)
+    @Query("SELECT AVG(rq.score), COUNT(rq) FROM ResultatQuiz rq WHERE rq.user.id = :userId")
+    List<Object[]> findUserQuizStatistics(@Param("userId") Long userId);
 }
