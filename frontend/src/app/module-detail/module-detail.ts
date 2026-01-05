@@ -484,7 +484,6 @@ export class ModuleDetailComponent implements OnInit {
 
   resetExerciceFormData() {
     this.fillBlankText = '';
-    this.draggableItems = [''];
     this.dropZones = [{ label: '', correctAnswer: '' }];
   }
 
@@ -547,23 +546,25 @@ export class ModuleDetailComponent implements OnInit {
     const elements: ExerciceElement[] = [];
     let position = 1;
 
-    this.draggableItems.forEach(item => {
-      if (item.trim()) {
+    // Créer les éléments DRAGGABLE à partir des réponses correctes
+    this.dropZones.forEach(zone => {
+      if (zone.correctAnswer.trim()) {
         elements.push({
-          contenu: item.trim(),
+          contenu: zone.correctAnswer.trim(),
           typeElement: 'DRAGGABLE',
           positionOrdre: position++
         });
       }
     });
 
+    // Créer les zones de dépôt avec les définitions
     this.dropZones.forEach(zone => {
-      if (zone.label.trim()) {
+      if (zone.label.trim() && zone.correctAnswer.trim()) {
         elements.push({
-          contenu: zone.label.trim(),
+          contenu: zone.label.trim(), // La définition
           typeElement: 'DROP_ZONE',
           positionOrdre: position++,
-          reponseCorrecte: zone.correctAnswer.trim()
+          reponseCorrecte: zone.correctAnswer.trim() // Le terme correspondant
         });
       }
     });
@@ -636,7 +637,24 @@ export class ModuleDetailComponent implements OnInit {
   // Méthodes pour l'affichage de l'exercice
   getDraggableElements(): ExerciceElement[] {
     if (!this.exercice?.elements) return [];
-    return this.exercice.elements.filter(e => e.typeElement === 'DRAGGABLE');
+    const draggableElements = this.exercice.elements.filter(e => e.typeElement === 'DRAGGABLE');
+    
+    // Mélanger seulement pour l'aperçu étudiant
+    if (!this.authService.isFormateur()) {
+      return this.shuffleElements([...draggableElements]);
+    }
+    
+    return draggableElements;
+  }
+
+  // Méthode pour mélanger les éléments aléatoirement (algorithme Fisher-Yates)
+  private shuffleElements<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   }
 
   getDropZoneElements(): ExerciceElement[] {

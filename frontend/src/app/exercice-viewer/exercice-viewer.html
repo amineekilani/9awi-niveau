@@ -125,11 +125,12 @@
 
         <!-- DRAG_DROP: Glisser-déposer -->
         <div *ngIf="exercice?.typeExercice === 'DRAG_DROP'" class="space-y-8">
-          <h3 class="text-2xl font-bold text-gray-900 mb-6">Glissez les éléments dans les bonnes zones</h3>
+          <h3 class="text-2xl font-bold text-gray-900 mb-6">Glissez les termes à côté de leurs définitions</h3>
+  
           
           <!-- Éléments à glisser -->
           <div class="mb-8">
-            <h4 class="text-lg font-semibold text-gray-700 mb-4">Éléments disponibles:</h4>
+            <h4 class="text-lg font-semibold text-gray-700 mb-4">Termes disponibles:</h4>
             <div class="flex flex-wrap gap-3">
               <div *ngFor="let item of getDraggableItems()"
                 draggable="true"
@@ -142,14 +143,14 @@
 
           <!-- Zones de dépôt -->
           <div class="space-y-4">
-            <h4 class="text-lg font-semibold text-gray-700">Zones de dépôt:</h4>
-            <div *ngFor="let zone of getDropZones()" class="space-y-2">
-              <p class="text-gray-700">{{ zone.contenu }}</p>
+            <h4 class="text-lg font-semibold text-gray-700">Définitions :</h4>
+            <div *ngFor="let zone of getDropZones(); let i = index" class="space-y-2">
+              <p class="text-gray-700 font-medium">{{ zone.contenu }}</p>
               <div 
                 (dragover)="onDragOver($event)"
                 (drop)="onDrop($event, zone.id!)"
                 class="min-h-[60px] p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:border-blue-400 hover:bg-blue-50 transition-colors flex items-center justify-center">
-                <span *ngIf="!reponses[zone.id!]" class="text-gray-500">Déposez un élément ici</span>
+                <span *ngIf="!reponses[zone.id!]" class="text-gray-500">Déposez le terme correspondant ici</span>
                 <span *ngIf="reponses[zone.id!]" 
                   draggable="true"
                   (dragstart)="onDragStart($event, reponses[zone.id!], zone.id!)"

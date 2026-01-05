@@ -34,6 +34,7 @@ export class ExerciceViewerComponent implements OnInit {
   // Drag and Drop
   draggedItem: string | null = null;
   draggedFromId: number | null = null;
+  shuffledDraggableItems: string[] = [];
 
   loading = false;
   error = '';
@@ -96,6 +97,8 @@ export class ExerciceViewerComponent implements OnInit {
     this.reponses = {};
     this.resultat = null;
     this.startTime = Date.now();
+    // Remélanger les termes pour chaque nouvelle tentative
+    this.shuffledDraggableItems = [];
   }
 
   // Méthodes pour texte à trous
@@ -210,11 +213,26 @@ export class ExerciceViewerComponent implements OnInit {
 
   getDraggableItems(): string[] {
     if (this.exercice?.typeExercice === 'DRAG_DROP') {
-      return this.elements
-        .filter(e => e.typeElement === 'DRAGGABLE')
-        .map(e => e.contenu);
+      // Si les termes n'ont pas encore été mélangés, les mélanger une seule fois
+      if (this.shuffledDraggableItems.length === 0) {
+        const items = this.elements
+          .filter(e => e.typeElement === 'DRAGGABLE')
+          .map(e => e.contenu);
+        this.shuffledDraggableItems = this.shuffleArray([...items]);
+      }
+      return this.shuffledDraggableItems;
     }
     return [];
+  }
+
+  // Méthode pour mélanger un tableau aléatoirement (algorithme Fisher-Yates)
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   }
 
   getDropZones(): ExerciceElement[] {
