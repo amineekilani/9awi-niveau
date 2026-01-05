@@ -47,8 +47,8 @@ export class ExerciceCreatorComponent implements OnInit {
     const elements: ExerciceElement[] = [];
     let position = 1;
     
-    // Parser le texte pour identifier les blancs marqués par [BLANK]
-    const parts = this.fillBlankText.split(/(\[BLANK:([^\]]+)\])/);
+    // Utiliser une regex sans groupe de capture pour éviter les éléments supplémentaires
+    const parts = this.fillBlankText.split(/(\[BLANK:[^\]]+\])/);
     
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
@@ -64,8 +64,8 @@ export class ExerciceCreatorComponent implements OnInit {
             reponseCorrecte: match[1].trim()
           });
         }
-      } else if (part && !part.startsWith('[BLANK')) {
-        // Texte normal
+      } else if (part && part.trim() !== '') {
+        // Ajouter seulement les parties non vides qui ne sont pas des BLANK
         elements.push({
           contenu: part,
           typeElement: 'TEXT',

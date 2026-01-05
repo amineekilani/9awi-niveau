@@ -720,9 +720,6 @@
                 <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                   {{ getExerciceTypeLabel(exercice.typeExercice) }}
                 </span>
-                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
-                  {{ exercice.elements?.length || 0 }} élément(s)
-                </span>
                 <!-- Bouton Faire l'exercice pour les étudiants -->
                 <div *ngIf="!authService.isFormateur() && exercice.elements && exercice.elements.length > 0">
                   <a *ngIf="allLeconsCompleted()" [routerLink]="['/exercice', exercice.id, 'module', moduleId]"
@@ -775,8 +772,134 @@
           <div *ngIf="!exercice.elements || exercice.elements.length === 0" class="text-center py-8 text-gray-500">
             Aucun élément pour cet exercice. Modifiez-le pour ajouter du contenu.
           </div>
-          <div *ngIf="exercice.elements && exercice.elements.length > 0" class="text-center py-4 text-gray-600">
-            Exercice configuré avec {{ exercice.elements.length }} élément(s)
+          
+          <!-- Aperçu du contenu de l'exercice -->
+          <div *ngIf="exercice.elements && exercice.elements.length > 0" class="space-y-6">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-semibold text-gray-900">Aperçu de l'exercice</h4>
+            </div>
+
+            <!-- Aperçu pour FILL_BLANK -->
+            <div *ngIf="exercice.typeExercice === 'FILL_BLANK'" class="bg-blue-50 rounded-lg p-4 border border-blue-200 exercice-preview">
+              
+              <!-- Vue formateur : aperçu avec réponses -->
+              <div *ngIf="authService.isFormateur()">
+                <h5 class="font-medium text-blue-900 mb-3">Aperçu formateur - Texte avec réponses :</h5>
+                <div class="text-lg leading-relaxed bg-white p-4 rounded border">
+                  <ng-container *ngFor="let element of getTextAndBlankElements()">
+                    <span *ngIf="element.typeElement === 'TEXT'" class="text-gray-800">{{ element.contenu }}</span>
+                    <span *ngIf="element.typeElement === 'BLANK'" 
+                      class="inline-block mx-1 px-3 py-1 bg-green-200 text-green-800 rounded border-2 border-green-400 font-bold">
+                      {{ element.reponseCorrecte }}
+                    </span>
+                  </ng-container>
+                </div>
+                <p class="text-sm text-blue-700 mt-3">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Les mots en vert sont les réponses correctes que les étudiants devront saisir
+                </p>
+              </div>
+
+              <!-- Vue étudiant : aperçu avec champs vides -->
+              <div *ngIf="!authService.isFormateur()">
+                <h5 class="font-medium text-blue-900 mb-3">Texte à compléter :</h5>
+                <div class="text-lg leading-relaxed bg-white p-4 rounded border">
+                  <ng-container *ngFor="let element of getTextAndBlankElements()">
+                    <span *ngIf="element.typeElement === 'TEXT'" class="text-gray-800">{{ element.contenu }}</span>
+                    <span *ngIf="element.typeElement === 'BLANK'" 
+                      class="inline-block mx-1 px-4 py-1 bg-gray-100 text-gray-500 rounded border-2 border-dashed border-gray-400 font-medium">
+                      _____
+                    </span>
+                  </ng-container>
+                </div>
+                <p class="text-sm text-gray-600 mt-3">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Cliquez sur "Faire l'exercice" pour compléter les espaces vides
+                </p>
+              </div>
+            </div>
+
+            <!-- Aperçu pour DRAG_DROP -->
+            <div *ngIf="exercice.typeExercice === 'DRAG_DROP'" class="bg-green-50 rounded-lg p-4 border border-green-200 exercice-preview">
+              
+              <!-- Vue formateur : aperçu avec réponses -->
+              <div *ngIf="authService.isFormateur()">
+                <h5 class="font-medium text-green-900 mb-3">Aperçu formateur - Glisser-déposer avec solutions :</h5>
+                
+                <!-- Éléments déplaçables -->
+                <div class="mb-4">
+                  <h6 class="text-sm font-medium text-green-800 mb-2">Éléments à glisser :</h6>
+                  <div class="flex flex-wrap gap-2">
+                    <span *ngFor="let element of getDraggableElements()"
+                      class="px-3 py-1 bg-green-200 text-green-800 rounded-lg border border-green-300 text-sm font-medium draggable-preview">
+                      {{ element.contenu }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Zones de dépôt avec solutions -->
+                <div>
+                  <h6 class="text-sm font-medium text-green-800 mb-2">Zones de dépôt avec solutions :</h6>
+                  <div class="space-y-2">
+                    <div *ngFor="let element of getDropZoneElements()"
+                      class="flex items-center justify-between p-3 bg-white rounded-lg border border-green-300">
+                      <span class="text-green-900 font-medium">{{ element.contenu }}</span>
+                      <span class="px-3 py-1 bg-green-300 text-green-900 rounded font-bold">
+                        ✓ {{ element.reponseCorrecte }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="text-sm text-green-700 mt-3">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Les éléments avec ✓ montrent les bonnes associations que les étudiants devront faire
+                </p>
+              </div>
+
+              <!-- Vue étudiant : aperçu sans solutions -->
+              <div *ngIf="!authService.isFormateur()">
+                <h5 class="font-medium text-green-900 mb-3">Exercice glisser-déposer :</h5>
+                
+                <!-- Éléments déplaçables -->
+                <div class="mb-4">
+                  <h6 class="text-sm font-medium text-green-800 mb-2">Éléments à glisser :</h6>
+                  <div class="flex flex-wrap gap-2">
+                    <span *ngFor="let element of getDraggableElements()"
+                      class="px-3 py-1 bg-green-200 text-green-800 rounded-lg border border-green-300 text-sm font-medium draggable-preview">
+                      {{ element.contenu }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Zones de dépôt vides -->
+                <div>
+                  <h6 class="text-sm font-medium text-green-800 mb-2">Zones de dépôt :</h6>
+                  <div class="space-y-2">
+                    <div *ngFor="let element of getDropZoneElements()"
+                      class="flex items-center justify-between p-3 bg-white rounded-lg border-2 border-dashed border-green-300">
+                      <span class="text-green-900 font-medium">{{ element.contenu }}</span>
+                      <span class="px-3 py-1 bg-gray-100 text-gray-500 rounded text-sm border-2 border-dashed border-gray-400">
+                        Zone de dépôt
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="text-sm text-green-700 mt-3">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Cliquez sur "Faire l'exercice" pour glisser les éléments dans les bonnes zones
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

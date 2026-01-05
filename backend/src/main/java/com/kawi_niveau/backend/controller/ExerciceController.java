@@ -56,9 +56,10 @@ public class ExerciceController {
     }
 
     @GetMapping("/module/{moduleId}")
-    public ResponseEntity<?> getExerciceByModuleId(@PathVariable Long moduleId) {
+    public ResponseEntity<?> getExerciceByModuleId(@PathVariable Long moduleId, Authentication authentication) {
         try {
-            ExerciceResponse exercice = exerciceService.getExerciceByModuleId(moduleId);
+            String email = authentication.getName();
+            ExerciceResponse exercice = exerciceService.getExerciceByModuleId(moduleId, email);
             if (exercice == null) {
                 return ResponseEntity.noContent().build();
             }
@@ -69,9 +70,10 @@ public class ExerciceController {
     }
 
     @GetMapping("/{exerciceId}")
-    public ResponseEntity<?> getExerciceById(@PathVariable Long exerciceId) {
+    public ResponseEntity<?> getExerciceById(@PathVariable Long exerciceId, Authentication authentication) {
         try {
-            ExerciceResponse exercice = exerciceService.getExerciceById(exerciceId);
+            String email = authentication.getName();
+            ExerciceResponse exercice = exerciceService.getExerciceById(exerciceId, email);
             return ResponseEntity.ok(exercice);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));

@@ -234,7 +234,8 @@
                     <span [class]="detail.correct ? 'text-green-700' : 'text-red-700'">{{ detail.reponseUtilisateur
                       }}</span>
                   </p>
-                  <p *ngIf="!detail.correct" class="text-sm text-gray-700">
+                  <!-- Réponse correcte visible seulement pour les formateurs ou si l'étudiant a eu faux -->
+                  <p *ngIf="!detail.correct && (authService.isFormateur() || resultat.score < 100)" class="text-sm text-gray-700">
                     <span class="font-medium">Réponse correcte:</span>
                     <span class="text-green-700">{{ detail.reponseCorrecte }}</span>
                   </p>

@@ -497,7 +497,8 @@ export class ModuleDetailComponent implements OnInit {
     const elements: ExerciceElement[] = [];
     let position = 1;
     
-    const parts = this.fillBlankText.split(/(\[BLANK:([^\]]+)\])/);
+    // Utiliser une regex sans groupe de capture pour éviter les éléments supplémentaires
+    const parts = this.fillBlankText.split(/(\[BLANK:[^\]]+\])/);
     
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
@@ -512,7 +513,8 @@ export class ModuleDetailComponent implements OnInit {
             reponseCorrecte: match[1].trim()
           });
         }
-      } else if (part && !part.startsWith('[BLANK')) {
+      } else if (part && part.trim() !== '') {
+        // Ajouter seulement les parties non vides qui ne sont pas des BLANK
         elements.push({
           contenu: part,
           typeElement: 'TEXT',
@@ -629,5 +631,23 @@ export class ModuleDetailComponent implements OnInit {
       case 'DRAG_DROP': return 'Glisser-déposer';
       default: return type;
     }
+  }
+
+  // Méthodes pour l'affichage de l'exercice
+  getDraggableElements(): ExerciceElement[] {
+    if (!this.exercice?.elements) return [];
+    return this.exercice.elements.filter(e => e.typeElement === 'DRAGGABLE');
+  }
+
+  getDropZoneElements(): ExerciceElement[] {
+    if (!this.exercice?.elements) return [];
+    return this.exercice.elements.filter(e => e.typeElement === 'DROP_ZONE');
+  }
+
+  getTextAndBlankElements(): ExerciceElement[] {
+    if (!this.exercice?.elements) return [];
+    return this.exercice.elements
+      .filter(e => e.typeElement === 'TEXT' || e.typeElement === 'BLANK')
+      .sort((a, b) => a.positionOrdre - b.positionOrdre);
   }
 }

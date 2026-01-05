@@ -103,20 +103,37 @@ public class ExerciceService {
         exerciceRepository.delete(exercice);
     }
 
-    public ExerciceResponse getExerciceByModuleId(Long moduleId) {
+    public ExerciceResponse getExerciceByModuleId(Long moduleId, String email) {
         com.kawi_niveau.backend.entity.Module module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new RuntimeException("Module non trouvé"));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         Exercice exercice = exerciceRepository.findByModule(module)
                 .orElse(null);
 
-        return exercice != null ? mapToResponse(exercice) : null;
+        if (exercice == null) {
+            return null;
+        }
+
+        // Vérifier si l'utilisateur est le formateur du cours
+        boolean isFormateur = exercice.getModule().getCours().getFormateur().getId().equals(user.getId());
+        
+        return mapToResponse(exercice, isFormateur);
     }
 
-    public ExerciceResponse getExerciceById(Long exerciceId) {
+    public ExerciceResponse getExerciceById(Long exerciceId, String email) {
         Exercice exercice = exerciceRepository.findById(exerciceId)
                 .orElseThrow(() -> new RuntimeException("Exercice non trouvé"));
-        return mapToResponse(exercice);
+        
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Vérifier si l'utilisateur est le formateur du cours
+        boolean isFormateur = exercice.getModule().getCours().getFormateur().getId().equals(user.getId());
+        
+        return mapToResponse(exercice, isFormateur);
     }
 
     @Transactional
@@ -181,9 +198,14 @@ public class ExerciceService {
     }
 
     private ExerciceResponse mapToResponse(Exercice exercice) {
+        // Par défaut, considérer comme formateur (pour les méthodes existantes)
+        return mapToResponse(exercice, true);
+    }
+
+    private ExerciceResponse mapToResponse(Exercice exercice, boolean isFormateur) {
         List<ExerciceElement> elements = exerciceElementRepository.findByExerciceOrderByPositionOrdreAsc(exercice);
         List<ExerciceElementResponse> elementResponses = elements.stream()
-                .map(this::mapElementToResponse)
+                .map(element -> mapElementToResponse(element, isFormateur))
                 .collect(Collectors.toList());
 
         return new ExerciceResponse(
@@ -199,12 +221,18 @@ public class ExerciceService {
     }
 
     private ExerciceElementResponse mapElementToResponse(ExerciceElement element) {
+        // Par défaut, considérer comme formateur (pour les méthodes existantes)
+        return mapElementToResponse(element, true);
+    }
+
+    private ExerciceElementResponse mapElementToResponse(ExerciceElement element, boolean isFormateur) {
         return new ExerciceElementResponse(
                 element.getId(),
                 element.getContenu(),
                 element.getTypeElement(),
                 element.getPositionOrdre(),
-                element.getReponseCorrecte(),
+                // Ne pas envoyer la réponse correcte aux étudiants
+                isFormateur ? element.getReponseCorrecte() : null,
                 element.getOptions(),
                 element.getCreatedAt()
         );
