@@ -127,7 +127,21 @@ export class RegisterComponent {
       },
       error: (err) => {
         console.error('Registration error:', err);
-        this.error = 'Erreur lors de l\'inscription. Veuillez réessayer.';
+        try {
+          // Essayer de parser err.error si c'est une chaîne JSON
+          let errorMessage = '';
+          if (typeof err.error === 'string') {
+            const parsedError = JSON.parse(err.error);
+            errorMessage = parsedError.message;
+          } else if (err.error?.message) {
+            errorMessage = err.error.message;
+          }
+          
+          this.error = errorMessage || 'Erreur lors de l\'inscription. Veuillez réessayer.';
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          this.error = 'Erreur lors de l\'inscription. Veuillez réessayer.';
+        }
       }
     });
   }
