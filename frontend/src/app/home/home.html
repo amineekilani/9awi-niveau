@@ -111,8 +111,13 @@
                 [style.width.%]="userStats?.progressPercent || 0"></div>
             </div>
             <div class="text-sm text-blue-50">
-              <span class="font-semibold">{{ userStats?.totalPoints || 0 }}</span> / {{ userStats?.nextLevelPoints ||
-              100 }} XP
+              <span class="font-semibold">{{ userStats?.totalPoints || 0 }}</span> XP
+              <span *ngIf="(userStats?.pointsToNextLevel || 0) > 0" class="opacity-75">
+                ({{ userStats?.pointsToNextLevel }} pour niveau {{ (userStats?.currentLevel || 1) + 1 }})
+              </span>
+              <span *ngIf="(userStats?.pointsToNextLevel || 0) === 0" class="opacity-75">
+                (Niveau maximum !)
+              </span>
             </div>
           </div>
         </div>

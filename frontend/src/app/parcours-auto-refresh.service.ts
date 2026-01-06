@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { ParcoursNotificationService, ParcoursNotification } from './parcours-notification.service';
 import { UserGamificationService, UserGamificationStats } from './user-gamification.service';
+import { LevelNotificationService, LevelNotification } from './level-notification.service';
+import { GamificationNotificationService } from './gamification-notification.service';
 import { ParcoursService } from './parcours.service';
 import Swal from 'sweetalert2';
 
@@ -12,21 +14,26 @@ export class ParcoursAutoRefreshService {
   
   private refreshInterval: Subscription | null = null;
   private lastNotificationCheck = 0;
+  private lastLevelNotificationCheck = 0;
   private lastStatsCheck = 0;
   
   // Subjects pour notifier les composants des mises à jour
   private parcoursUpdatedSubject = new BehaviorSubject<boolean>(false);
   private statsUpdatedSubject = new BehaviorSubject<UserGamificationStats | null>(null);
   private newNotificationSubject = new BehaviorSubject<ParcoursNotification | null>(null);
+  private newLevelNotificationSubject = new BehaviorSubject<LevelNotification | null>(null);
   
   // Observables publics
   public parcoursUpdated$ = this.parcoursUpdatedSubject.asObservable();
   public statsUpdated$ = this.statsUpdatedSubject.asObservable();
   public newNotification$ = this.newNotificationSubject.asObservable();
+  public newLevelNotification$ = this.newLevelNotificationSubject.asObservable();
 
   constructor(
     private parcoursNotificationService: ParcoursNotificationService,
     private userGamificationService: UserGamificationService,
+    private levelNotificationService: LevelNotificationService,
+    private gamificationNotificationService: GamificationNotificationService,
     private parcoursService: ParcoursService
   ) {}
 
@@ -64,7 +71,17 @@ export class ParcoursAutoRefreshService {
    */
   private checkForUpdates() {
     this.checkForNewNotifications();
+    this.checkForNewAchievements();
     this.checkForStatsUpdates();
+  }
+
+  /**
+   * Vérifie les nouvelles réalisations (badges, défis, niveaux)
+   */
+  private checkForNewAchievements() {
+    // Utiliser le service de gamification pour vérifier TOUTES les nouvelles réalisations
+    // Cela inclut les badges, défis ET niveaux
+    this.gamificationNotificationService.checkForNewAchievements();
   }
 
   /**
@@ -187,6 +204,7 @@ export class ParcoursAutoRefreshService {
    */
   resetCheckTimestamps() {
     this.lastNotificationCheck = 0;
+    this.lastLevelNotificationCheck = 0;
     this.lastStatsCheck = 0;
     console.log('🔄 Timestamps de vérification réinitialisés');
   }

@@ -4,6 +4,9 @@ import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
 import { ParcoursNotificationService, ParcoursNotification } from '../parcours-notification.service';
+import { LevelNotificationService, LevelNotification } from '../level-notification.service';
+import { BadgeNotificationService, BadgeNotification } from '../badge-notification.service';
+import { ChallengeNotificationService, ChallengeNotification } from '../challenge-notification.service';
 import { ParcoursAutoRefreshService } from '../parcours-auto-refresh.service';
 import { EnrollmentService } from '../enrollment.service';
 import { Subscription } from 'rxjs';
@@ -25,6 +28,9 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
     showNotifications = false;
     recentActivity: RecentActivity[] = [];
     parcoursNotifications: ParcoursNotification[] = [];
+    levelNotifications: LevelNotification[] = [];
+    badgeNotifications: BadgeNotification[] = [];
+    challengeNotifications: ChallengeNotification[] = [];
     unreadNotificationsCount = 0;
     private profileSub: Subscription | null = null;
     private autoRefreshSub: Subscription | null = null;
@@ -35,6 +41,9 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
         private router: Router,
         private userStatsService: UserGamificationService,
         private parcoursNotificationService: ParcoursNotificationService,
+        private levelNotificationService: LevelNotificationService,
+        private badgeNotificationService: BadgeNotificationService,
+        private challengeNotificationService: ChallengeNotificationService,
         private parcoursAutoRefreshService: ParcoursAutoRefreshService,
         private enrollmentService: EnrollmentService
     ) { }
@@ -116,7 +125,7 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
 
     loadNotifications() {
         if (!this.authService.isFormateur()) {
-            // Charger les activités récentes (badges, défis)
+            // Charger les activités récentes (pour compatibilité - peut être supprimé plus tard)
             this.userStatsService.getRecentActivity(5).subscribe({
                 next: (activities) => {
                     this.recentActivity = activities;
@@ -130,13 +139,93 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
                 }
             });
 
-            // Charger le nombre de notifications non lues
-            this.parcoursNotificationService.getUnreadNotificationsCount().subscribe({
-                next: (response) => {
-                    this.unreadNotificationsCount = response.count;
+            // Charger les notifications de niveau
+            this.levelNotificationService.getUnreadLevelNotifications().subscribe({
+                next: (notifications) => {
+                    this.levelNotifications = notifications;
                 }
             });
+
+            // Charger les notifications de badge
+            this.badgeNotificationService.getUnreadBadgeNotifications().subscribe({
+                next: (notifications) => {
+                    this.badgeNotifications = notifications;
+                },
+                error: (error) => {
+                    console.warn('Service de notifications de badge non disponible:', error);
+                    this.badgeNotifications = [];
+                }
+            });
+
+            // Charger les notifications de défi
+            this.challengeNotificationService.getUnreadChallengeNotifications().subscribe({
+                next: (notifications) => {
+                    this.challengeNotifications = notifications;
+                },
+                error: (error) => {
+                    console.warn('Service de notifications de défi non disponible:', error);
+                    this.challengeNotifications = [];
+                }
+            });
+
+            // Charger le nombre total de notifications non lues
+            this.updateUnreadNotificationsCount();
         }
+    }
+
+    private updateUnreadNotificationsCount() {
+        let totalCount = 0;
+        let completedRequests = 0;
+        const totalRequests = 4; // parcours, niveau, badge, défi
+
+        const updateTotal = () => {
+            completedRequests++;
+            if (completedRequests === totalRequests) {
+                this.unreadNotificationsCount = totalCount;
+            }
+        };
+
+        // Compter les notifications de parcours
+        this.parcoursNotificationService.getUnreadNotificationsCount().subscribe({
+            next: (response) => {
+                totalCount += response.count;
+                updateTotal();
+            },
+            error: () => updateTotal()
+        });
+
+        // Compter les notifications de niveau
+        this.levelNotificationService.getUnreadLevelNotificationsCount().subscribe({
+            next: (response) => {
+                totalCount += response.count;
+                updateTotal();
+            },
+            error: () => updateTotal()
+        });
+
+        // Compter les notifications de badge
+        this.badgeNotificationService.getUnreadBadgeNotificationsCount().subscribe({
+            next: (response) => {
+                totalCount += response.count;
+                updateTotal();
+            },
+            error: (error) => {
+                console.warn('Compteur de notifications de badge non disponible:', error);
+                updateTotal();
+            }
+        });
+
+        // Compter les notifications de défi
+        this.challengeNotificationService.getUnreadChallengeNotificationsCount().subscribe({
+            next: (response) => {
+                totalCount += response.count;
+                updateTotal();
+            },
+            error: (error) => {
+                console.warn('Compteur de notifications de défi non disponible:', error);
+                updateTotal();
+            }
+        });
     }
 
     loadEnrolledCount() {
@@ -162,24 +251,70 @@ export class NavbarComponent implements OnInit, AfterViewInit, OnDestroy {
             next: () => {
                 // Retirer la notification de la liste des non lues
                 this.parcoursNotifications = this.parcoursNotifications.filter(n => n.id !== notificationId);
-                this.unreadNotificationsCount = Math.max(0, this.unreadNotificationsCount - 1);
+                this.updateUnreadNotificationsCount();
+            }
+        });
+    }
+
+    markLevelNotificationAsRead(notificationId: number) {
+        this.levelNotificationService.markNotificationAsRead(notificationId).subscribe({
+            next: () => {
+                // Retirer la notification de la liste des non lues
+                this.levelNotifications = this.levelNotifications.filter(n => n.id !== notificationId);
+                this.updateUnreadNotificationsCount();
+            }
+        });
+    }
+
+    markBadgeNotificationAsRead(notificationId: number) {
+        this.badgeNotificationService.markNotificationAsRead(notificationId).subscribe({
+            next: () => {
+                // Retirer la notification de la liste des non lues
+                this.badgeNotifications = this.badgeNotifications.filter(n => n.id !== notificationId);
+                this.updateUnreadNotificationsCount();
+            }
+        });
+    }
+
+    markChallengeNotificationAsRead(notificationId: number) {
+        this.challengeNotificationService.markNotificationAsRead(notificationId).subscribe({
+            next: () => {
+                // Retirer la notification de la liste des non lues
+                this.challengeNotifications = this.challengeNotifications.filter(n => n.id !== notificationId);
+                this.updateUnreadNotificationsCount();
             }
         });
     }
 
     markAllNotificationsAsRead() {
+        // Marquer toutes les notifications de parcours comme lues
         this.parcoursNotificationService.markAllNotificationsAsRead().subscribe({
             next: () => {
                 this.parcoursNotifications = [];
+            }
+        });
+
+        // Marquer toutes les notifications de niveau comme lues
+        this.levelNotificationService.markAllNotificationsAsRead().subscribe({
+            next: () => {
+                this.levelNotifications = [];
+            }
+        });
+
+        // Marquer toutes les notifications de badge comme lues
+        this.badgeNotificationService.markAllNotificationsAsRead().subscribe({
+            next: () => {
+                this.badgeNotifications = [];
+            }
+        });
+
+        // Marquer toutes les notifications de défi comme lues
+        this.challengeNotificationService.markAllNotificationsAsRead().subscribe({
+            next: () => {
+                this.challengeNotifications = [];
                 this.unreadNotificationsCount = 0;
             }
         });
-    }
-
-    openCertificate(certificateUrl: string) {
-        if (certificateUrl) {
-            window.open(certificateUrl, '_blank');
-        }
     }
 
     getUserDomaine(): string {

@@ -40,6 +40,15 @@ public class GamificationService {
     @Autowired
     private UserLoginRepository userLoginRepository;
 
+    @Autowired
+    private LevelNotificationService levelNotificationService;
+
+    @Autowired
+    private BadgeNotificationRepository badgeNotificationRepository;
+
+    @Autowired
+    private ChallengeNotificationRepository challengeNotificationRepository;
+
     // Pas d'injection directe pour éviter la dépendance circulaire
 
     // Gestion des XP avec protection contre les erreurs
@@ -61,6 +70,22 @@ public class GamificationService {
             System.err.println("Erreur lors de l'attribution d'XP pour " + user.getEmail() + ": " + e.getMessage());
             e.printStackTrace();
             // Ne pas faire échouer l'opération principale
+        }
+    }
+
+    /**
+     * Force la vérification des niveaux pour un utilisateur
+     * Utile après une modification manuelle des XP
+     */
+    public void forceCheckLevelUp(User user) {
+        try {
+            UserXP userXP = getUserXP(user);
+            checkLevelUp(userXP);
+            userXPRepository.save(userXP);
+            System.out.println("Gamification: Vérification forcée des niveaux pour " + user.getEmail());
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la vérification forcée des niveaux pour " + user.getEmail() + ": " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -106,7 +131,8 @@ public class GamificationService {
                 Level currentLevel = availableLevels.get(0);
                 if (currentLevel.getLevel() > userXP.getCurrentLevel()) {
                     int oldLevel = userXP.getCurrentLevel();
-                    userXP.setCurrentLevel(currentLevel.getLevel());
+                    int newLevel = currentLevel.getLevel();
+                    userXP.setCurrentLevel(newLevel);
 
                     // Calculer XP pour le prochain niveau avec gestion d'erreur
                     try {
@@ -135,10 +161,30 @@ public class GamificationService {
                     userXP.setLastUpdated(System.currentTimeMillis());
 
                     System.out.println("Gamification: " + userXP.getUser().getEmail() + " monte du niveau " + oldLevel
-                            + " au niveau " + currentLevel.getLevel());
+                            + " au niveau " + newLevel);
+
+                    // 🆕 CRÉER LA NOTIFICATION DE NIVEAU
+                    try {
+                        // Calculer les XP gagnés depuis le niveau précédent
+                        Optional<Level> previousLevelInfo = levelRepository.findByLevel(oldLevel);
+                        int xpGained = previousLevelInfo.isPresent() ? 
+                            userXP.getTotalXP() - previousLevelInfo.get().getXpRequired() : 
+                            userXP.getTotalXP();
+                        
+                        levelNotificationService.createLevelUpNotification(
+                            userXP.getUser(), 
+                            oldLevel, 
+                            newLevel, 
+                            userXP.getTotalXP(), 
+                            xpGained
+                        );
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Erreur lors de la création de notification de niveau: " + e.getMessage());
+                        // Ne pas faire échouer la montée de niveau
+                    }
 
                     // Vérifier les badges de niveau
-                    checkLevelBadges(userXP.getUser(), currentLevel.getLevel());
+                    checkLevelBadges(userXP.getUser(), newLevel);
                 }
             }
         } catch (Exception e) {
@@ -156,6 +202,21 @@ public class GamificationService {
                 userBadge.setBadge(badge);
                 userBadge.setEarnedAt(System.currentTimeMillis());
                 userBadgeRepository.save(userBadge);
+
+                // 🆕 CRÉER LA NOTIFICATION DE BADGE
+                try {
+                    BadgeNotification badgeNotification = new BadgeNotification();
+                    badgeNotification.setUser(user);
+                    badgeNotification.setBadge(badge);
+                    badgeNotification.setIsRead(false);
+                    badgeNotification.setIsNew(true);
+                    badgeNotificationRepository.save(badgeNotification);
+                    
+                    System.out.println("✅ Notification de badge créée: " + badge.getName() + " pour " + user.getEmail());
+                } catch (Exception e) {
+                    System.err.println("⚠️ Erreur lors de la création de notification de badge (table manquante?): " + e.getMessage());
+                    // Ne pas faire échouer l'attribution du badge - continuer normalement
+                }
 
                 System.out.println("Gamification: Badge '" + badge.getName() + "' attribué à " + user.getEmail());
             }
@@ -434,6 +495,22 @@ public class GamificationService {
         try {
             // Attribuer les XP du défi
             awardXP(user, challenge.getXpReward(), "Défi terminé: " + challenge.getName());
+
+            // 🆕 CRÉER LA NOTIFICATION DE DÉFI
+            try {
+                ChallengeNotification challengeNotification = new ChallengeNotification();
+                challengeNotification.setUser(user);
+                challengeNotification.setChallenge(challenge);
+                challengeNotification.setXpEarned(challenge.getXpReward());
+                challengeNotification.setIsRead(false);
+                challengeNotification.setIsNew(true);
+                challengeNotificationRepository.save(challengeNotification);
+                
+                System.out.println("✅ Notification de défi créée: " + challenge.getName() + " pour " + user.getEmail());
+            } catch (Exception e) {
+                System.err.println("⚠️ Erreur lors de la création de notification de défi (table manquante?): " + e.getMessage());
+                // Ne pas faire échouer la completion du défi - continuer normalement
+            }
 
             System.out.println("Gamification: Défi '" + challenge.getName() + "' terminé pour " + user.getEmail()
                     + " (+" + challenge.getXpReward() + " XP)");

@@ -118,6 +118,100 @@
                             </div>
 
                             <div class="max-h-96 overflow-y-auto">
+                                <!-- Notifications de niveau -->
+                                <div *ngFor="let levelNotification of levelNotifications"
+                                    class="px-4 py-3 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-colors border-b border-gray-50 group cursor-pointer"
+                                    (click)="markLevelNotificationAsRead(levelNotification.id)">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-100 to-blue-100 flex items-center justify-center text-purple-600">
+                                                <i data-feather="trending-up" class="w-4 h-4"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
+                                                🎉 Montée de niveau !
+                                            </p>
+                                            <p class="text-xs text-gray-600 mt-1">
+                                                Niveau {{ levelNotification.oldLevel }} → {{ levelNotification.newLevel }} : {{ levelNotification.levelName }}
+                                            </p>
+                                            <div class="flex items-center justify-between mt-2">
+                                                <p class="text-xs text-gray-500 flex items-center">
+                                                    <span class="font-bold text-purple-600 mr-2">
+                                                        +{{ levelNotification.xpGained.toLocaleString() }} XP
+                                                    </span>
+                                                    <span class="text-gray-400 mr-2">•</span>
+                                                    <span class="text-blue-600">
+                                                        {{ levelNotification.totalXP.toLocaleString() }} XP total
+                                                    </span>
+                                                </p>
+                                                <p class="text-xs text-gray-400 flex items-center">
+                                                    <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                                                    {{ levelNotification.timeAgo }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Notifications de badge -->
+                                <div *ngFor="let badgeNotification of badgeNotifications"
+                                    class="px-4 py-3 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-colors border-b border-gray-50 group cursor-pointer"
+                                    (click)="markBadgeNotificationAsRead(badgeNotification.id)">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-100 to-orange-100 flex items-center justify-center text-orange-600">
+                                                <i data-feather="award" class="w-4 h-4"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 group-hover:text-orange-600 transition-colors">
+                                                🏆 Badge débloqué !
+                                            </p>
+                                            <p class="text-xs text-gray-600 mt-1">
+                                                Vous avez obtenu le badge "{{ badgeNotification.badge.name }}"
+                                            </p>
+                                            <div class="flex items-center justify-between mt-2">
+                                                <p class="text-xs text-gray-500 flex items-center">
+                                                    <span class="text-orange-600 mr-2">🎉</span>
+                                                    <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                                                    {{ badgeNotification.createdAt | date:'short' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Notifications de défi -->
+                                <div *ngFor="let challengeNotification of challengeNotifications"
+                                    class="px-4 py-3 hover:bg-gradient-to-r hover:from-green-50 hover:to-teal-50 transition-colors border-b border-gray-50 group cursor-pointer"
+                                    (click)="markChallengeNotificationAsRead(challengeNotification.id)">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-green-100 to-teal-100 flex items-center justify-center text-green-600">
+                                                <i data-feather="target" class="w-4 h-4"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 group-hover:text-green-600 transition-colors">
+                                                🎯 Défi réussi !
+                                            </p>
+                                            <p class="text-xs text-gray-600 mt-1">
+                                                Vous avez terminé le défi "{{ challengeNotification.challenge.name }}"
+                                            </p>
+                                            <div class="flex items-center justify-between mt-2">
+                                                <p class="text-xs text-gray-500 flex items-center">
+                                                    <span class="font-bold text-green-600 mr-2">
+                                                        +{{ challengeNotification.xpEarned }} XP
+                                                    </span>
+                                                    <i data-feather="clock" class="w-3 h-3 mr-1"></i>
+                                                    {{ challengeNotification.createdAt | date:'short' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Notifications de parcours -->
                                 <div *ngFor="let notification of parcoursNotifications"
                                     class="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 group cursor-pointer"
@@ -144,11 +238,6 @@
                                                     <i data-feather="clock" class="w-3 h-3 mr-1"></i>
                                                     {{ notification.createdAt | date:'short' }}
                                                 </p>
-                                                <button *ngIf="notification.certificateReady && notification.certificateUrl"
-                                                        (click)="openCertificate(notification.certificateUrl); $event.stopPropagation()"
-                                                        class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md hover:bg-blue-200 transition-colors">
-                                                    📜 Certificat
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -179,7 +268,7 @@
                                     </div>
                                 </div>
 
-                                <div *ngIf="recentActivity.length === 0 && parcoursNotifications.length === 0" 
+                                <div *ngIf="recentActivity.length === 0 && parcoursNotifications.length === 0 && levelNotifications.length === 0 && badgeNotifications.length === 0 && challengeNotifications.length === 0" 
                                      class="px-4 py-8 text-center text-gray-500">
                                     <i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
                                     <p class="text-sm">Aucune nouvelle notification</p>

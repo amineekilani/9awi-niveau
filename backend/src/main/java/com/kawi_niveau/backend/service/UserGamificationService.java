@@ -70,43 +70,69 @@ public class UserGamificationService {
     // @Cacheable(value = "userStats", key = "#user.email", unless = "#result == null")
     public UserGamificationStatsResponse getUserStats(User user) {
         try {
-            // System.out.println("========================================");
-            // System.out.println("getUserStats appelé pour: " + user.getEmail());
-
             // S'assurer que l'utilisateur a des données de gamification
             UserXP userXP = gamificationService.getUserXP(user);
-            // System.out.println("UserXP récupéré: " + userXP.getTotalXP() + " XP, Niveau " + userXP.getCurrentLevel());
 
             // Vérification défensive des valeurs nulles
             int currentLevelVal = userXP.getCurrentLevel() != null ? userXP.getCurrentLevel() : 1;
             int totalXpVal = userXP.getTotalXP() != null ? userXP.getTotalXP() : 0;
-            // System.out.println("Valeurs après vérification: " + totalXpVal + " XP, Niveau " + currentLevelVal);
+
+            // Récupérer les informations du niveau actuel
+            Optional<Level> currentLevelInfo = levelRepository.findByLevel(currentLevelVal);
+            String levelName = currentLevelInfo.map(Level::getName).orElse("Niveau " + currentLevelVal);
+            String levelDescription = currentLevelInfo.map(Level::getDescription).orElse("Description du niveau");
+
+            // Calculer les XP pour le prochain niveau
+            int pointsToNextLevel = 0;
+            int nextLevelPoints = 0;
+            double progressPercent = 0.0;
+
+            // Trouver le prochain niveau
+            Optional<Level> nextLevelInfo = levelRepository.findNextLevel(totalXpVal);
+            if (nextLevelInfo.isPresent()) {
+                Level nextLevel = nextLevelInfo.get();
+                nextLevelPoints = nextLevel.getXpRequired();
+                pointsToNextLevel = nextLevelPoints - totalXpVal;
+                
+                // Calculer le pourcentage de progression vers le prochain niveau
+                int currentLevelXpRequired = currentLevelInfo.map(Level::getXpRequired).orElse(0);
+                int xpInCurrentLevel = totalXpVal - currentLevelXpRequired;
+                int xpNeededForNextLevel = nextLevelPoints - currentLevelXpRequired;
+                
+                if (xpNeededForNextLevel > 0) {
+                    progressPercent = Math.min(100.0, (double) xpInCurrentLevel / xpNeededForNextLevel * 100.0);
+                }
+            } else {
+                // Niveau maximum atteint
+                pointsToNextLevel = 0;
+                nextLevelPoints = totalXpVal;
+                progressPercent = 100.0;
+            }
 
             // Compter les badges
             int badgesCount = (int) userBadgeRepository.countByUserId(user.getId());
-            // System.out.println("Badges count: " + badgesCount);
 
             // Compter les défis terminés
             int completedChallenges = (int) userChallengeRepository.countCompletedChallengesByUserId(user.getId());
-            // System.out.println("Completed challenges: " + completedChallenges);
 
-            // Créer une réponse simple
+            // Position approximative dans le classement
+            int leaderboardPosition = getApproximateLeaderboardPosition(user);
+
+            // Créer la réponse avec les vraies valeurs calculées
             UserGamificationStatsResponse response = new UserGamificationStatsResponse(
                     totalXpVal,
                     currentLevelVal,
-                    "Niveau " + currentLevelVal,
-                    "Description du niveau",
-                    100,
-                    100,
-                    0.0,
+                    levelName,
+                    levelDescription,
+                    pointsToNextLevel,
+                    nextLevelPoints,
+                    progressPercent,
                     badgesCount,
                     completedChallenges,
-                    1,
+                    leaderboardPosition,
                     new ArrayList<>(),
                     new ArrayList<>());
 
-            // System.out.println("Réponse créée avec succès!");
-            // System.out.println("========================================");
             return response;
         } catch (Exception e) {
             System.err.println("========================================");

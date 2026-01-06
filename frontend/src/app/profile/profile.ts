@@ -6,6 +6,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService, Profile } from '../auth';
 import { UserGamificationService, UserGamificationStats, RecentActivity } from '../user-gamification.service';
+import { LevelTestService } from '../level-test.service';
 
 declare const feather: any;
 declare const VANTA: any;
@@ -56,7 +57,8 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     private http: HttpClient,
     public authService: AuthService,
     private router: Router,
-    private gamificationService: UserGamificationService
+    private gamificationService: UserGamificationService,
+    private levelTestService: LevelTestService
   ) { }
 
   ngOnInit() {
@@ -294,5 +296,36 @@ export class ProfileComponent implements OnInit, AfterViewInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  // Méthodes de test pour les notifications de niveau
+  testAddXP(amount: number) {
+    this.levelTestService.addTestXP(amount).subscribe({
+      next: (response) => {
+        this.message = `+${amount} XP ajoutés ! Vérifiez les notifications.`;
+        this.errorMessage = '';
+        // Recharger les stats après un délai
+        setTimeout(() => {
+          this.loadProfile();
+        }, 1000);
+      },
+      error: (error) => {
+        this.errorMessage = 'Erreur lors de l\'ajout d\'XP';
+        this.message = '';
+      }
+    });
+  }
+
+  forceCheckLevel() {
+    this.levelTestService.forceCheckLevel().subscribe({
+      next: (response) => {
+        this.message = 'Vérification des niveaux effectuée !';
+        this.errorMessage = '';
+      },
+      error: (error) => {
+        this.errorMessage = 'Erreur lors de la vérification des niveaux';
+        this.message = '';
+      }
+    });
   }
 }
