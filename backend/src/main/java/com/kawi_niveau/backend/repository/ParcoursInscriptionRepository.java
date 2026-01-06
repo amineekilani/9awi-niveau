@@ -33,6 +33,9 @@ public interface ParcoursInscriptionRepository extends JpaRepository<ParcoursIns
     // Trouver les inscriptions terminées d'un utilisateur
     List<ParcoursInscription> findByUserAndIsCompletedTrueOrderByDateCompletionDesc(User user);
     
+    // Trouver les inscriptions terminées d'un utilisateur (sans tri)
+    List<ParcoursInscription> findByUserAndIsCompletedTrue(User user);
+    
     // Trouver toutes les inscriptions d'un parcours
     List<ParcoursInscription> findByParcoursOrderByDateInscriptionDesc(ParcoursApprentissage parcours);
     

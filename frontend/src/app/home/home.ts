@@ -8,6 +8,7 @@ import { UserGamificationService, UserGamificationStats, RecentActivity } from '
 import { CoursService, Cours, NiveauDifficulte, NiveauDifficulteInfo } from '../cours.service';
 import { EnrollmentService, Enrollment } from '../enrollment.service';
 import { GamificationNotificationService } from '../gamification-notification.service';
+import { RecommendationService, ParcoursRecommendation } from '../recommendation.service';
 import { NiveauBadgeComponent } from '../niveau-badge/niveau-badge';
 import { ChatbotComponent } from '../chatbot/chatbot';
 
@@ -51,13 +52,18 @@ export class HomeComponent implements OnInit, AfterViewInit {
   // Notifications
   recentActivity: RecentActivity[] = [];
 
+  // Recommandations IA
+  quickRecommendations: ParcoursRecommendation[] = [];
+  recommendationsLoading = false;
+
   constructor(
     private router: Router,
     public authService: AuthService,
     private userGamificationService: UserGamificationService,
     private coursService: CoursService,
     private enrollmentService: EnrollmentService,
-    private notificationService: GamificationNotificationService
+    private notificationService: GamificationNotificationService,
+    private recommendationService: RecommendationService
   ) { }
 
   ngOnInit() {
@@ -67,6 +73,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.loadUserStats();
     this.loadCours();
     this.loadNiveauxDifficulte();
+    this.loadQuickRecommendations();
   }
 
   ngAfterViewInit() {
@@ -285,5 +292,43 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   toggleNotifications() {
     // Handled by Navbar
+  }
+
+  loadQuickRecommendations() {
+    this.recommendationsLoading = true;
+    
+    this.recommendationService.getQuickRecommendations().subscribe({
+      next: (recommendations) => {
+        this.quickRecommendations = recommendations;
+        this.recommendationsLoading = false;
+        
+        // Réinitialiser les icônes après le chargement
+        setTimeout(() => {
+          if (typeof feather !== 'undefined') {
+            feather.replace();
+          }
+        }, 100);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des recommandations rapides:', err);
+        this.recommendationsLoading = false;
+      }
+    });
+  }
+
+  getScoreColor(score: number): string {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-blue-600';
+    if (score >= 40) return 'text-yellow-600';
+    return 'text-gray-600';
+  }
+
+  getMatchBadgeClass(niveau: string): string {
+    switch (niveau) {
+      case 'PARFAIT': return 'bg-green-100 text-green-800';
+      case 'BON': return 'bg-blue-100 text-blue-800';
+      case 'ACCEPTABLE': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   }
 }

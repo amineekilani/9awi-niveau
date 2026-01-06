@@ -19,7 +19,7 @@ import { ModuleDetailComponent } from './module-detail/module-detail';
 import { QuizViewerComponent } from './quiz-viewer/quiz-viewer';
 import { ExerciceViewerComponent } from './exercice-viewer/exercice-viewer';
 import { AdminMainComponent } from './admin-main/admin-main';
-import { AdminDashboardMainComponent } from './admin-dashboard-main/admin-dashboard-main';
+import { AdminDashboardEnhancedComponent } from './admin-dashboard-enhanced/admin-dashboard-enhanced.component';
 import { AdminUsersComponent } from './admin-users/admin-users';
 import { AdminGamificationComponent } from './admin-gamification/admin-gamification';
 import { MesRecompensesComponent } from './mes-recompenses/mes-recompenses';
@@ -36,6 +36,8 @@ import { ParcoursDetailComponent } from './parcours-detail/parcours-detail.compo
 import { ParcoursEtapesComponent } from './parcours-etapes/parcours-etapes.component';
 
 import { ParcoursProgressionDetailsComponent } from './parcours-progression-details/parcours-progression-details.component';
+
+import { TestChartsComponent } from './test-charts/test-charts.component';
 
 export const routes: Routes = [
   { path: '', canActivate: [rootGuard], children: [] },
@@ -61,6 +63,8 @@ export const routes: Routes = [
   { path: 'quiz/:quizId/module/:moduleId', component: QuizViewerComponent, canActivate: [authGuard] },
   { path: 'exercice/:exerciceId/module/:moduleId', component: ExerciceViewerComponent, canActivate: [authGuard] },
 
+  { path: 'test-charts', component: TestChartsComponent, canActivate: [authGuard] },
+
   // Routes pour les parcours d'apprentissage
   { path: 'parcours-dashboard', component: ParcoursDashboardComponent, canActivate: [authGuard] },
   { path: 'parcours', component: ParcoursCatalogueComponent, canActivate: [authGuard] }, // Catalogue pour apprenants
@@ -79,7 +83,7 @@ export const routes: Routes = [
     canActivate: [authGuard, adminGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: AdminDashboardMainComponent },
+      { path: 'dashboard', component: AdminDashboardEnhancedComponent },
       { path: 'users', component: AdminUsersComponent },
       { path: 'gamification', component: AdminGamificationComponent }
     ]

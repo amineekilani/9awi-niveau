@@ -1,349 +1,305 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NavbarComponent } from '../navbar/navbar.component';
 import { FormsModule } from '@angular/forms';
-import { RecommendationService, Recommendation, RecommendationResponse } from '../recommendation.service';
-import { Router } from '@angular/router';
-import { interval, Subscription } from 'rxjs';
+import { RouterModule, Router } from '@angular/router';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { AuthService } from '../auth';
+import { RecommendationService, ParcoursRecommendation, RecommendationRequest, UserPreferences } from '../recommendation.service';
+import { ParcoursService } from '../parcours.service';
+import { NiveauDifficulte } from '../parcours.service';
 
 declare const feather: any;
 
-/**
- * Composant d'affichage des recommandations pédagogiques
- * Interface utilisateur pour l'agent IA de recommandation
- */
 @Component({
   selector: 'app-recommendations',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
   templateUrl: './recommendations.component.html',
   styleUrls: ['./recommendations.component.css']
 })
-export class RecommendationsComponent implements OnInit, OnDestroy, AfterViewInit {
+export class RecommendationsComponent implements OnInit {
+  recommendations: ParcoursRecommendation[] = [];
+  loading = false;
+  error = '';
+  success = '';
 
-  recommendations: Recommendation[] = [];
-  groupedRecommendations: Map<string, Recommendation[]> = new Map();
-  isLoading = false;
-  error: string | null = null;
-  encouragementMessage = '';
+  // Onglets
+  activeTab = 'personalized'; // personalized, criteria, preferences
 
-  // Filtres et options
-  selectedType: string = 'ALL';
-  minConfidence: number = 0.5;
-  showOnlyHighPriority = false;
+  // Critères de recherche
+  searchCriteria: RecommendationRequest = {
+    maxRecommendations: 8
+  };
 
-  // Auto-refresh
-  private autoRefreshSubscription?: Subscription;
-  private readonly AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-  autoRefreshEnabled = true;
-  lastUpdateTime: Date = new Date();
+  // Préférences utilisateur
+  userPreferences: UserPreferences = {};
+  preferencesLoading = false;
+  preferencesSaving = false;
 
-  // Types de recommandations disponibles
-  recommendationTypes = [
-    { value: 'ALL', label: 'Toutes les recommandations' },
-    { value: 'COURS', label: 'Cours' },
-    { value: 'LECON', label: 'Leçons' },
-    { value: 'QUIZ', label: 'Quiz' },
-    { value: 'CHALLENGE', label: 'Défis' }
-  ];
+  // Options pour les formulaires
+  availableCategories: string[] = [];
+  learningStyles: { value: string, label: string }[] = [];
+  challengePreferences: { value: string, label: string }[] = [];
+  learningGoals: string[] = [];
+  interests: string[] = [];
+  careerFocuses: string[] = [];
+
+  // Sélections multiples
+  selectedCategories: string[] = [];
+  selectedGoals: string[] = [];
+  selectedInterests: string[] = [];
+
+  // Enum pour le template
+  NiveauDifficulte = NiveauDifficulte;
 
   constructor(
     private recommendationService: RecommendationService,
+    private parcoursService: ParcoursService,
+    public authService: AuthService,
     private router: Router
-  ) { }
+  ) {}
 
-  ngOnInit(): void {
-    this.loadRecommendations();
-    this.setupAutoRefresh();
+  ngOnInit() {
+    this.initializeOptions();
+    this.loadUserPreferences();
+    this.loadPersonalizedRecommendations();
+
+    // Initialiser Feather icons
+    setTimeout(() => {
+      if (typeof feather !== 'undefined') {
+        feather.replace();
+      }
+    }, 100);
   }
 
-  ngAfterViewInit(): void {
-    if (typeof feather !== 'undefined') {
-      setTimeout(() => feather.replace(), 100);
+  initializeOptions() {
+    this.availableCategories = this.recommendationService.getAvailableCategories();
+    this.learningStyles = this.recommendationService.getLearningStyles();
+    this.challengePreferences = this.recommendationService.getChallengePreferences();
+    this.learningGoals = this.recommendationService.getLearningGoals();
+    this.interests = this.recommendationService.getInterests();
+    this.careerFocuses = this.recommendationService.getCareerFocuses();
+  }
+
+  switchTab(tab: string) {
+    this.activeTab = tab;
+    this.error = '';
+    this.success = '';
+
+    if (tab === 'personalized') {
+      this.loadPersonalizedRecommendations();
     }
+
+    // Réinitialiser les icônes
+    setTimeout(() => {
+      if (typeof feather !== 'undefined') {
+        feather.replace();
+      }
+    }, 100);
   }
 
-  ngOnDestroy(): void {
-    this.stopAutoRefresh();
-  }
+  loadPersonalizedRecommendations() {
+    this.loading = true;
+    this.error = '';
 
-  /**
-   * Configure l'actualisation automatique
-   */
-  private setupAutoRefresh(): void {
-    if (this.autoRefreshEnabled) {
-      this.autoRefreshSubscription = interval(this.AUTO_REFRESH_INTERVAL).subscribe(() => {
-        console.log('Auto-refresh des recommandations');
-        this.loadRecommendations(true); // true = silent refresh
-      });
-    }
-  }
-
-  /**
-   * Arrête l'actualisation automatique
-   */
-  private stopAutoRefresh(): void {
-    if (this.autoRefreshSubscription) {
-      this.autoRefreshSubscription.unsubscribe();
-      this.autoRefreshSubscription = undefined;
-    }
-  }
-
-  /**
-   * Active/désactive l'auto-refresh
-   */
-  toggleAutoRefresh(): void {
-    this.autoRefreshEnabled = !this.autoRefreshEnabled;
-
-    if (this.autoRefreshEnabled) {
-      this.setupAutoRefresh();
-      console.log('Auto-refresh activé');
-    } else {
-      this.stopAutoRefresh();
-      console.log('Auto-refresh désactivé');
-    }
-  }
-
-  /**
-   * Charge les recommandations depuis l'API
-   */
-  loadRecommendations(silent: boolean = false): void {
-    if (!silent) {
-      this.isLoading = true;
-    }
-    this.error = null;
-
-    this.recommendationService.getMyRecommendations().subscribe({
-      next: (response: RecommendationResponse) => {
-        const hasChanges = this.hasRecommendationsChanged(response.recommendations);
-
-        this.recommendations = response.recommendations;
-        this.applyFilters();
-        this.encouragementMessage = this.recommendationService.generateEncouragementMessage(this.recommendations);
-        this.lastUpdateTime = new Date();
-        this.isLoading = false;
-
-        if (hasChanges && silent) {
-          console.log('Nouvelles recommandations détectées lors de l\'auto-refresh');
-          // Optionnel : afficher une notification discrète
+    this.recommendationService.getPersonalizedRecommendations(8).subscribe({
+      next: (recommendations) => {
+        this.recommendations = recommendations;
+        this.loading = false;
+        
+        if (recommendations.length === 0) {
+          this.error = 'Aucune recommandation disponible. Configurez vos préférences pour de meilleures suggestions.';
         }
 
-        // Rafraîchir les icônes SVG
         setTimeout(() => {
           if (typeof feather !== 'undefined') {
             feather.replace();
           }
         }, 100);
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement des recommandations:', error);
-        if (!silent) {
-          this.error = 'Impossible de charger les recommandations. Veuillez réessayer.';
-          this.isLoading = false;
-          alert('Erreur lors du chargement des recommandations');
+      error: (err) => {
+        this.error = 'Erreur lors du chargement des recommandations';
+        this.loading = false;
+        console.error('Erreur:', err);
+      }
+    });
+  }
+
+  searchByCriteria() {
+    this.loading = true;
+    this.error = '';
+
+    // Préparer les critères
+    const criteria: RecommendationRequest = {
+      ...this.searchCriteria,
+      preferredCategories: this.selectedCategories.length > 0 ? this.selectedCategories : undefined,
+      learningGoals: this.selectedGoals.length > 0 ? this.selectedGoals : undefined,
+      interests: this.selectedInterests.length > 0 ? this.selectedInterests : undefined
+    };
+
+    this.recommendationService.getRecommendationsByCriteria(criteria).subscribe({
+      next: (recommendations) => {
+        this.recommendations = recommendations;
+        this.loading = false;
+        
+        if (recommendations.length === 0) {
+          this.error = 'Aucun parcours ne correspond à vos critères. Essayez d\'élargir votre recherche.';
+        } else {
+          this.success = `${recommendations.length} recommandation(s) trouvée(s) selon vos critères.`;
         }
-      }
-    });
-  }
 
-  /**
-   * Vérifie si les recommandations ont changé
-   */
-  private hasRecommendationsChanged(newRecommendations: Recommendation[]): boolean {
-    if (this.recommendations.length !== newRecommendations.length) {
-      return true;
-    }
-
-    // Comparaison simple par ID et titre
-    const currentIds = this.recommendations.map(r => `${r.id}-${r.type}`).sort();
-    const newIds = newRecommendations.map(r => `${r.id}-${r.type}`).sort();
-
-    return JSON.stringify(currentIds) !== JSON.stringify(newIds);
-  }
-
-  /**
-   * Applique les filtres aux recommandations
-   */
-  applyFilters(): void {
-    let filtered = [...this.recommendations];
-
-    // Filtre par type
-    if (this.selectedType !== 'ALL') {
-      filtered = filtered.filter(rec => rec.type === this.selectedType);
-    }
-
-    // Filtre par confiance minimale
-    filtered = this.recommendationService.filterByConfidence(filtered, this.minConfidence);
-
-    // Filtre haute priorité uniquement
-    if (this.showOnlyHighPriority) {
-      filtered = filtered.filter(rec => rec.priority <= 2);
-    }
-
-    // Trier les recommandations
-    filtered = this.recommendationService.sortRecommendations(filtered);
-
-    // Grouper par type
-    this.groupedRecommendations = this.recommendationService.groupRecommendationsByType(filtered);
-  }
-
-  /**
-   * Gestionnaire de changement de filtre
-   */
-  onFilterChange(): void {
-    this.applyFilters();
-  }
-
-  /**
-   * Navigue vers le contenu recommandé
-   */
-  navigateToRecommendation(recommendation: Recommendation): void {
-    switch (recommendation.type) {
-      case 'COURS':
-        this.router.navigate(['/cours', recommendation.id]);
-        break;
-      case 'LECON':
-        // Naviguer vers la leçon (nécessite de récupérer l'ID du cours/module)
-        alert('Navigation vers la leçon en cours de développement');
-        break;
-      case 'QUIZ':
-        this.router.navigate(['/quiz', recommendation.id]);
-        break;
-      case 'CHALLENGE':
-        this.router.navigate(['/challenges', recommendation.id]);
-        break;
-      default:
-        alert('Type de recommandation non supporté');
-    }
-  }
-
-  /**
-   * Marque une recommandation comme vue/ignorée
-   */
-  dismissRecommendation(recommendation: Recommendation): void {
-    // TODO: Implémenter la logique de dismissal côté backend
-    this.recommendations = this.recommendations.filter(r => r.id !== recommendation.id);
-    this.applyFilters();
-
-    if (confirm('Recommandation masquée. Voulez-vous la restaurer ?')) {
-      // Restaurer la recommandation
-      this.loadRecommendations();
-    }
-  }
-
-  /**
-   * Actualise les recommandations
-   */
-  refreshRecommendations(): void {
-    this.loadRecommendations();
-    this.lastUpdateTime = new Date();
-    console.log('Recommandations actualisées manuellement');
-  }
-
-  /**
-   * Obtient le temps écoulé depuis la dernière mise à jour
-   */
-  getTimeSinceLastUpdate(): string {
-    const now = new Date();
-    const diffMs = now.getTime() - this.lastUpdateTime.getTime();
-    const diffMinutes = Math.floor(diffMs / 60000);
-
-    if (diffMinutes < 1) {
-      return 'À l\'instant';
-    } else if (diffMinutes < 60) {
-      return `Il y a ${diffMinutes} min`;
-    } else {
-      const diffHours = Math.floor(diffMinutes / 60);
-      return `Il y a ${diffHours}h`;
-    }
-  }
-
-  /**
-   * Obtient l'icône pour un type de recommandation
-   */
-  getRecommendationIcon(type: string): string {
-    return this.recommendationService.getRecommendationIcon(type);
-  }
-
-  /**
-   * Obtient la couleur de priorité
-   */
-  getPriorityColor(priority: number): string {
-    return this.recommendationService.getPriorityColor(priority);
-  }
-
-  /**
-   * Obtient le label de priorité
-   */
-  getPriorityLabel(priority: number): string {
-    return this.recommendationService.getPriorityLabel(priority);
-  }
-
-  /**
-   * Formate le score de confiance
-   */
-  formatConfidenceScore(score: number): string {
-    return this.recommendationService.formatConfidenceScore(score);
-  }
-
-  /**
-   * Détermine si une recommandation est hautement recommandée
-   */
-  isHighlyRecommended(recommendation: Recommendation): boolean {
-    return this.recommendationService.isHighlyRecommended(recommendation);
-  }
-
-  /**
-   * Obtient les clés du Map pour l'itération dans le template
-   */
-  getGroupKeys(): string[] {
-    return Array.from(this.groupedRecommendations.keys());
-  }
-
-  /**
-   * Obtient les recommandations pour un type donné
-   */
-  getRecommendationsForType(type: string): Recommendation[] {
-    return this.groupedRecommendations.get(type) || [];
-  }
-
-  /**
-   * Obtient le label français pour un type de recommandation
-   */
-  getTypeLabel(type: string): string {
-    const typeMap: { [key: string]: string } = {
-      'COURS': 'Cours recommandés',
-      'LECON': 'Leçons suggérées',
-      'QUIZ': 'Quiz à tenter',
-      'CHALLENGE': 'Défis à relever'
-    };
-    return typeMap[type] || type;
-  }
-
-  /**
-   * Charge des recommandations personnalisées
-   */
-  loadCustomRecommendations(): void {
-    this.isLoading = true;
-
-    const params = {
-      maxRecommendations: 15,
-      includeCompleted: false,
-      focusArea: this.selectedType !== 'ALL' ? this.selectedType : undefined
-    };
-
-    this.recommendationService.getCustomRecommendations(params).subscribe({
-      next: (response: RecommendationResponse) => {
-        this.recommendations = response.recommendations;
-        this.applyFilters();
-        this.isLoading = false;
-        console.log('Recommandations personnalisées chargées');
+        setTimeout(() => {
+          if (typeof feather !== 'undefined') {
+            feather.replace();
+          }
+        }, 100);
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement des recommandations personnalisées:', error);
-        this.isLoading = false;
-        alert('Erreur lors du chargement des recommandations personnalisées');
+      error: (err) => {
+        this.error = 'Erreur lors de la recherche par critères';
+        this.loading = false;
+        console.error('Erreur:', err);
       }
     });
+  }
+
+  loadUserPreferences() {
+    this.preferencesLoading = true;
+
+    this.recommendationService.getUserPreferences().subscribe({
+      next: (preferences) => {
+        this.userPreferences = preferences;
+        
+        // Parser les arrays JSON
+        this.selectedCategories = this.recommendationService.parseJsonArray(preferences.preferredCategories);
+        this.selectedGoals = this.recommendationService.parseJsonArray(preferences.learningGoals);
+        this.selectedInterests = this.recommendationService.parseJsonArray(preferences.interests);
+        
+        this.preferencesLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des préférences:', err);
+        this.preferencesLoading = false;
+      }
+    });
+  }
+
+  saveUserPreferences() {
+    this.preferencesSaving = true;
+    this.error = '';
+    this.success = '';
+
+    // Préparer les préférences avec les arrays JSON
+    const preferencesToSave: UserPreferences = {
+      ...this.userPreferences,
+      preferredCategories: this.recommendationService.stringifyArray(this.selectedCategories),
+      learningGoals: this.recommendationService.stringifyArray(this.selectedGoals),
+      interests: this.recommendationService.stringifyArray(this.selectedInterests)
+    };
+
+    this.recommendationService.saveUserPreferences(preferencesToSave).subscribe({
+      next: (savedPrefs) => {
+        this.userPreferences = savedPrefs;
+        this.success = 'Préférences sauvegardées avec succès !';
+        this.preferencesSaving = false;
+        
+        // Recharger les recommandations personnalisées
+        if (this.activeTab === 'personalized') {
+          setTimeout(() => this.loadPersonalizedRecommendations(), 1000);
+        }
+      },
+      error: (err) => {
+        this.error = 'Erreur lors de la sauvegarde des préférences';
+        this.preferencesSaving = false;
+        console.error('Erreur:', err);
+      }
+    });
+  }
+
+  // Gestion des sélections multiples
+  toggleCategory(category: string) {
+    const index = this.selectedCategories.indexOf(category);
+    if (index > -1) {
+      this.selectedCategories.splice(index, 1);
+    } else {
+      this.selectedCategories.push(category);
+    }
+  }
+
+  toggleGoal(goal: string) {
+    const index = this.selectedGoals.indexOf(goal);
+    if (index > -1) {
+      this.selectedGoals.splice(index, 1);
+    } else {
+      this.selectedGoals.push(goal);
+    }
+  }
+
+  toggleInterest(interest: string) {
+    const index = this.selectedInterests.indexOf(interest);
+    if (index > -1) {
+      this.selectedInterests.splice(index, 1);
+    } else {
+      this.selectedInterests.push(interest);
+    }
+  }
+
+  // Actions sur les parcours
+  voirParcours(parcoursId: number) {
+    this.router.navigate(['/parcours', parcoursId]);
+  }
+
+  sInscrireAuParcours(parcoursId: number) {
+    this.parcoursService.sInscrireAuParcours(parcoursId).subscribe({
+      next: (response) => {
+        this.success = 'Inscription réussie ! Vous pouvez maintenant commencer le parcours.';
+        
+        // Mettre à jour le statut d'inscription dans les recommandations
+        const recommendation = this.recommendations.find(r => r.id === parcoursId);
+        if (recommendation) {
+          recommendation.isInscrit = true;
+        }
+      },
+      error: (err) => {
+        this.error = 'Erreur lors de l\'inscription au parcours';
+        console.error('Erreur:', err);
+      }
+    });
+  }
+
+  // Utilitaires
+  getScoreColor(score: number): string {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-blue-600';
+    if (score >= 40) return 'text-yellow-600';
+    return 'text-gray-600';
+  }
+
+  getMatchBadgeClass(niveau: string): string {
+    switch (niveau) {
+      case 'PARFAIT': return 'bg-green-100 text-green-800';
+      case 'BON': return 'bg-blue-100 text-blue-800';
+      case 'ACCEPTABLE': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  getDifficultyColor(niveau?: NiveauDifficulte): string {
+    switch (niveau) {
+      case NiveauDifficulte.DEBUTANT: return 'text-green-600';
+      case NiveauDifficulte.INTERMEDIAIRE: return 'text-blue-600';
+      case NiveauDifficulte.AVANCE: return 'text-orange-600';
+      case NiveauDifficulte.EXPERT: return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  }
+
+  clearCriteria() {
+    this.searchCriteria = { maxRecommendations: 8 };
+    this.selectedCategories = [];
+    this.selectedGoals = [];
+    this.selectedInterests = [];
+    this.recommendations = [];
+    this.error = '';
+    this.success = '';
   }
 }

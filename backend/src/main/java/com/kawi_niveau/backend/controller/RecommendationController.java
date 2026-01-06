@@ -1,165 +1,172 @@
 package com.kawi_niveau.backend.controller;
 
-import com.kawi_niveau.backend.dto.RecommendationResponse;
-import com.kawi_niveau.backend.service.RecommendationService;
-import com.kawi_niveau.backend.repository.UserRepository;
+import com.kawi_niveau.backend.dto.ParcoursRecommendationResponse;
+import com.kawi_niveau.backend.dto.RecommendationRequest;
 import com.kawi_niveau.backend.entity.User;
+import com.kawi_niveau.backend.entity.UserPreferences;
+import com.kawi_niveau.backend.repository.UserRepository;
+import com.kawi_niveau.backend.repository.UserPreferencesRepository;
+import com.kawi_niveau.backend.service.AIRecommendationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-/**
- * Contrôleur REST pour l'API de recommandations pédagogiques
- * Endpoints pour générer et récupérer des recommandations personnalisées
- */
+import java.util.List;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/recommendations")
 @CrossOrigin(origins = "http://localhost:4200")
 public class RecommendationController {
-    
-    private static final Logger logger = LoggerFactory.getLogger(RecommendationController.class);
-    
+
     @Autowired
-    private RecommendationService recommendationService;
-    
+    private AIRecommendationService aiRecommendationService;
+
     @Autowired
     private UserRepository userRepository;
-    
+
+    @Autowired
+    private UserPreferencesRepository userPreferencesRepository;
+
     /**
-     * Génère des recommandations personnalisées pour l'utilisateur connecté
-     * 
-     * @param authentication Utilisateur connecté
-     * @return Recommandations au format JSON
+     * Obtenir des recommandations personnalisées basées sur le profil utilisateur
      */
-    @GetMapping("/me")
-    @PreAuthorize("hasRole('ETUDIANT') or hasRole('FORMATEUR')")
-    public ResponseEntity<RecommendationResponse> getMyRecommendations(Authentication authentication) {
-        
-        try {
-            String email = authentication.getName();
-            User user = userRepository.findByEmailAndArchivedFalse(email)
-                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-            
-            logger.info("Génération de recommandations pour l'utilisateur {}", user.getId());
-            
-            RecommendationResponse recommendations = recommendationService
-                    .generateRecommendations(user.getId());
-            
-            return ResponseEntity.ok(recommendations);
-            
-        } catch (Exception e) {
-            logger.error("Erreur lors de la génération de recommandations pour l'utilisateur {}", 
-                    authentication.getName(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-    
-    /**
-     * Génère des recommandations pour un utilisateur spécifique (admin/formateur)
-     * 
-     * @param userId ID de l'utilisateur cible
-     * @param authentication Utilisateur connecté (doit être admin/formateur)
-     * @return Recommandations au format JSON
-     */
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('FORMATEUR')")
-    public ResponseEntity<RecommendationResponse> getUserRecommendations(
-            @PathVariable Long userId,
-            Authentication authentication) {
-        
-        try {
-            logger.info("Génération de recommandations pour l'utilisateur {} par {}", 
-                    userId, authentication.getName());
-            
-            RecommendationResponse recommendations = recommendationService
-                    .generateRecommendations(userId);
-            
-            return ResponseEntity.ok(recommendations);
-            
-        } catch (Exception e) {
-            logger.error("Erreur lors de la génération de recommandations pour l'utilisateur {}", 
-                    userId, e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-    
-    /**
-     * Génère des recommandations avec paramètres personnalisés
-     * 
-     * @param authentication Utilisateur connecté
-     * @param maxRecommendations Nombre maximum de recommandations (défaut: 10)
-     * @param includeCompleted Inclure les contenus déjà complétés (défaut: false)
-     * @param focusArea Domaine de focus spécifique (optionnel)
-     * @return Recommandations personnalisées
-     */
-    @GetMapping("/me/custom")
-    @PreAuthorize("hasRole('ETUDIANT') or hasRole('FORMATEUR')")
-    public ResponseEntity<RecommendationResponse> getCustomRecommendations(
+    @GetMapping("/personalized")
+    public ResponseEntity<?> getPersonalizedRecommendations(
             Authentication authentication,
-            @RequestParam(defaultValue = "10") Integer maxRecommendations,
-            @RequestParam(defaultValue = "false") Boolean includeCompleted,
-            @RequestParam(required = false) String focusArea) {
+            @RequestParam(defaultValue = "5") Integer maxResults) {
         
         try {
-            String email = authentication.getName();
-            User user = userRepository.findByEmailAndArchivedFalse(email)
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-            
-            logger.info("Génération de recommandations personnalisées pour l'utilisateur {} " +
-                    "(max: {}, includeCompleted: {}, focus: {})", 
-                    user.getId(), maxRecommendations, includeCompleted, focusArea);
-            
-            // Pour l'instant, utiliser la méthode standard
-            // TODO: Implémenter les paramètres personnalisés
-            RecommendationResponse recommendations = recommendationService
-                    .generateRecommendations(user.getId());
-            
+
+            List<ParcoursRecommendationResponse> recommendations = 
+                    aiRecommendationService.getPersonalizedRecommendations(user, maxResults);
+
             return ResponseEntity.ok(recommendations);
-            
+
         } catch (Exception e) {
-            logger.error("Erreur lors de la génération de recommandations personnalisées pour l'utilisateur {}", 
-                    authentication.getName(), e);
-            return ResponseEntity.internalServerError().build();
+            System.err.println("Erreur lors de la récupération des recommandations: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la génération des recommandations: " + e.getMessage());
         }
     }
-    
+
     /**
-     * Endpoint pour tester le moteur de recommandation avec des données d'exemple
-     * Disponible uniquement en mode développement
+     * Obtenir des recommandations basées sur des critères spécifiques
      */
-    @GetMapping("/test")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> testRecommendationEngine() {
+    @PostMapping("/by-criteria")
+    public ResponseEntity<?> getRecommendationsByCriteria(
+            Authentication authentication,
+            @RequestBody RecommendationRequest request) {
         
         try {
-            logger.info("Test du moteur de recommandation");
-            
-            // Exemple de test avec données fictives
-            String testResult = """
-                {
-                  "status": "success",
-                  "message": "Moteur de recommandation opérationnel",
-                  "timestamp": "%s",
-                  "features": [
-                    "Filtrage collaboratif",
-                    "Recommandations basées sur le contenu",
-                    "Règles pédagogiques",
-                    "Analyse des performances",
-                    "Recommandations par niveau"
-                  ]
-                }
-                """.formatted(java.time.Instant.now().toString());
-            
-            return ResponseEntity.ok(testResult);
-            
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            List<ParcoursRecommendationResponse> recommendations = 
+                    aiRecommendationService.getRecommendationsByCriteria(user, request);
+
+            return ResponseEntity.ok(recommendations);
+
         } catch (Exception e) {
-            logger.error("Erreur lors du test du moteur de recommandation", e);
-            return ResponseEntity.internalServerError()
-                    .body("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
+            System.err.println("Erreur lors de la récupération des recommandations par critères: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la génération des recommandations: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtenir les préférences utilisateur
+     */
+    @GetMapping("/preferences")
+    public ResponseEntity<?> getUserPreferences(Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            Optional<UserPreferences> preferences = userPreferencesRepository.findByUser(user);
+            
+            if (preferences.isPresent()) {
+                return ResponseEntity.ok(preferences.get());
+            } else {
+                // Créer des préférences par défaut
+                UserPreferences defaultPrefs = new UserPreferences();
+                defaultPrefs.setUser(user);
+                return ResponseEntity.ok(defaultPrefs);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des préférences: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la récupération des préférences: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sauvegarder les préférences utilisateur
+     */
+    @PostMapping("/preferences")
+    public ResponseEntity<?> saveUserPreferences(
+            Authentication authentication,
+            @RequestBody UserPreferences preferences) {
+        
+        try {
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            // Vérifier si des préférences existent déjà
+            Optional<UserPreferences> existingPrefs = userPreferencesRepository.findByUser(user);
+            
+            UserPreferences prefsToSave;
+            if (existingPrefs.isPresent()) {
+                prefsToSave = existingPrefs.get();
+                // Mettre à jour les champs
+                prefsToSave.setPreferredCategories(preferences.getPreferredCategories());
+                prefsToSave.setPreferredDifficulty(preferences.getPreferredDifficulty());
+                prefsToSave.setLearningStyle(preferences.getLearningStyle());
+                prefsToSave.setTimeAvailabilityHours(preferences.getTimeAvailabilityHours());
+                prefsToSave.setLearningGoals(preferences.getLearningGoals());
+                prefsToSave.setInterests(preferences.getInterests());
+                prefsToSave.setCareerFocus(preferences.getCareerFocus());
+                prefsToSave.setPreferredDurationMin(preferences.getPreferredDurationMin());
+                prefsToSave.setPreferredDurationMax(preferences.getPreferredDurationMax());
+                prefsToSave.setChallengePreference(preferences.getChallengePreference());
+                prefsToSave.setCertificationImportant(preferences.getCertificationImportant());
+            } else {
+                prefsToSave = preferences;
+                prefsToSave.setUser(user);
+            }
+
+            UserPreferences savedPrefs = userPreferencesRepository.save(prefsToSave);
+            return ResponseEntity.ok(savedPrefs);
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la sauvegarde des préférences: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la sauvegarde des préférences: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtenir des recommandations rapides (top 3)
+     */
+    @GetMapping("/quick")
+    public ResponseEntity<?> getQuickRecommendations(Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            List<ParcoursRecommendationResponse> recommendations = 
+                    aiRecommendationService.getPersonalizedRecommendations(user, 3);
+
+            return ResponseEntity.ok(recommendations);
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des recommandations rapides: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la génération des recommandations: " + e.getMessage());
         }
     }
 }
