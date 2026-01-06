@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 @Transactional
@@ -219,6 +219,9 @@ public class GamificationService {
                 }
 
                 System.out.println("Gamification: Badge '" + badge.getName() + "' attribué à " + user.getEmail());
+
+                // ✅ NOUVEAU: Vérifier les défis EARN_BADGES après avoir attribué un badge
+                checkBadgeEarnedChallenges(user);
             }
         } catch (Exception e) {
             System.err.println("Erreur lors de l'attribution du badge '" + badge.getName() + "' à " + user.getEmail()
@@ -399,14 +402,29 @@ public class GamificationService {
                     // Attribuer des XP de bienvenue
                     awardXP(user, 10, "Première connexion");
 
-                    // Badge de première connexion - utiliser un type approprié ou créer un badge spécifique
-                    // Ne pas utiliser FIRST_COURSE pour la connexion !
-                    // checkBadgeEligibility(user, BadgeCriteriaType.DAILY_LOGIN, 1); // Si un badge "Premier Pas" existe
+                    // Badge de première connexion
+                    checkBadgeEligibility(user, BadgeCriteriaType.FIRST_LOGIN, 1);
                     
                     System.out.println("Gamification: Première connexion pour " + user.getEmail() + " - XP de bienvenue attribués");
                 } else {
-                    // XP quotidien pour les connexions suivantes
-                    awardXP(user, 1, "Connexion quotidienne");
+                    // Calculer et vérifier les jours consécutifs de connexion
+                    int consecutiveDays = calculateConsecutiveLoginDays(user);
+                    System.out.println("Gamification: Connexion pour " + user.getEmail() + " - Jours consécutifs: " + consecutiveDays);
+                    
+                    // Vérifier les badges de streak
+                    checkBadgeEligibility(user, BadgeCriteriaType.STREAK_DAYS, consecutiveDays);
+                    
+                    // Vérifier les défis de connexions consécutives
+                    checkLoginChallenges(user, consecutiveDays);
+                    
+                    // Attribuer des XP bonus pour les streaks
+                    if (consecutiveDays >= 3) {
+                        int bonusXP = Math.min(consecutiveDays * 2, 20); // Max 20 XP bonus
+                        awardXP(user, bonusXP, "Bonus connexion " + consecutiveDays + " jours consécutifs");
+                    } else {
+                        // XP quotidien pour les connexions suivantes
+                        awardXP(user, 1, "Connexion quotidienne");
+                    }
                     System.out.println("Gamification: Connexion enregistrée pour " + user.getEmail());
                 }
             } catch (Exception e) {
@@ -545,6 +563,180 @@ public class GamificationService {
         } catch (Exception e) {
             System.err.println(
                     "Erreur lors du traitement de défi terminé pour " + user.getEmail() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Appelé quand un utilisateur termine un ou plusieurs modules
+     */
+    public void onModuleCompleted(User user, int totalCompletedModules) {
+        try {
+            System.out.println("🎯 Gamification: Modules terminés pour " + user.getEmail() + " - Total: " + totalCompletedModules);
+            
+            // Attribuer des XP pour chaque module terminé
+            awardXP(user, 25, "Module terminé");
+            
+            // Vérifier les défis de type COMPLETE_MODULE
+            List<Challenge> moduleCompletionChallenges = challengeRepository.findByChallengeTypeAndIsActiveTrue(ChallengeType.COMPLETE_MODULE);
+            
+            for (Challenge challenge : moduleCompletionChallenges) {
+                // Vérifier si l'utilisateur a déjà terminé ce défi
+                Optional<UserChallenge> existingUserChallenge = userChallengeRepository.findByUserAndChallenge(user, challenge);
+                boolean alreadyCompleted = existingUserChallenge.isPresent() && existingUserChallenge.get().isCompleted();
+                
+                if (!alreadyCompleted && totalCompletedModules >= challenge.getTargetValue()) {
+                    // Créer ou mettre à jour le UserChallenge
+                    UserChallenge userChallenge = existingUserChallenge.orElse(new UserChallenge());
+                    userChallenge.setUser(user);
+                    userChallenge.setChallenge(challenge);
+                    userChallenge.setCurrentProgress(totalCompletedModules);
+                    userChallenge.setCompleted(true);
+                    userChallenge.setCompletedAt(System.currentTimeMillis());
+                    userChallengeRepository.save(userChallenge);
+                    
+                    // Déclencher la completion du défi
+                    onChallengeCompleted(user, challenge);
+                    
+                    System.out.println("🏆 Défi COMPLETE_MODULE terminé: " + challenge.getName() + " pour " + user.getEmail());
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Erreur lors du traitement de modules terminés pour " + user.getEmail() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Calcule le nombre de jours consécutifs de connexion pour un utilisateur
+     */
+    private int calculateConsecutiveLoginDays(User user) {
+        try {
+            // Récupérer les connexions des 30 derniers jours
+            long thirtyDaysAgo = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000);
+            List<UserLogin> recentLogins = userLoginRepository.findByUserAndLoginTimeAfter(user, thirtyDaysAgo);
+            
+            if (recentLogins.isEmpty()) {
+                return 0;
+            }
+
+            // Grouper les connexions par jour
+            Set<String> loginDays = new HashSet<>();
+            for (UserLogin login : recentLogins) {
+                // Convertir timestamp en date (format YYYY-MM-DD)
+                Date loginDate = new Date(login.getLoginTime());
+                String dayString = new SimpleDateFormat("yyyy-MM-dd").format(loginDate);
+                loginDays.add(dayString);
+            }
+
+            // Convertir en liste triée (du plus récent au plus ancien)
+            List<String> sortedDays = new ArrayList<>(loginDays);
+            sortedDays.sort(Collections.reverseOrder());
+
+            // Calculer les jours consécutifs depuis aujourd'hui
+            int consecutiveDays = 0;
+            String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+            
+            for (int i = 0; i < sortedDays.size(); i++) {
+                String expectedDay;
+                if (i == 0) {
+                    // Premier jour doit être aujourd'hui ou hier
+                    expectedDay = today;
+                    String yesterday = new SimpleDateFormat("yyyy-MM-dd").format(new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000));
+                    
+                    if (sortedDays.get(i).equals(today) || sortedDays.get(i).equals(yesterday)) {
+                        consecutiveDays = 1;
+                    } else {
+                        break; // Pas de connexion récente
+                    }
+                } else {
+                    // Calculer le jour attendu (jour précédent)
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(new SimpleDateFormat("yyyy-MM-dd").parse(sortedDays.get(i - 1)));
+                    cal.add(Calendar.DAY_OF_MONTH, -1);
+                    expectedDay = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+                    
+                    if (sortedDays.get(i).equals(expectedDay)) {
+                        consecutiveDays++;
+                    } else {
+                        break; // Interruption dans la séquence
+                    }
+                }
+            }
+
+            return consecutiveDays;
+        } catch (Exception e) {
+            System.err.println("Erreur calcul jours consécutifs pour " + user.getEmail() + ": " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Vérifie les défis de connexions consécutives
+     */
+    private void checkLoginChallenges(User user, int consecutiveDays) {
+        try {
+            List<Challenge> loginChallenges = challengeRepository.findByChallengeTypeAndIsActiveTrue(ChallengeType.DAILY_LOGIN);
+            
+            for (Challenge challenge : loginChallenges) {
+                Optional<UserChallenge> existingUserChallenge = userChallengeRepository.findByUserAndChallenge(user, challenge);
+                boolean alreadyCompleted = existingUserChallenge.isPresent() && existingUserChallenge.get().isCompleted();
+                
+                if (!alreadyCompleted && consecutiveDays >= challenge.getTargetValue()) {
+                    UserChallenge userChallenge = existingUserChallenge.orElse(new UserChallenge());
+                    userChallenge.setUser(user);
+                    userChallenge.setChallenge(challenge);
+                    userChallenge.setCurrentProgress(consecutiveDays);
+                    userChallenge.setCompleted(true);
+                    userChallenge.setCompletedAt(System.currentTimeMillis());
+                    userChallengeRepository.save(userChallenge);
+                    
+                    onChallengeCompleted(user, challenge);
+                    System.out.println("🏆 Défi DAILY_LOGIN terminé: " + challenge.getName() + " pour " + user.getEmail());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur vérification défis connexion pour " + user.getEmail() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Vérifie les défis EARN_BADGES après qu'un badge soit attribué
+     */
+    private void checkBadgeEarnedChallenges(User user) {
+        try {
+            // Compter le nombre total de badges de l'utilisateur
+            long totalBadges = userBadgeRepository.countByUserId(user.getId());
+            
+            // Vérifier les badges BADGES_EARNED
+            checkBadgeEligibility(user, BadgeCriteriaType.BADGES_EARNED, (int) totalBadges);
+            
+            // Vérifier les défis EARN_BADGES
+            List<Challenge> badgeEarnedChallenges = challengeRepository.findByChallengeTypeAndIsActiveTrue(ChallengeType.EARN_BADGES);
+            
+            for (Challenge challenge : badgeEarnedChallenges) {
+                Optional<UserChallenge> existingUserChallenge = userChallengeRepository.findByUserAndChallenge(user, challenge);
+                boolean alreadyCompleted = existingUserChallenge.isPresent() && existingUserChallenge.get().isCompleted();
+                
+                if (!alreadyCompleted && totalBadges >= challenge.getTargetValue()) {
+                    UserChallenge userChallenge = existingUserChallenge.orElse(new UserChallenge());
+                    userChallenge.setUser(user);
+                    userChallenge.setChallenge(challenge);
+                    userChallenge.setCurrentProgress((int) totalBadges);
+                    userChallenge.setCompleted(true);
+                    userChallenge.setCompletedAt(System.currentTimeMillis());
+                    userChallengeRepository.save(userChallenge);
+                    
+                    onChallengeCompleted(user, challenge);
+                    System.out.println("🏆 Défi EARN_BADGES terminé: " + challenge.getName() + " pour " + user.getEmail());
+                }
+            }
+            
+            System.out.println("🎯 Badges totaux pour " + user.getEmail() + ": " + totalBadges);
+            
+        } catch (Exception e) {
+            System.err.println("Erreur vérification défis badges pour " + user.getEmail() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }

@@ -8,6 +8,8 @@ public enum BadgeCriteriaType {
     XP_EARNED,             // Points XP gagnés
     FIRST_COURSE,          // Premier cours terminé
     FIRST_QUIZ,            // Premier quiz réussi
+    FIRST_LOGIN,           // Première connexion
     CHALLENGE_COMPLETED,   // Défi terminé
-    LEVEL_REACHED          // Niveau atteint
+    LEVEL_REACHED,         // Niveau atteint
+    BADGES_EARNED          // Nombre de badges gagnés
 }

@@ -215,6 +215,9 @@ public class EnrollmentService {
             float progress = (float) completedLecons / totalLecons * 100;
             enrollment.setProgress(Math.round(progress * 100) / 100.0f); // Arrondir à 2 décimales
 
+            // ✅ NOUVEAU: Vérifier les modules terminés pour les défis
+            checkCompletedModules(enrollment);
+
             // Vérifier si le cours est terminé (100% de progression)
             if (progress >= 100.0f) {
                 // Déclencher l'événement de cours terminé pour la gamification
@@ -398,5 +401,50 @@ public class EnrollmentService {
         response.setEtapesProgression(etapesProgression);
         
         return response;
+    }
+
+    /**
+     * Vérifie les modules terminés et déclenche les défis COMPLETE_MODULE
+     */
+    private void checkCompletedModules(Enrollment enrollment) {
+        try {
+            List<com.kawi_niveau.backend.entity.Module> modules = moduleRepository.findByCoursOrderByOrdreAsc(enrollment.getCours());
+            int completedModules = 0;
+
+            for (com.kawi_niveau.backend.entity.Module module : modules) {
+                // Vérifier si toutes les leçons du module sont terminées
+                List<Lecon> lecons = leconRepository.findByModuleOrderByOrdreAsc(module);
+                long totalLecons = lecons.size();
+                long completedLecons = lecons.stream()
+                    .mapToLong(lecon -> leconCompletionRepository.existsByEnrollmentAndLecon(enrollment, lecon) ? 1 : 0)
+                    .sum();
+
+                // Vérifier si le module a un quiz et s'il est réussi
+                boolean quizCompleted = true;
+                Optional<Quiz> quizOpt = quizRepository.findByModule(module);
+                if (quizOpt.isPresent()) {
+                    // Il y a un quiz, vérifier s'il est réussi (score >= 60%)
+                    Quiz quiz = quizOpt.get();
+                    Optional<ResultatQuiz> bestResult = resultatQuizRepository
+                        .findFirstByUserAndQuizOrderByScoreDesc(enrollment.getUser(), quiz);
+                    quizCompleted = bestResult.isPresent() && bestResult.get().getScore() >= 60.0;
+                }
+
+                // Module terminé si toutes les leçons sont faites ET quiz réussi (s'il y en a un)
+                if (totalLecons > 0 && completedLecons == totalLecons && quizCompleted) {
+                    completedModules++;
+                }
+            }
+
+            // Déclencher la vérification des défis COMPLETE_MODULE
+            if (completedModules > 0) {
+                gamificationService.onModuleCompleted(enrollment.getUser(), completedModules);
+                System.out.println("✅ Modules terminés pour " + enrollment.getUser().getEmail() + ": " + completedModules);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la vérification des modules terminés: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

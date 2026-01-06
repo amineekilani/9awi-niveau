@@ -121,7 +121,7 @@ public class GamificationInitController {
 
     private void initializeBadges() {
         Badge[] badges = {
-            createBadge("Premier Pas", "Félicitations pour votre première connexion !", "/icons/first-login.svg", BadgeCriteriaType.FIRST_COURSE, 1),
+            createBadge("Premier Pas", "Félicitations pour votre première connexion !", "/icons/first-login.svg", BadgeCriteriaType.FIRST_LOGIN, 1),
             createBadge("Étudiant Assidu", "Terminez votre premier cours", "/icons/first-course.svg", BadgeCriteriaType.COURS_COMPLETED, 1),
             createBadge("Quiz Master", "Réussissez votre premier quiz", "/icons/first-quiz.svg", BadgeCriteriaType.QUIZ_PASSED, 1),
             createBadge("Perfectionniste", "Obtenez un score parfait à un quiz", "/icons/perfect-score.svg", BadgeCriteriaType.PERFECT_SCORE, 1),
@@ -130,7 +130,8 @@ public class GamificationInitController {
             createBadge("Expert Quiz", "Réussissez 10 quiz", "/icons/quiz-expert.svg", BadgeCriteriaType.QUIZ_PASSED, 10),
             createBadge("Montée en Niveau", "Atteignez le niveau 5", "/icons/level-up.svg", BadgeCriteriaType.LEVEL_REACHED, 5),
             createBadge("Chasseur de Points", "Gagnez 1000 points XP", "/icons/xp-hunter.svg", BadgeCriteriaType.XP_EARNED, 1000),
-            createBadge("Défi Relevé", "Terminez votre premier défi", "/icons/challenge.svg", BadgeCriteriaType.CHALLENGE_COMPLETED, 1)
+            createBadge("Défi Relevé", "Terminez votre premier défi", "/icons/challenge.svg", BadgeCriteriaType.CHALLENGE_COMPLETED, 1),
+            createBadge("Collectionneur de Badges", "Gagnez 5 badges différents", "/icons/badge-collector.svg", BadgeCriteriaType.BADGES_EARNED, 5)
         };
 
         for (Badge badge : badges) {
