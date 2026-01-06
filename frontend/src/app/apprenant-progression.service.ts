@@ -4,20 +4,21 @@ import { Observable } from 'rxjs';
 
 export interface QuizResultatDetail {
   quizId: number;
-  quizTitre: string;
+  titreQuiz: string;
   meilleurScore: number;
   nombreTentatives: number;
-  derniereTentative: number;
-  passed: boolean;
+  dateDerniereTentative: string; // LocalDateTime du backend
+  reussi: boolean;
 }
 
 export interface ModuleProgressionDetail {
   moduleId: number;
-  moduleTitre: string;
+  titreModule: string;
+  ordreModule: number;
+  progressionPourcentage: number;
   totalLecons: number;
   leconsCompletees: number;
-  progression: number;
-  quizResultat: QuizResultatDetail | null;
+  quizDetail: QuizResultatDetail | null;
 }
 
 export interface ApprenantProgression {
@@ -25,14 +26,23 @@ export interface ApprenantProgression {
   nom: string;
   prenom: string;
   email: string;
-  profileImage: string | null;
-  progressionGlobale: number;
-  totalLecons: number;
-  leconsCompletees: number;
-  enrolledAt: number;
-  lastAccessedAt: number;
-  modulesProgression: ModuleProgressionDetail[];
-  quizResultats: QuizResultatDetail[];
+  progressionPourcentage: number; // Renommé de progressionGlobale
+  totalEtapes: number; // Renommé de totalLecons
+  etapeCourante: number; // Renommé de leconsCompletees
+  dateInscription: string; // LocalDateTime du backend
+  dateCompletion?: string; // LocalDateTime du backend (optionnel)
+  pointsGagnes: number;
+  isCompleted: boolean;
+  certificatGenere: boolean;
+  statut: string;
+  
+  // Propriétés calculées pour compatibilité avec le template
+  get progressionGlobale(): number;
+  get totalLecons(): number;
+  get leconsCompletees(): number;
+  get enrolledAt(): number;
+  get lastAccessedAt(): number;
+  get modulesProgression(): ModuleProgressionDetail[];
 }
 
 @Injectable({

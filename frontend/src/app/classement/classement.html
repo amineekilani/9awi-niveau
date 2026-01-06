@@ -104,7 +104,8 @@
             <td class="px-8 py-6">
               <div class="flex items-center">
                 <div *ngIf="entry.rank <= 3" [class]="getRankColor(entry.rank)"
-                  class="bg-gradient-to-br w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition-transform">
+                  class="bg-gradient-to-br w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition-transform rank-badge top-3"
+                  [class.rank-1-special]="entry.rank === 1">
                   <i [attr.data-feather]="getRankIcon(entry.rank)" class="w-5 h-5"></i>
                 </div>
                 <div *ngIf="entry.rank > 3"

@@ -169,11 +169,11 @@
               </div>
               <div class="text-right">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="text-2xl font-bold" [ngClass]="getProgressColor(apprenant.progressionGlobale)">
-                    {{ apprenant.progressionGlobale | number:'1.0-0' }}%
+                  <span class="text-2xl font-bold" [ngClass]="getProgressColor(getProgressionGlobale(apprenant))">
+                    {{ getProgressionGlobale(apprenant) | number:'1.0-0' }}%
                   </span>
                 </div>
-                <p class="text-xs text-gray-500">Inscrit le {{ formatDate(apprenant.enrolledAt) }}</p>
+                <p class="text-xs text-gray-500">Inscrit le {{ formatDate(getEnrolledAt(apprenant)) }}</p>
               </div>
             </div>
           </div>
@@ -184,13 +184,13 @@
             <div class="mb-4">
               <div class="flex justify-between items-center mb-2">
                 <span class="text-sm font-medium text-gray-700">Progression globale</span>
-                <span class="text-sm text-gray-600">{{ apprenant.leconsCompletees }} / {{ apprenant.totalLecons }}
+                <span class="text-sm text-gray-600">{{ getLeconsCompletees(apprenant) }} / {{ getTotalLecons(apprenant) }}
                   leçons</span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-3">
                 <div class="h-3 rounded-full transition-all duration-300"
-                  [ngClass]="getProgressBarColor(apprenant.progressionGlobale)"
-                  [style.width.%]="apprenant.progressionGlobale"></div>
+                  [ngClass]="getProgressBarColor(getProgressionGlobale(apprenant))"
+                  [style.width.%]="getProgressionGlobale(apprenant)"></div>
               </div>
             </div>
 
@@ -204,7 +204,7 @@
                 Détails par module
               </h5>
 
-              <div *ngFor="let module of apprenant.modulesProgression"
+              <div *ngFor="let module of getModulesProgression(apprenant)"
                 class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
@@ -260,7 +260,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Dernière activité: {{ formatDate(apprenant.lastAccessedAt) }}
+                Dernière activité: {{ formatDate(getLastAccessedAt(apprenant)) }}
               </p>
             </div>
           </div>

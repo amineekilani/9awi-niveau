@@ -300,8 +300,9 @@ public class EnrollmentService {
                 .mapToInt(module -> leconRepository.findByModuleOrderByOrdreAsc(module).size())
                 .sum();
         int leconsCompletees = (int) leconCompletionRepository.countByEnrollment(enrollment);
+        float progressionGlobale = totalLecons > 0 ? (float) leconsCompletees / totalLecons * 100 : 0;
 
-        // Progression par module
+        // Progression par module avec détails complets
         List<com.kawi_niveau.backend.dto.ApprenantProgressionResponse.ModuleProgressionDetail> modulesProgression = modules.stream()
                 .map(module -> {
                     List<Lecon> lecons = leconRepository.findByModuleOrderByOrdreAsc(module);
@@ -331,7 +332,7 @@ public class EnrollmentService {
                                         java.time.Instant.ofEpochMilli(dernierResultat.getDatePassed()),
                                         java.time.ZoneId.systemDefault()
                                     ),
-                                    meilleurScore >= 50.0 // Score minimum par défaut de 50%
+                                    meilleurScore >= 50.0
                             );
                         }
                     }
@@ -339,50 +340,16 @@ public class EnrollmentService {
                     return new com.kawi_niveau.backend.dto.ApprenantProgressionResponse.ModuleProgressionDetail(
                             module.getId(),
                             module.getTitre(),
-                            module.getOrdre(), // ordreModule
-                            progressionModule, // progressionPourcentage
-                            totalLeconsModule, // totalLecons
-                            (int) leconsCompleteesModule, // leconsCompletees
+                            module.getOrdre(),
+                            progressionModule,
+                            totalLeconsModule,
+                            (int) leconsCompleteesModule,
                             quizDetail
                     );
                 })
                 .collect(Collectors.toList());
 
-        // Tous les résultats de quiz du cours
-        List<com.kawi_niveau.backend.dto.ApprenantProgressionResponse.QuizResultatDetail> quizResultats = modules.stream()
-                .map(module -> {
-                    com.kawi_niveau.backend.entity.Quiz quiz = quizRepository.findByModule(module).orElse(null);
-                    if (quiz == null) {
-                        return null;
-                    }
-
-                    List<com.kawi_niveau.backend.entity.ResultatQuiz> resultats = resultatQuizRepository.findByUserAndQuizOrderByDatePassedDesc(user, quiz);
-                    if (resultats.isEmpty()) {
-                        return null;
-                    }
-
-                    double meilleurScore = resultats.stream()
-                            .mapToDouble(com.kawi_niveau.backend.entity.ResultatQuiz::getScore)
-                            .max()
-                            .orElse(0.0);
-                    com.kawi_niveau.backend.entity.ResultatQuiz dernierResultat = resultats.get(0);
-
-                    return new com.kawi_niveau.backend.dto.ApprenantProgressionResponse.QuizResultatDetail(
-                            quiz.getId(),
-                            quiz.getTitre(),
-                            meilleurScore,
-                            resultats.size(),
-                            java.time.LocalDateTime.ofInstant(
-                                java.time.Instant.ofEpochMilli(dernierResultat.getDatePassed()),
-                                java.time.ZoneId.systemDefault()
-                            ),
-                            meilleurScore >= 50.0 // Score minimum par défaut de 50%
-                    );
-                })
-                .filter(detail -> detail != null)
-                .collect(Collectors.toList());
-
-        // Créer la réponse avec le constructeur par défaut et les setters
+        // Créer la réponse avec toutes les données nécessaires
         com.kawi_niveau.backend.dto.ApprenantProgressionResponse response = 
             new com.kawi_niveau.backend.dto.ApprenantProgressionResponse();
         
@@ -390,14 +357,14 @@ public class EnrollmentService {
         response.setNom(user.getLastName());
         response.setPrenom(user.getFirstName());
         response.setEmail(user.getEmail());
-        response.setProgressionPourcentage((int) Math.round(enrollment.getProgress()));
-        response.setEtapeCourante(1); // Valeur par défaut
-        response.setTotalEtapes(totalLecons);
-        response.setPointsGagnes(leconsCompletees * 10); // Points par défaut
-        response.setIsCompleted(enrollment.getProgress() >= 100.0f);
+        response.setProgressionPourcentage(Math.round(progressionGlobale));
+        response.setEtapeCourante(leconsCompletees); // Nombre réel de leçons complétées
+        response.setTotalEtapes(totalLecons); // Nombre total de leçons
+        response.setPointsGagnes(leconsCompletees * 10);
+        response.setIsCompleted(progressionGlobale >= 100.0f);
         response.setCertificatGenere(false);
         
-        // Convertir les timestamps en LocalDateTime
+        // Convertir les timestamps
         if (enrollment.getEnrolledAt() != null) {
             response.setDateInscription(java.time.LocalDateTime.ofInstant(
                 java.time.Instant.ofEpochMilli(enrollment.getEnrolledAt()),
@@ -405,12 +372,30 @@ public class EnrollmentService {
             ));
         }
         
-        if (enrollment.getLastAccessedAt() != null && enrollment.getProgress() >= 100.0f) {
-            response.setDateCompletion(java.time.LocalDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(enrollment.getLastAccessedAt()),
-                java.time.ZoneId.systemDefault()
-            ));
+        if (enrollment.getLastAccessedAt() != null) {
+            if (progressionGlobale >= 100.0f) {
+                response.setDateCompletion(java.time.LocalDateTime.ofInstant(
+                    java.time.Instant.ofEpochMilli(enrollment.getLastAccessedAt()),
+                    java.time.ZoneId.systemDefault()
+                ));
+            }
         }
+        
+        // 🆕 AJOUTER LES DÉTAILS DES MODULES
+        // Créer une liste d'étapes basée sur les modules
+        List<com.kawi_niveau.backend.dto.ApprenantProgressionResponse.EtapeProgressionDto> etapesProgression = 
+            modulesProgression.stream()
+                .map(module -> new com.kawi_niveau.backend.dto.ApprenantProgressionResponse.EtapeProgressionDto(
+                    module.getModuleId(),
+                    module.getTitreModule(),
+                    module.getOrdreModule(),
+                    module.getProgressionPourcentage() >= 100.0f,
+                    module.getQuizDetail() != null ? (int) Math.round(module.getQuizDetail().getMeilleurScore()) : null,
+                    module.getQuizDetail() != null ? module.getQuizDetail().getDateDerniereTentative() : null
+                ))
+                .collect(Collectors.toList());
+        
+        response.setEtapesProgression(etapesProgression);
         
         return response;
     }

@@ -190,18 +190,18 @@ export class ClassementComponent implements OnInit, AfterViewInit {
 
   getRankIcon(rank: number): string {
     switch (rank) {
-      case 1: return 'crown';
-      case 2: return 'award';
-      case 3: return 'star';
+      case 1: return 'award'; // Badge doré pour le 1er
+      case 2: return 'award'; // Badge argenté pour le 2ème  
+      case 3: return 'award'; // Badge bronze pour le 3ème
       default: return 'user';
     }
   }
 
   getRankColor(rank: number): string {
     switch (rank) {
-      case 1: return 'from-yellow-400 to-yellow-600';
-      case 2: return 'from-gray-300 to-gray-500';
-      case 3: return 'from-orange-400 to-orange-600';
+      case 1: return 'from-yellow-400 to-yellow-600'; // Or pour le 1er
+      case 2: return 'from-gray-400 to-gray-600';     // Argent pour le 2ème
+      case 3: return 'from-amber-600 to-orange-700';  // Bronze pour le 3ème
       default: return 'from-blue-400 to-blue-600';
     }
   }

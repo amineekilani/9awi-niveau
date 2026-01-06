@@ -90,12 +90,91 @@ export class CoursDetailComponent implements OnInit {
     this.showApprenants = !this.showApprenants;
   }
 
-  formatDate(timestamp: number): string {
-    return new Date(timestamp).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  formatDate(dateString: string | number): string {
+    if (typeof dateString === 'number') {
+      // Timestamp en millisecondes
+      return new Date(dateString).toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } else {
+      // LocalDateTime string du backend
+      return new Date(dateString).toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+  }
+
+  // Méthodes d'adaptation pour la compatibilité avec le template
+  getProgressionGlobale(apprenant: any): number {
+    return apprenant.progressionPourcentage || apprenant.progressionGlobale || 0;
+  }
+
+  getTotalLecons(apprenant: any): number {
+    return apprenant.totalEtapes || apprenant.totalLecons || 0;
+  }
+
+  getLeconsCompletees(apprenant: any): number {
+    // Utiliser etapeCourante qui contient maintenant le nombre réel de leçons complétées
+    return apprenant.etapeCourante || apprenant.leconsCompletees || 0;
+  }
+
+  getEnrolledAt(apprenant: any): number {
+    if (apprenant.dateInscription) {
+      return new Date(apprenant.dateInscription).getTime();
+    }
+    return apprenant.enrolledAt || Date.now();
+  }
+
+  getLastAccessedAt(apprenant: any): number {
+    if (apprenant.dateCompletion) {
+      return new Date(apprenant.dateCompletion).getTime();
+    }
+    return apprenant.lastAccessedAt || Date.now();
+  }
+
+  getModulesProgression(apprenant: any): any[] {
+    // Utiliser les étapes de progression du backend
+    if (apprenant.etapesProgression && apprenant.etapesProgression.length > 0) {
+      return apprenant.etapesProgression.map((etape: any) => ({
+        moduleId: etape.etapeId,
+        moduleTitre: etape.titreCours,
+        totalLecons: 1, // Chaque module = 1 étape
+        leconsCompletees: etape.isCompleted ? 1 : 0,
+        progression: etape.isCompleted ? 100 : 0,
+        quizResultat: etape.scoreObtenu ? {
+          quizId: etape.etapeId,
+          quizTitre: 'Quiz ' + etape.titreCours,
+          meilleurScore: etape.scoreObtenu,
+          nombreTentatives: 1,
+          derniereTentative: etape.dateCompletion ? new Date(etape.dateCompletion).getTime() : Date.now(),
+          passed: etape.scoreObtenu >= 50
+        } : null
+      }));
+    }
+    
+    // Fallback: créer des modules fictifs basés sur la progression
+    const totalModules = Math.max(1, Math.floor(this.getTotalLecons(apprenant) / 3)); // Estimer 3 leçons par module
+    const completedModules = Math.floor((this.getLeconsCompletees(apprenant) / this.getTotalLecons(apprenant)) * totalModules);
+    
+    const modules = [];
+    for (let i = 0; i < totalModules; i++) {
+      const isCompleted = i < completedModules;
+      modules.push({
+        moduleId: i + 1,
+        moduleTitre: `Module ${i + 1}`,
+        totalLecons: Math.ceil(this.getTotalLecons(apprenant) / totalModules),
+        leconsCompletees: isCompleted ? Math.ceil(this.getTotalLecons(apprenant) / totalModules) : 
+                         (i === completedModules ? this.getLeconsCompletees(apprenant) % Math.ceil(this.getTotalLecons(apprenant) / totalModules) : 0),
+        progression: isCompleted ? 100 : (i === completedModules ? ((this.getLeconsCompletees(apprenant) % Math.ceil(this.getTotalLecons(apprenant) / totalModules)) / Math.ceil(this.getTotalLecons(apprenant) / totalModules)) * 100 : 0),
+        quizResultat: null
+      });
+    }
+    
+    return modules;
   }
 
   getProgressColor(progress: number): string {
