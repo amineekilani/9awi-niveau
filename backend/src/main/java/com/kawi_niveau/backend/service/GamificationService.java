@@ -257,7 +257,16 @@ public class GamificationService {
             // Attribuer des XP pour terminer un cours
             awardXP(user, 50, "Cours terminé");
 
-            System.out.println("Gamification: Cours terminé pour " + user.getEmail());
+            // 🆕 Vérifier le badge "Premier Cours"
+            long completedCourses = getCompletedCoursesCount(user);
+            checkBadgeEligibility(user, BadgeCriteriaType.COURS_COMPLETED, (int) completedCourses);
+            
+            // Badge spécial pour le premier cours
+            if (completedCourses == 1) {
+                checkBadgeEligibility(user, BadgeCriteriaType.FIRST_COURSE, 1);
+            }
+
+            System.out.println("Gamification: Cours terminé pour " + user.getEmail() + " (Total: " + completedCourses + " cours)");
         } catch (Exception e) {
             System.err.println(
                     "Erreur lors du traitement de cours terminé pour " + user.getEmail() + ": " + e.getMessage());
@@ -390,10 +399,11 @@ public class GamificationService {
                     // Attribuer des XP de bienvenue
                     awardXP(user, 10, "Première connexion");
 
-                    // Badge de première connexion
-                    checkBadgeEligibility(user, BadgeCriteriaType.FIRST_COURSE, 1); // Réutiliser pour "Premier Pas"
+                    // Badge de première connexion - utiliser un type approprié ou créer un badge spécifique
+                    // Ne pas utiliser FIRST_COURSE pour la connexion !
+                    // checkBadgeEligibility(user, BadgeCriteriaType.DAILY_LOGIN, 1); // Si un badge "Premier Pas" existe
                     
-                    System.out.println("Gamification: Première connexion pour " + user.getEmail() + " - Badge Premier Pas attribué");
+                    System.out.println("Gamification: Première connexion pour " + user.getEmail() + " - XP de bienvenue attribués");
                 } else {
                     // XP quotidien pour les connexions suivantes
                     awardXP(user, 1, "Connexion quotidienne");
@@ -496,6 +506,24 @@ public class GamificationService {
             // Attribuer les XP du défi
             awardXP(user, challenge.getXpReward(), "Défi terminé: " + challenge.getName());
 
+            // 🆕 Vérifier le badge "Premier Défi"
+            long completedChallenges = userChallengeRepository.countCompletedChallengesByUserId(user.getId());
+            checkBadgeEligibility(user, BadgeCriteriaType.CHALLENGE_COMPLETED, (int) completedChallenges);
+            
+            // Badge spécial pour le premier défi (si c'est le premier)
+            if (completedChallenges == 1) {
+                // Créer un badge spécial pour le premier défi si il n'existe pas déjà
+                List<Badge> firstChallengeBadges = badgeRepository.findByCriteriaTypeAndIsActiveTrue(BadgeCriteriaType.CHALLENGE_COMPLETED);
+                Badge firstChallengeBadge = firstChallengeBadges.stream()
+                    .filter(b -> b.getCriteriaValue() == 1)
+                    .findFirst()
+                    .orElse(null);
+                
+                if (firstChallengeBadge != null) {
+                    awardBadge(user, firstChallengeBadge);
+                }
+            }
+
             // 🆕 CRÉER LA NOTIFICATION DE DÉFI
             try {
                 ChallengeNotification challengeNotification = new ChallengeNotification();
@@ -513,7 +541,7 @@ public class GamificationService {
             }
 
             System.out.println("Gamification: Défi '" + challenge.getName() + "' terminé pour " + user.getEmail()
-                    + " (+" + challenge.getXpReward() + " XP)");
+                    + " (+" + challenge.getXpReward() + " XP, Total défis: " + completedChallenges + ")");
         } catch (Exception e) {
             System.err.println(
                     "Erreur lors du traitement de défi terminé pour " + user.getEmail() + ": " + e.getMessage());

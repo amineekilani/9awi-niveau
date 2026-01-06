@@ -17,108 +17,119 @@ export class GamificationNotificationService {
 
     /**
      * Vérifie s'il y a de nouveaux badges, défis, niveaux ou parcours et affiche des alertes
+     * PRIORITÉ: Niveau > Badge > Défi > Parcours
      */
-    checkForNewAchievements() {
+    async checkForNewAchievements() {
         console.log('🔍 GamificationNotificationService.checkForNewAchievements() appelé');
         
-        // 1. Vérifier les badges
-        this.gamificationService.getUserBadges('new').subscribe({
-            next: (badges) => {
-                console.log('🏆 Badges nouveaux trouvés:', badges?.length || 0);
-                if (badges && badges.length > 0) {
-                    this.showBadgeNotifications(badges);
-                }
-            },
-            error: (error) => {
-                console.error('❌ Erreur lors de la récupération des badges:', error);
-            }
-        });
-
-        // 2. Vérifier les montées de niveau
-        this.levelNotificationService.getNewLevelNotifications().subscribe({
-            next: (levelNotifications) => {
+        try {
+            // 🎯 PRIORITÉ 1: Vérifier les montées de niveau EN PREMIER
+            try {
+                const levelNotifications = await this.levelNotificationService.getNewLevelNotifications().toPromise();
                 console.log('📈 Notifications de niveau nouvelles trouvées:', levelNotifications?.length || 0);
                 if (levelNotifications && levelNotifications.length > 0) {
-                    console.log('🎉 Affichage des notifications de niveau:', levelNotifications);
-                    this.showLevelNotifications(levelNotifications);
+                    console.log('🎉 Affichage des notifications de niveau (PRIORITÉ):', levelNotifications);
+                    await this.showLevelNotifications(levelNotifications);
                 }
-            },
-            error: (error) => {
-                console.error('❌ Erreur lors de la récupération des notifications de niveau:', error);
+            } catch (error) {
+                console.warn('⚠️ Service de notifications de niveau non disponible:', error);
             }
-        });
 
-        // 3. Vérifier les défis
-        this.gamificationService.getUserChallenges().subscribe({
-            next: (challenges) => {
-                const newChallenges = challenges.filter(c => c.isCompleted && c.isNew);
+            // 🏆 PRIORITÉ 2: Vérifier les badges
+            try {
+                const badges = await this.gamificationService.getUserBadges('new').toPromise();
+                console.log('🏆 Badges nouveaux trouvés:', badges?.length || 0);
+                if (badges && badges.length > 0) {
+                    await this.showBadgeNotifications(badges);
+                }
+            } catch (error) {
+                console.warn('⚠️ Service de badges non disponible:', error);
+            }
+
+            // 🎯 PRIORITÉ 3: Vérifier les défis
+            try {
+                const challenges = await this.gamificationService.getUserChallenges().toPromise();
+                const newChallenges = challenges ? challenges.filter(c => c.isCompleted && c.isNew) : [];
                 console.log('🎯 Défis nouveaux trouvés:', newChallenges?.length || 0);
                 if (newChallenges.length > 0) {
-                    this.showChallengeNotifications(newChallenges);
+                    await this.showChallengeNotifications(newChallenges);
                 }
-            },
-            error: (error) => {
-                console.error('❌ Erreur lors de la récupération des défis:', error);
+            } catch (error) {
+                console.warn('⚠️ Service de défis non disponible:', error);
             }
-        });
 
-        // 4. Vérifier les notifications de parcours
-        this.parcoursNotificationService.getUnreadNotifications().subscribe({
-            next: (notifications) => {
-                console.log('📚 Notifications de parcours non lues trouvées:', notifications?.length || 0);
-                if (notifications && notifications.length > 0) {
-                    this.showParcoursNotifications(notifications);
+            // 📚 PRIORITÉ 4: Vérifier les notifications de parcours
+            try {
+                const parcoursNotifications = await this.parcoursNotificationService.getUnreadNotifications().toPromise();
+                console.log('📚 Notifications de parcours non lues trouvées:', parcoursNotifications?.length || 0);
+                if (parcoursNotifications && parcoursNotifications.length > 0) {
+                    await this.showParcoursNotifications(parcoursNotifications);
                 }
-            },
-            error: (error) => {
-                console.error('❌ Erreur lors de la récupération des notifications de parcours:', error);
+            } catch (error) {
+                console.warn('⚠️ Service de notifications de parcours non disponible:', error);
             }
-        });
+
+        } catch (error) {
+            console.error('❌ Erreur générale lors de la vérification des achievements:', error);
+        }
     }
 
     private async showLevelNotifications(levelNotifications: LevelNotification[]) {
-        // Afficher les alertes une par une (séquentiel)
+        // Afficher les alertes une par une (séquentiel) avec style spécial pour les niveaux
         for (const notification of levelNotifications) {
-            // Créer un message personnalisé
-            const message = `Félicitations ! Vous êtes passé du niveau ${notification.oldLevel} au niveau ${notification.newLevel} !<br><br>
-                            <strong>🎯 ${notification.levelName}</strong><br>
-                            <strong>⭐ Total XP:</strong> ${notification.totalXP.toLocaleString()} points<br>
-                            <strong>🚀 XP gagnés:</strong> +${notification.xpGained.toLocaleString()} points`;
+            // Créer un message personnalisé avec plus d'emphase
+            const message = `
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: #fbbf24;">
+                        MONTÉE DE NIVEAU !
+                    </div>
+                    <div style="font-size: 1.2rem; margin-bottom: 1rem;">
+                        Vous êtes passé du <strong>niveau ${notification.oldLevel}</strong> au <strong>niveau ${notification.newLevel}</strong> !
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #fbbf24;">🎯 ${notification.levelName}</div>
+                        <div style="margin-top: 0.5rem;">⭐ <strong>Total XP:</strong> ${notification.totalXP.toLocaleString()} points</div>
+                        <div>🚀 <strong>XP gagnés:</strong> +${notification.xpGained.toLocaleString()} points</div>
+                    </div>
+                </div>
+            `;
 
-            // Afficher l'alerte avec un style spécial pour les niveaux
+            // Afficher l'alerte avec un style spécial pour les niveaux (plus visible)
             await Swal.fire({
-                title: '🎉 Montée de niveau !',
+                title: '',
                 html: message,
-                icon: 'success',
-                confirmButtonText: 'Fantastique !',
-                confirmButtonColor: '#10b981', // Vert pour les niveaux
-                color: '#1f2937',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                padding: '2rem',
-                backdrop: `rgba(16, 185, 129, 0.1)`,
+                icon: undefined, // Pas d'icône par défaut, on utilise notre emoji
+                confirmButtonText: '🎉 Fantastique !',
+                confirmButtonColor: '#f59e0b', // Orange/jaune pour les niveaux
+                color: '#ffffff',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #92400e 100%)', // Gradient orange
+                padding: '1rem',
+                backdrop: `rgba(245, 158, 11, 0.3)`, // Fond orange semi-transparent
+                width: '500px',
                 customClass: {
-                    popup: 'rounded-xl shadow-2xl border-2 border-green-200',
-                    title: 'text-2xl font-bold text-white',
+                    popup: 'rounded-2xl shadow-2xl border-4 border-yellow-300',
+                    title: 'text-3xl font-bold text-white',
                     htmlContainer: 'text-white',
-                    confirmButton: 'font-bold px-8 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-transform'
+                    confirmButton: 'font-bold px-10 py-4 rounded-xl shadow-lg transform hover:scale-110 transition-all duration-200 text-lg'
                 },
                 showClass: {
-                    popup: 'animate__animated animate__bounceIn animate__faster'
+                    popup: 'animate__animated animate__bounceIn animate__slow'
                 },
                 hideClass: {
-                    popup: 'animate__animated animate__fadeOut animate__faster'
-                }
+                    popup: 'animate__animated animate__fadeOut animate__fast'
+                },
+                allowOutsideClick: false, // Forcer l'utilisateur à cliquer pour fermer
+                allowEscapeKey: false
             });
 
             // Marquer comme vue APRÈS que l'utilisateur ait cliqué sur OK
-            this.levelNotificationService.markNotificationAsViewed(notification.id).subscribe({
-                next: () => {
-                    console.log('✅ Notification de niveau marquée comme vue:', notification.id);
-                },
-                error: (error) => {
-                    console.error('❌ Erreur lors du marquage de la notification de niveau:', error);
-                }
-            });
+            try {
+                await this.levelNotificationService.markNotificationAsViewed(notification.id).toPromise();
+                console.log('✅ Notification de niveau marquée comme vue:', notification.id);
+            } catch (error) {
+                console.error('❌ Erreur lors du marquage de la notification de niveau:', error);
+            }
         }
     }
 
