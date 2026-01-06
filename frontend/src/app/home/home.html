@@ -9,63 +9,222 @@
   {{ error }}
 </div>
 
-<!-- Section Hero Moderne -->
-<section class="relative overflow-hidden py-20"
-  style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);">
-  <!-- Formes décoratives en arrière-plan -->
-  <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-    <div class="absolute top-20 left-10 w-72 h-72 rounded-full opacity-20"
-      style="background: radial-gradient(circle, #063cdf 0%, transparent 70%);"></div>
-    <div class="absolute bottom-10 right-20 w-96 h-96 rounded-full opacity-15"
-      style="background: radial-gradient(circle, #10b981 0%, transparent 70%);"></div>
+<!-- Section Hero Moderne Améliorée -->
+<section class="relative overflow-hidden py-24 min-h-[80vh] flex items-center">
+  <!-- Fond dégradé avec les couleurs de la navbar -->
+  <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900"></div>
+  
+  <!-- Overlay avec motif géométrique -->
+  <div class="absolute inset-0 opacity-20">
+    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, #063cdf 2px, transparent 2px), radial-gradient(circle at 75% 75%, #10b981 1px, transparent 1px); background-size: 60px 60px;"></div>
+  </div>
+
+  <!-- Particules flottantes animées -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <!-- Particule 1 - Bleu principal -->
+    <div class="absolute top-1/4 left-1/4 w-2 h-2 rounded-full opacity-60 animate-float-slow" style="background-color: #063cdf;"></div>
+    <!-- Particule 2 - Vert -->
+    <div class="absolute top-1/3 right-1/3 w-1 h-1 rounded-full opacity-80 animate-float-medium" style="background-color: #10b981;"></div>
+    <!-- Particule 3 - Bleu hover -->
+    <div class="absolute bottom-1/4 left-1/3 w-3 h-3 rounded-full opacity-40 animate-float-fast" style="background-color: #0850f5;"></div>
+    <!-- Particule 4 - Bleu principal -->
+    <div class="absolute top-1/2 right-1/4 w-1.5 h-1.5 rounded-full opacity-70 animate-float-slow" style="background-color: #063cdf;"></div>
+    <!-- Particule 5 - Vert -->
+    <div class="absolute bottom-1/3 right-1/2 w-2.5 h-2.5 rounded-full opacity-50 animate-float-medium" style="background-color: #10b981;"></div>
+  </div>
+
+  <!-- Formes géométriques décoratives -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <!-- Cercle principal avec les couleurs de la navbar -->
+    <div class="absolute top-10 right-10 w-96 h-96 rounded-full opacity-10 animate-pulse-slow"
+      style="background: conic-gradient(from 0deg, #063cdf, #10b981, #0850f5, #063cdf);"></div>
+    
+    <!-- Forme hexagonale -->
+    <div class="absolute bottom-20 left-10 w-64 h-64 opacity-15 animate-spin-slow"
+      style="background: linear-gradient(45deg, #063cdf, transparent, #10b981); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);"></div>
+    
+    <!-- Lignes diagonales -->
+    <div class="absolute top-0 left-0 w-full h-full opacity-5">
+      <div class="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-white to-transparent transform rotate-12"></div>
+      <div class="absolute top-2/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-white to-transparent transform -rotate-12"></div>
+      <div class="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-white to-transparent transform rotate-6"></div>
+    </div>
   </div>
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
     <div class="text-center">
-      <!-- Logo principal (seul, sans texte) -->
-      <div class="flex justify-center mb-6 animate-float">
-        <img src="/Logo_9awi_Niveau.png" alt="9awi Niveau" class="h-40 w-auto drop-shadow-2xl">
+      <!-- Logo principal avec effet glassmorphism -->
+      <div class="flex justify-center mb-8">
+        <div class="relative group">
+          <!-- Halo lumineux autour du logo avec les couleurs de la navbar -->
+          <div class="absolute inset-0 rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500 scale-110" 
+               style="background: linear-gradient(135deg, #063cdf, #10b981, #0850f5);"></div>
+          
+          <!-- Container du logo avec glassmorphism -->
+          <div class="relative bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 border border-white border-opacity-20 shadow-2xl animate-float">
+            <img src="/Logo_9awi_Niveau.png" alt="9awi Niveau" class="h-32 w-auto drop-shadow-2xl">
+          </div>
+        </div>
       </div>
 
-      <!-- Tagline accrocheur -->
-      <h1 class="text-3xl md:text-4xl font-bold mb-4" style="color: #063cdf;">
-        Apprenez, Progressez, Excellez
-      </h1>
-      <p class="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-        Transformez votre apprentissage en aventure gamifiée. Gagnez des points, débloquez des récompenses et atteignez
-        vos objectifs.
+      <!-- Tagline avec effet de typing -->
+      <div class="mb-6">
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white via-blue-100 to-green-100 bg-clip-text text-transparent animate-fade-in">
+          Apprenez, Progressez, Excellez
+        </h1>
+        <div class="h-px w-32 mx-auto mb-6" style="background: linear-gradient(to right, transparent, #063cdf, transparent);"></div>
+      </div>
+      
+      <p class="text-xl md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in-delay">
+        Transformez votre apprentissage en 
+        <span class="text-transparent bg-clip-text font-semibold" style="background: linear-gradient(135deg, #063cdf, #10b981);">aventure gamifiée</span>. 
+        Gagnez des points, débloquez des récompenses et atteignez vos objectifs.
       </p>
 
-      <!-- Bouton d'action avec animation -->
-      <button (click)="scrollToCourses()"
-        class="group relative inline-flex items-center text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
-        style="background: linear-gradient(135deg, #063cdf 0%, #0850f5 100%);">
-        <span class="relative z-10 flex items-center">
-          <i data-feather="play-circle" class="w-5 h-5 mr-2"></i>
-          Commencer l'apprentissage
-        </span>
-        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-      </button>
+      <!-- Boutons d'action avec effets modernes -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+        <!-- Bouton principal -->
+        <button (click)="scrollToCourses()"
+          class="group relative inline-flex items-center px-8 py-4 rounded-2xl font-semibold text-lg shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:scale-105 overflow-hidden">
+          
+          <!-- Fond dégradé animé avec les couleurs de la navbar -->
+          <div class="absolute inset-0 bg-size-200 animate-gradient" style="background: linear-gradient(135deg, #063cdf, #0850f5, #063cdf);"></div>
+          
+          <!-- Effet de brillance au hover -->
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-700"></div>
+          
+          <span class="relative z-10 flex items-center text-white">
+            <i data-feather="rocket" class="w-5 h-5 mr-3 group-hover:animate-bounce"></i>
+            Commencer l'aventure
+          </span>
+        </button>
+
+        <!-- Bouton secondaire - Voir récompenses -->
+        <button routerLink="/mes-recompenses" class="group relative inline-flex items-center px-8 py-4 rounded-2xl font-semibold text-lg border-2 text-white hover:bg-white hover:bg-opacity-10 transition-all duration-300 backdrop-blur-sm" 
+                style="border-color: #10b981;">
+          <i data-feather="award" class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform"></i>
+          Voir récompenses
+        </button>
+      </div>
+
+      <!-- Statistiques rapides -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div class="text-center group">
+          <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-6 border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300">
+            <div class="text-3xl font-bold text-white mb-2 group-hover:scale-110 transition-transform">1000+</div>
+            <div class="text-gray-300">Étudiants actifs</div>
+          </div>
+        </div>
+        
+        <div class="text-center group">
+          <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-6 border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300">
+            <div class="text-3xl font-bold text-white mb-2 group-hover:scale-110 transition-transform">50+</div>
+            <div class="text-gray-300">Cours disponibles</div>
+          </div>
+        </div>
+        
+        <div class="text-center group">
+          <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-6 border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300">
+            <div class="text-3xl font-bold text-white mb-2 group-hover:scale-110 transition-transform">95%</div>
+            <div class="text-gray-300">Taux de satisfaction</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- Style pour l'animation float -->
+<!-- Styles pour les animations personnalisées -->
 <style>
   @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(2deg); }
+  }
 
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    33% { transform: translateY(-30px) translateX(10px); }
+    66% { transform: translateY(-10px) translateX(-5px); }
+  }
 
-    50% {
-      transform: translateY(-10px);
-    }
+  @keyframes float-medium {
+    0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+    50% { transform: translateY(-25px) translateX(15px) scale(1.1); }
+  }
+
+  @keyframes float-fast {
+    0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+    25% { transform: translateY(-15px) translateX(8px) rotate(90deg); }
+    50% { transform: translateY(-30px) translateX(-8px) rotate(180deg); }
+    75% { transform: translateY(-15px) translateX(-15px) rotate(270deg); }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.1; transform: scale(1); }
+    50% { opacity: 0.2; transform: scale(1.05); }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in-delay {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .animate-float {
-    animation: float 3s ease-in-out infinite;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: float-slow 8s ease-in-out infinite;
+  }
+
+  .animate-float-medium {
+    animation: float-medium 6s ease-in-out infinite;
+  }
+
+  .animate-float-fast {
+    animation: float-fast 4s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 20s linear infinite;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 1s ease-out forwards;
+  }
+
+  .animate-fade-in-delay {
+    animation: fade-in-delay 1s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+
+  .bg-size-200 {
+    background-size: 200% 200%;
   }
 </style>
 

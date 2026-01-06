@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { ParcoursNotificationService, ParcoursNotification } from './parcours-notification.service';
 import { UserGamificationService, UserGamificationStats } from './user-gamification.service';
@@ -34,7 +35,8 @@ export class ParcoursAutoRefreshService {
     private userGamificationService: UserGamificationService,
     private levelNotificationService: LevelNotificationService,
     private gamificationNotificationService: GamificationNotificationService,
-    private parcoursService: ParcoursService
+    private parcoursService: ParcoursService,
+    private router: Router
   ) {}
 
   /**
@@ -153,41 +155,88 @@ export class ParcoursAutoRefreshService {
     if (notification.type === 'PARCOURS_COMPLETED') {
       const xpText = notification.xpEarned ? `+${notification.xpEarned} XP` : '';
       
-      Swal.fire({
-        title: '🎉 Félicitations !',
-        html: `
-          <div style="text-align: center;">
-            <h3 style="color: #28a745; margin-bottom: 15px;">Parcours Terminé !</h3>
-            <p style="font-size: 16px; margin-bottom: 10px;">${notification.message}</p>
-            ${xpText ? `<div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 15px 0;">
-              <span style="font-size: 18px; font-weight: bold; color: #007bff;">${xpText}</span>
-            </div>` : ''}
-            ${notification.certificateReady ? 
-              '<p style="color: #17a2b8;"><i class="fas fa-certificate"></i> Certificat disponible !</p>' : ''}
-          </div>
-        `,
-        icon: 'success',
-        confirmButtonText: 'Super !',
-        confirmButtonColor: '#28a745',
-        timer: 8000,
-        timerProgressBar: true,
-        showClass: {
-          popup: 'animate__animated animate__bounceIn'
-        },
-        hideClass: {
-          popup: 'animate__animated animate__bounceOut'
-        }
-      }).then(() => {
-        // Marquer la notification comme lue après que l'utilisateur ait vu l'alerte
-        this.parcoursNotificationService.markNotificationAsRead(notification.id).subscribe({
-          next: () => {
-            console.log('✅ Notification marquée comme lue:', notification.id);
+      // Si un certificat est disponible, proposer deux boutons
+      if (notification.certificateReady) {
+        Swal.fire({
+          title: '🎉 Félicitations !',
+          html: `
+            <div style="text-align: center;">
+              <h3 style="color: #28a745; margin-bottom: 15px;">Parcours Terminé !</h3>
+              <p style="font-size: 16px; margin-bottom: 10px;">${notification.message}</p>
+              ${xpText ? `<div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 15px 0;">
+                <span style="font-size: 18px; font-weight: bold; color: #007bff;">${xpText}</span>
+              </div>` : ''}
+              <p style="color: #17a2b8; font-size: 16px; margin-top: 15px;">
+                <i class="fas fa-certificate"></i> Votre certificat est prêt !
+              </p>
+            </div>
+          `,
+          icon: 'success',
+          showCancelButton: true,
+          confirmButtonText: 'Voir Certificat',
+          cancelButtonText: 'Plus tard',
+          confirmButtonColor: '#17a2b8',
+          cancelButtonColor: '#28a745',
+          timer: 10000,
+          timerProgressBar: true,
+          showClass: {
+            popup: 'animate__animated animate__bounceIn'
           },
-          error: (error) => {
-            console.error('Erreur lors du marquage de la notification:', error);
+          hideClass: {
+            popup: 'animate__animated animate__bounceOut'
           }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Rediriger vers la page mes-parcours avec le Router Angular
+            this.router.navigate(['/mes-parcours']);
+          }
+          
+          // Marquer la notification comme lue
+          this.parcoursNotificationService.markNotificationAsRead(notification.id).subscribe({
+            next: () => {
+              console.log('✅ Notification marquée comme lue:', notification.id);
+            },
+            error: (error) => {
+              console.error('Erreur lors du marquage de la notification:', error);
+            }
+          });
         });
-      });
+      } else {
+        // Pas de certificat, juste une notification simple
+        Swal.fire({
+          title: '🎉 Félicitations !',
+          html: `
+            <div style="text-align: center;">
+              <h3 style="color: #28a745; margin-bottom: 15px;">Parcours Terminé !</h3>
+              <p style="font-size: 16px; margin-bottom: 10px;">${notification.message}</p>
+              ${xpText ? `<div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 15px 0;">
+                <span style="font-size: 18px; font-weight: bold; color: #007bff;">${xpText}</span>
+              </div>` : ''}
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonText: 'Super !',
+          confirmButtonColor: '#28a745',
+          timer: 8000,
+          timerProgressBar: true,
+          showClass: {
+            popup: 'animate__animated animate__bounceIn'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__bounceOut'
+          }
+        }).then(() => {
+          // Marquer la notification comme lue
+          this.parcoursNotificationService.markNotificationAsRead(notification.id).subscribe({
+            next: () => {
+              console.log('✅ Notification marquée comme lue:', notification.id);
+            },
+            error: (error) => {
+              console.error('Erreur lors du marquage de la notification:', error);
+            }
+          });
+        });
+      }
     }
   }
 

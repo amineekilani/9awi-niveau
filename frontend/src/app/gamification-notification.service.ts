@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { UserGamificationService, UserBadge } from './user-gamification.service';
 import { ParcoursNotificationService, ParcoursNotification } from './parcours-notification.service';
@@ -12,7 +13,8 @@ export class GamificationNotificationService {
     constructor(
         private gamificationService: UserGamificationService,
         private parcoursNotificationService: ParcoursNotificationService,
-        private levelNotificationService: LevelNotificationService
+        private levelNotificationService: LevelNotificationService,
+        private router: Router
     ) { }
 
     /**
@@ -172,9 +174,9 @@ export class GamificationNotificationService {
             });
 
             // Gérer les actions après fermeture de l'alerte
-            if (result.isConfirmed && notification.certificateReady && notification.certificateUrl) {
-                // Ouvrir le certificat dans un nouvel onglet
-                window.open(notification.certificateUrl, '_blank');
+            if (result.isConfirmed && notification.certificateReady) {
+                // Rediriger vers la page mes-parcours avec le Router Angular
+                this.router.navigate(['/mes-parcours']);
             }
 
             // Marquer comme lue après que l'utilisateur ait cliqué
