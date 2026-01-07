@@ -2,16 +2,21 @@ package com.kawi_niveau.backend.service;
 
 import com.kawi_niveau.backend.dto.CoursRequest;
 import com.kawi_niveau.backend.dto.CoursResponse;
+import com.kawi_niveau.backend.dto.CoursStatsResponse;
+import com.kawi_niveau.backend.dto.ApprenantProgressionDto;
 import com.kawi_niveau.backend.dto.NiveauDifficulteResponse;
 import com.kawi_niveau.backend.entity.Cours;
 import com.kawi_niveau.backend.entity.NiveauDifficulte;
 import com.kawi_niveau.backend.entity.Role;
 import com.kawi_niveau.backend.entity.User;
+import com.kawi_niveau.backend.entity.Enrollment;
 import com.kawi_niveau.backend.repository.CoursRepository;
 import com.kawi_niveau.backend.repository.UserRepository;
+import com.kawi_niveau.backend.repository.EnrollmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +29,73 @@ public class CoursService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
+
+    public CoursStatsResponse getCoursStats(Long coursId, String formateurEmail) {
+        // Vérifier que le cours existe et appartient au formateur
+        Cours cours = coursRepository.findById(coursId)
+                .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
+
+        User formateur = userRepository.findByEmail(formateurEmail)
+                .orElseThrow(() -> new RuntimeException("Formateur non trouvé"));
+
+        if (!cours.getFormateur().getId().equals(formateur.getId())) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à voir les statistiques de ce cours");
+        }
+
+        // Récupérer toutes les inscriptions pour ce cours
+        List<Enrollment> enrollments = enrollmentRepository.findByCours(cours);
+
+        // Calculer les statistiques
+        int totalInscrits = enrollments.size();
+
+        double progressionMoyenne = enrollments.stream()
+                .mapToDouble(e -> e.getProgress() != null ? e.getProgress().doubleValue() : 0.0)
+                .average()
+                .orElse(0.0);
+
+        // Considérer comme complété si progress >= 100
+        long nombreCompletes = enrollments.stream()
+                .filter(e -> e.getProgress() != null && e.getProgress() >= 100.0f)
+                .count();
+
+        double tauxReussite = totalInscrits > 0 ? (double) nombreCompletes / totalInscrits * 100 : 0.0;
+
+        // Pour les certificats, on considère qu'ils sont générés si le cours est complété
+        int nombreCertificats = (int) nombreCompletes;
+
+        // Créer la liste des apprenants avec leur progression
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        List<ApprenantProgressionDto> apprenants = enrollments.stream()
+                .map(enrollment -> {
+                    User apprenant = enrollment.getUser();
+                    boolean isCompleted = enrollment.getProgress() != null && enrollment.getProgress() >= 100.0f;
+                    return new ApprenantProgressionDto(
+                            apprenant.getId(),
+                            apprenant.getLastName() != null ? apprenant.getLastName() : "",
+                            apprenant.getFirstName() != null ? apprenant.getFirstName() : "",
+                            apprenant.getEmail(),
+                            enrollment.getProgress() != null ? enrollment.getProgress().doubleValue() : 0.0,
+                            isCompleted,
+                            isCompleted, // certificat généré si complété
+                            enrollment.getEnrolledAt() != null ? sdf.format(enrollment.getEnrolledAt()) : "N/A",
+                            enrollment.getLastAccessedAt() != null ? sdf.format(enrollment.getLastAccessedAt()) : "Jamais"
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new CoursStatsResponse(
+                cours.getId(),
+                cours.getTitre(),
+                totalInscrits,
+                progressionMoyenne,
+                tauxReussite,
+                nombreCertificats,
+                apprenants
+        );
+    }
 
     public CoursResponse createCours(CoursRequest request, String email) {
         User formateur = userRepository.findByEmail(email)
@@ -137,7 +209,7 @@ public class CoursService {
 
     public List<CoursResponse> searchCoursAvecFiltres(String keyword, String categorie, NiveauDifficulte niveau) {
         List<Cours> coursList;
-        
+
         if (keyword != null && !keyword.trim().isEmpty()) {
             if (categorie != null && !categorie.trim().isEmpty() && niveau != null) {
                 coursList = coursRepository.searchCoursWithAllFilters(keyword, categorie, niveau);
@@ -157,7 +229,7 @@ public class CoursService {
         } else {
             coursList = coursRepository.findByArchivedFalse();
         }
-        
+
         return coursList.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -178,12 +250,12 @@ public class CoursService {
         } else {
             formateurNom = cours.getFormateur().getEmail(); // Fallback vers l'email
         }
-        
+
         String formateurDomaine = cours.getFormateur().getDomaineSpecialisation();
         if (formateurDomaine == null || formateurDomaine.trim().isEmpty()) {
             formateurDomaine = "Développement Web"; // Valeur par défaut
         }
-        
+
         return new CoursResponse(
                 cours.getId(),
                 cours.getTitre(),
