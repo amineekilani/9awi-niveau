@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AuthService } from '../auth';
-import { RecommendationService, ParcoursRecommendation, CoursRecommendation, RecommendationRequest, UserPreferences } from '../recommendation.service';
+import { RecommendationService, ParcoursRecommendation, CoursRecommendation } from '../recommendation.service';
 import { ParcoursService } from '../parcours.service';
 import { NiveauDifficulte } from '../parcours.service';
 
@@ -25,30 +25,7 @@ export class RecommendationsComponent implements OnInit {
   success = '';
 
   // Onglets
-  activeTab = 'personalized'; // personalized, cours, criteria, preferences
-
-  // Critères de recherche
-  searchCriteria: RecommendationRequest = {
-    maxRecommendations: 8
-  };
-
-  // Préférences utilisateur
-  userPreferences: UserPreferences = {};
-  preferencesLoading = false;
-  preferencesSaving = false;
-
-  // Options pour les formulaires
-  availableCategories: string[] = [];
-  learningStyles: { value: string, label: string }[] = [];
-  challengePreferences: { value: string, label: string }[] = [];
-  learningGoals: string[] = [];
-  interests: string[] = [];
-  careerFocuses: string[] = [];
-
-  // Sélections multiples
-  selectedCategories: string[] = [];
-  selectedGoals: string[] = [];
-  selectedInterests: string[] = [];
+  activeTab = 'personalized'; // personalized, cours
 
   // Enum pour le template
   NiveauDifficulte = NiveauDifficulte;
@@ -61,8 +38,6 @@ export class RecommendationsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.initializeOptions();
-    this.loadUserPreferences();
     this.loadPersonalizedRecommendations();
 
     // Initialiser Feather icons
@@ -71,15 +46,6 @@ export class RecommendationsComponent implements OnInit {
         feather.replace();
       }
     }, 100);
-  }
-
-  initializeOptions() {
-    this.availableCategories = this.recommendationService.getAvailableCategories();
-    this.learningStyles = this.recommendationService.getLearningStyles();
-    this.challengePreferences = this.recommendationService.getChallengePreferences();
-    this.learningGoals = this.recommendationService.getLearningGoals();
-    this.interests = this.recommendationService.getInterests();
-    this.careerFocuses = this.recommendationService.getCareerFocuses();
   }
 
   switchTab(tab: string) {
@@ -111,7 +77,7 @@ export class RecommendationsComponent implements OnInit {
         this.loading = false;
         
         if (recommendations.length === 0) {
-          this.error = 'Aucune recommandation disponible. Configurez vos préférences pour de meilleures suggestions.';
+          this.error = 'Aucune recommandation disponible. Suivez des cours pour obtenir des suggestions personnalisées.';
         }
 
         setTimeout(() => {
@@ -138,7 +104,7 @@ export class RecommendationsComponent implements OnInit {
         this.loading = false;
         
         if (recommendations.length === 0) {
-          this.error = 'Aucune recommandation de cours disponible. Configurez vos préférences pour de meilleures suggestions.';
+          this.error = 'Aucune recommandation de cours disponible. Suivez des cours pour obtenir des suggestions personnalisées.';
         }
 
         setTimeout(() => {
@@ -153,124 +119,6 @@ export class RecommendationsComponent implements OnInit {
         console.error('Erreur:', err);
       }
     });
-  }
-
-  searchByCriteria() {
-    this.loading = true;
-    this.error = '';
-
-    // Préparer les critères
-    const criteria: RecommendationRequest = {
-      ...this.searchCriteria,
-      preferredCategories: this.selectedCategories.length > 0 ? this.selectedCategories : undefined,
-      learningGoals: this.selectedGoals.length > 0 ? this.selectedGoals : undefined,
-      interests: this.selectedInterests.length > 0 ? this.selectedInterests : undefined
-    };
-
-    this.recommendationService.getRecommendationsByCriteria(criteria).subscribe({
-      next: (recommendations) => {
-        this.recommendations = recommendations;
-        this.loading = false;
-        
-        if (recommendations.length === 0) {
-          this.error = 'Aucun parcours ne correspond à vos critères. Essayez d\'élargir votre recherche.';
-        } else {
-          this.success = `${recommendations.length} recommandation(s) trouvée(s) selon vos critères.`;
-        }
-
-        setTimeout(() => {
-          if (typeof feather !== 'undefined') {
-            feather.replace();
-          }
-        }, 100);
-      },
-      error: (err) => {
-        this.error = 'Erreur lors de la recherche par critères';
-        this.loading = false;
-        console.error('Erreur:', err);
-      }
-    });
-  }
-
-  loadUserPreferences() {
-    this.preferencesLoading = true;
-
-    this.recommendationService.getUserPreferences().subscribe({
-      next: (preferences) => {
-        this.userPreferences = preferences;
-        
-        // Parser les arrays JSON
-        this.selectedCategories = this.recommendationService.parseJsonArray(preferences.preferredCategories);
-        this.selectedGoals = this.recommendationService.parseJsonArray(preferences.learningGoals);
-        this.selectedInterests = this.recommendationService.parseJsonArray(preferences.interests);
-        
-        this.preferencesLoading = false;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des préférences:', err);
-        this.preferencesLoading = false;
-      }
-    });
-  }
-
-  saveUserPreferences() {
-    this.preferencesSaving = true;
-    this.error = '';
-    this.success = '';
-
-    // Préparer les préférences avec les arrays JSON
-    const preferencesToSave: UserPreferences = {
-      ...this.userPreferences,
-      preferredCategories: this.recommendationService.stringifyArray(this.selectedCategories),
-      learningGoals: this.recommendationService.stringifyArray(this.selectedGoals),
-      interests: this.recommendationService.stringifyArray(this.selectedInterests)
-    };
-
-    this.recommendationService.saveUserPreferences(preferencesToSave).subscribe({
-      next: (savedPrefs) => {
-        this.userPreferences = savedPrefs;
-        this.success = 'Préférences sauvegardées avec succès !';
-        this.preferencesSaving = false;
-        
-        // Recharger les recommandations personnalisées
-        if (this.activeTab === 'personalized') {
-          setTimeout(() => this.loadPersonalizedRecommendations(), 1000);
-        }
-      },
-      error: (err) => {
-        this.error = 'Erreur lors de la sauvegarde des préférences';
-        this.preferencesSaving = false;
-        console.error('Erreur:', err);
-      }
-    });
-  }
-
-  // Gestion des sélections multiples
-  toggleCategory(category: string) {
-    const index = this.selectedCategories.indexOf(category);
-    if (index > -1) {
-      this.selectedCategories.splice(index, 1);
-    } else {
-      this.selectedCategories.push(category);
-    }
-  }
-
-  toggleGoal(goal: string) {
-    const index = this.selectedGoals.indexOf(goal);
-    if (index > -1) {
-      this.selectedGoals.splice(index, 1);
-    } else {
-      this.selectedGoals.push(goal);
-    }
-  }
-
-  toggleInterest(interest: string) {
-    const index = this.selectedInterests.indexOf(interest);
-    if (index > -1) {
-      this.selectedInterests.splice(index, 1);
-    } else {
-      this.selectedInterests.push(interest);
-    }
   }
 
   // Actions sur les parcours
@@ -302,7 +150,6 @@ export class RecommendationsComponent implements OnInit {
   }
 
   sInscrireAuCours(coursId: number) {
-    // Utiliser le service de cours pour l'inscription
     this.router.navigate(['/cours', coursId]);
   }
 
@@ -331,15 +178,5 @@ export class RecommendationsComponent implements OnInit {
       case NiveauDifficulte.EXPERT: return 'text-red-600';
       default: return 'text-gray-600';
     }
-  }
-
-  clearCriteria() {
-    this.searchCriteria = { maxRecommendations: 8 };
-    this.selectedCategories = [];
-    this.selectedGoals = [];
-    this.selectedInterests = [];
-    this.recommendations = [];
-    this.error = '';
-    this.success = '';
   }
 }

@@ -10,8 +10,8 @@
         <h1 class="text-3xl font-bold text-gray-900">Recommandations IA</h1>
       </div>
       <p class="text-gray-600 max-w-3xl">
-        Découvrez des parcours personnalisés basés sur votre profil, vos préférences et votre historique d'apprentissage.
-        Notre intelligence artificielle analyse vos données pour vous proposer les meilleurs parcours.
+        Découvrez des parcours et cours personnalisés basés sur votre historique d'apprentissage.
+        Notre intelligence artificielle analyse vos cours et parcours suivis pour vous proposer les meilleures recommandations.
       </p>
     </div>
 
@@ -23,7 +23,7 @@
           [class]="activeTab === 'personalized' ? 
             'border-indigo-500 text-indigo-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm' :
             'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'">
-          <i data-feather="user" class="w-4 h-4 inline mr-2"></i>
+          <i data-feather="map" class="w-4 h-4 inline mr-2"></i>
           Parcours Recommandés
         </button>
         <button 
@@ -33,22 +33,6 @@
             'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'">
           <i data-feather="book" class="w-4 h-4 inline mr-2"></i>
           Cours Recommandés
-        </button>
-        <button 
-          (click)="switchTab('criteria')"
-          [class]="activeTab === 'criteria' ? 
-            'border-indigo-500 text-indigo-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm' :
-            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'">
-          <i data-feather="search" class="w-4 h-4 inline mr-2"></i>
-          Recherche par Critères
-        </button>
-        <button 
-          (click)="switchTab('preferences')"
-          [class]="activeTab === 'preferences' ? 
-            'border-indigo-500 text-indigo-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm' :
-            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'">
-          <i data-feather="settings" class="w-4 h-4 inline mr-2"></i>
-          Mes Préférences
         </button>
       </nav>
     </div>
@@ -68,15 +52,13 @@
       </div>
     </div>
 
-    <!-- Contenu des onglets -->
-    
-    <!-- Onglet Recommandations Personnalisées -->
+    <!-- Onglet Parcours Recommandés -->
     <div *ngIf="activeTab === 'personalized'">
       <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="text-xl font-semibold text-gray-900 mb-2">Parcours Recommandés pour Vous</h2>
-            <p class="text-gray-600">Basés sur votre profil, vos préférences et votre historique d'apprentissage</p>
+            <p class="text-gray-600">Basés sur votre historique de cours et parcours suivis</p>
           </div>
           <button 
             (click)="loadPersonalizedRecommendations()"
@@ -87,15 +69,146 @@
           </button>
         </div>
       </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <p class="mt-4 text-gray-600">Analyse de votre historique d'apprentissage...</p>
+      </div>
+
+      <!-- Grille des recommandations de parcours -->
+      <div *ngIf="!loading && recommendations.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div *ngFor="let recommendation of recommendations" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+          
+          <!-- Image du parcours -->
+          <div class="relative h-48 bg-gradient-to-br from-indigo-500 to-purple-600">
+            <img 
+              *ngIf="recommendation.thumbnailUrl" 
+              [src]="recommendation.thumbnailUrl" 
+              [alt]="recommendation.titre"
+              class="w-full h-full object-cover">
+            <div *ngIf="!recommendation.thumbnailUrl" class="flex items-center justify-center h-full">
+              <i data-feather="map" class="w-12 h-12 text-white"></i>
+            </div>
+            
+            <!-- Badge de correspondance -->
+            <div class="absolute top-3 right-3">
+              <span [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + getMatchBadgeClass(recommendation.niveauCorrespondance)">
+                {{ recommendation.niveauCorrespondance }}
+              </span>
+            </div>
+
+            <!-- Score de recommandation -->
+            <div class="absolute top-3 left-3 bg-white bg-opacity-90 rounded-full px-2 py-1">
+              <span [class]="'text-sm font-bold ' + getScoreColor(recommendation.scoreRecommendation)">
+                {{ recommendation.scoreRecommendation | number:'1.0-0' }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- Contenu -->
+          <div class="p-6">
+            
+            <!-- Titre et catégorie -->
+            <div class="mb-3">
+              <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{{ recommendation.titre }}</h3>
+              <div class="flex items-center text-sm text-gray-500">
+                <span *ngIf="recommendation.categorie" class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs mr-2">
+                  {{ recommendation.categorie }}
+                </span>
+                <span [class]="'font-medium ' + getDifficultyColor(recommendation.niveauDifficulte)">
+                  {{ recommendation.niveauDifficulte }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p *ngIf="recommendation.description" class="text-gray-600 text-sm mb-4 line-clamp-3">
+              {{ recommendation.description }}
+            </p>
+
+            <!-- Métadonnées -->
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center text-sm text-gray-500">
+                <i data-feather="user" class="w-4 h-4 mr-2"></i>
+                <span>{{ recommendation.formateurNom }}</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-500">
+                <i data-feather="clock" class="w-4 h-4 mr-2"></i>
+                <span>{{ recommendation.dureeEstimeeHeures }}h</span>
+                <i data-feather="layers" class="w-4 h-4 ml-4 mr-2"></i>
+                <span>{{ recommendation.nombreEtapes }} étapes</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-500">
+                <i data-feather="users" class="w-4 h-4 mr-2"></i>
+                <span>{{ recommendation.nombreInscriptions }} inscrits</span>
+                <i data-feather="award" class="w-4 h-4 ml-4 mr-2"></i>
+                <span>{{ recommendation.pointsBonus }} XP</span>
+              </div>
+            </div>
+
+            <!-- Raisons de recommandation -->
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-900 mb-2">Pourquoi ce parcours ?</h4>
+              <ul class="space-y-1">
+                <li *ngFor="let raison of recommendation.raisonsRecommandation.slice(0, 3)" class="flex items-start text-xs text-gray-600">
+                  <i data-feather="check" class="w-3 h-3 mr-2 mt-0.5 text-green-500 flex-shrink-0"></i>
+                  <span>{{ raison }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Certificat -->
+            <div *ngIf="recommendation.certificatEnabled" class="mb-4">
+              <div class="flex items-center text-sm text-green-600">
+                <i data-feather="award" class="w-4 h-4 mr-2"></i>
+                <span>Certificat disponible</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-2">
+              <button 
+                (click)="voirParcours(recommendation.id)"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i data-feather="eye" class="w-4 h-4 mr-2"></i>
+                Voir le Parcours
+              </button>
+              
+              <button 
+                *ngIf="!recommendation.isInscrit"
+                (click)="sInscrireAuParcours(recommendation.id)"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                S'inscrire
+              </button>
+
+              <div *ngIf="recommendation.isInscrit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-50 border border-green-200 rounded-md text-sm font-medium text-green-700">
+                <i data-feather="check-circle" class="w-4 h-4 mr-2"></i>
+                Déjà inscrit
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aucune recommandation de parcours -->
+      <div *ngIf="!loading && recommendations.length === 0 && !error" class="text-center py-12">
+        <i data-feather="map" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune recommandation de parcours</h3>
+        <p class="text-gray-600 mb-6">
+          Commencez à suivre des cours pour obtenir des recommandations personnalisées basées sur votre historique.
+        </p>
+      </div>
     </div>
 
-    <!-- Onglet Recommandations de Cours -->
+    <!-- Onglet Cours Recommandés -->
     <div *ngIf="activeTab === 'cours'">
       <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="text-xl font-semibold text-gray-900 mb-2">Cours Recommandés pour Vous</h2>
-            <p class="text-gray-600">Découvrez des cours individuels adaptés à vos centres d'intérêt et votre niveau</p>
+            <p class="text-gray-600">Basés sur votre historique de cours et parcours suivis</p>
           </div>
           <button 
             (click)="loadPersonalizedCoursRecommendations()"
@@ -110,7 +223,7 @@
       <!-- Loading -->
       <div *ngIf="loading" class="text-center py-12">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p class="mt-4 text-gray-600">Génération des recommandations de cours...</p>
+        <p class="mt-4 text-gray-600">Analyse de votre historique d'apprentissage...</p>
       </div>
 
       <!-- Grille des recommandations de cours -->
@@ -209,7 +322,6 @@
                 Déjà inscrit
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -217,474 +329,11 @@
       <!-- Aucune recommandation de cours -->
       <div *ngIf="!loading && coursRecommendations.length === 0 && !error" class="text-center py-12">
         <i data-feather="book" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune recommandation de cours trouvée</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune recommandation de cours</h3>
         <p class="text-gray-600 mb-6">
-          Configurez vos préférences pour obtenir des suggestions de cours personnalisées.
+          Commencez à suivre des cours pour obtenir des recommandations personnalisées basées sur votre historique.
         </p>
-        <button 
-          (click)="switchTab('preferences')"
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          <i data-feather="settings" class="w-4 h-4 mr-2"></i>
-          Configurer mes Préférences
-        </button>
       </div>
-    </div>
-
-    <!-- Onglet Recherche par Critères -->
-    <div *ngIf="activeTab === 'criteria'">
-      <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Recherche Personnalisée</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          <!-- Catégories -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Catégories</label>
-            <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
-              <div *ngFor="let category of availableCategories" class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  [id]="'cat-' + category"
-                  [checked]="selectedCategories.includes(category)"
-                  (change)="toggleCategory(category)"
-                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                <label [for]="'cat-' + category" class="ml-2 text-sm text-gray-700">{{ category }}</label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Niveau de difficulté -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Niveau de Difficulté</label>
-            <select 
-              [(ngModel)]="searchCriteria.preferredDifficulty"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-              <option [ngValue]="undefined">Tous les niveaux</option>
-              <option [ngValue]="NiveauDifficulte.DEBUTANT">Débutant</option>
-              <option [ngValue]="NiveauDifficulte.INTERMEDIAIRE">Intermédiaire</option>
-              <option [ngValue]="NiveauDifficulte.AVANCE">Avancé</option>
-              <option [ngValue]="NiveauDifficulte.EXPERT">Expert</option>
-            </select>
-          </div>
-
-          <!-- Durée -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Durée (heures)</label>
-            <div class="grid grid-cols-2 gap-2">
-              <input 
-                type="number" 
-                [(ngModel)]="searchCriteria.preferredDurationMin"
-                placeholder="Min"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <input 
-                type="number" 
-                [(ngModel)]="searchCriteria.preferredDurationMax"
-                placeholder="Max"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-          </div>
-
-          <!-- Style d'apprentissage -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Style d'Apprentissage</label>
-            <select 
-              [(ngModel)]="searchCriteria.learningStyle"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-              <option [ngValue]="undefined">Tous les styles</option>
-              <option *ngFor="let style of learningStyles" [ngValue]="style.value">{{ style.label }}</option>
-            </select>
-          </div>
-
-          <!-- Temps disponible -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Temps disponible (h/semaine)</label>
-            <input 
-              type="number" 
-              [(ngModel)]="searchCriteria.timeAvailabilityHours"
-              placeholder="Ex: 10"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-
-          <!-- Certificat important -->
-          <div class="flex items-center">
-            <input 
-              type="checkbox" 
-              id="certification"
-              [(ngModel)]="searchCriteria.certificationImportant"
-              class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-            <label for="certification" class="ml-2 text-sm text-gray-700">Certificat important</label>
-          </div>
-
-        </div>
-
-        <!-- Objectifs d'apprentissage -->
-        <div class="mt-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Objectifs d'Apprentissage</label>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-            <div *ngFor="let goal of learningGoals" class="flex items-center">
-              <input 
-                type="checkbox" 
-                [id]="'goal-' + goal"
-                [checked]="selectedGoals.includes(goal)"
-                (change)="toggleGoal(goal)"
-                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label [for]="'goal-' + goal" class="ml-2 text-sm text-gray-700">{{ goal }}</label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Centres d'intérêt -->
-        <div class="mt-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Centres d'Intérêt</label>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-            <div *ngFor="let interest of interests" class="flex items-center">
-              <input 
-                type="checkbox" 
-                [id]="'interest-' + interest"
-                [checked]="selectedInterests.includes(interest)"
-                (change)="toggleInterest(interest)"
-                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-              <label [for]="'interest-' + interest" class="ml-2 text-sm text-gray-700">{{ interest }}</label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Boutons d'action -->
-        <div class="mt-6 flex space-x-4">
-          <button 
-            (click)="searchByCriteria()"
-            [disabled]="loading"
-            class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
-            <i data-feather="search" class="w-4 h-4 mr-2"></i>
-            Rechercher
-          </button>
-          <button 
-            (click)="clearCriteria()"
-            class="inline-flex items-center px-6 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            <i data-feather="x" class="w-4 h-4 mr-2"></i>
-            Effacer
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Onglet Préférences -->
-    <div *ngIf="activeTab === 'preferences'">
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Mes Préférences d'Apprentissage</h2>
-        <p class="text-gray-600 mb-6">Configurez vos préférences pour améliorer la qualité des recommandations.</p>
-
-        <div *ngIf="preferencesLoading" class="text-center py-8">
-          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          <p class="mt-2 text-gray-600">Chargement des préférences...</p>
-        </div>
-
-        <form *ngIf="!preferencesLoading" (ngSubmit)="saveUserPreferences()" class="space-y-6">
-          
-          <!-- Catégories préférées -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Catégories Préférées</label>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-              <div *ngFor="let category of availableCategories" class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  [id]="'pref-cat-' + category"
-                  [checked]="selectedCategories.includes(category)"
-                  (change)="toggleCategory(category)"
-                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                <label [for]="'pref-cat-' + category" class="ml-2 text-sm text-gray-700">{{ category }}</label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Niveau de difficulté préféré -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Niveau de Difficulté Préféré</label>
-            <select 
-              [(ngModel)]="userPreferences.preferredDifficulty"
-              name="preferredDifficulty"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-              <option [ngValue]="undefined">Aucune préférence</option>
-              <option [ngValue]="NiveauDifficulte.DEBUTANT">Débutant</option>
-              <option [ngValue]="NiveauDifficulte.INTERMEDIAIRE">Intermédiaire</option>
-              <option [ngValue]="NiveauDifficulte.AVANCE">Avancé</option>
-              <option [ngValue]="NiveauDifficulte.EXPERT">Expert</option>
-            </select>
-          </div>
-
-          <!-- Style d'apprentissage -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Style d'Apprentissage</label>
-            <select 
-              [(ngModel)]="userPreferences.learningStyle"
-              name="learningStyle"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-              <option [ngValue]="undefined">Aucune préférence</option>
-              <option *ngFor="let style of learningStyles" [ngValue]="style.value">{{ style.label }}</option>
-            </select>
-          </div>
-
-          <!-- Temps disponible -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Temps Disponible par Semaine (heures)</label>
-            <input 
-              type="number" 
-              [(ngModel)]="userPreferences.timeAvailabilityHours"
-              name="timeAvailabilityHours"
-              placeholder="Ex: 10"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-
-          <!-- Durée préférée -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Durée Préférée des Parcours (heures)</label>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Minimum</label>
-                <input 
-                  type="number" 
-                  [(ngModel)]="userPreferences.preferredDurationMin"
-                  name="preferredDurationMin"
-                  placeholder="Ex: 5"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              </div>
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Maximum</label>
-                <input 
-                  type="number" 
-                  [(ngModel)]="userPreferences.preferredDurationMax"
-                  name="preferredDurationMax"
-                  placeholder="Ex: 50"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              </div>
-            </div>
-          </div>
-
-          <!-- Niveau de défi -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Niveau de Défi Souhaité</label>
-            <select 
-              [(ngModel)]="userPreferences.challengePreference"
-              name="challengePreference"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-              <option [ngValue]="undefined">Aucune préférence</option>
-              <option *ngFor="let challenge of challengePreferences" [ngValue]="challenge.value">{{ challenge.label }}</option>
-            </select>
-          </div>
-
-          <!-- Orientation professionnelle -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Orientation Professionnelle</label>
-            <select 
-              [(ngModel)]="userPreferences.careerFocus"
-              name="careerFocus"
-              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-              <option [ngValue]="undefined">Aucune orientation spécifique</option>
-              <option *ngFor="let career of careerFocuses" [ngValue]="career">{{ career }}</option>
-            </select>
-          </div>
-
-          <!-- Objectifs d'apprentissage -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Objectifs d'Apprentissage</label>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-              <div *ngFor="let goal of learningGoals" class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  [id]="'pref-goal-' + goal"
-                  [checked]="selectedGoals.includes(goal)"
-                  (change)="toggleGoal(goal)"
-                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                <label [for]="'pref-goal-' + goal" class="ml-2 text-sm text-gray-700">{{ goal }}</label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Centres d'intérêt -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Centres d'Intérêt</label>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-              <div *ngFor="let interest of interests" class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  [id]="'pref-interest-' + interest"
-                  [checked]="selectedInterests.includes(interest)"
-                  (change)="toggleInterest(interest)"
-                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                <label [for]="'pref-interest-' + interest" class="ml-2 text-sm text-gray-700">{{ interest }}</label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Certificat important -->
-          <div class="flex items-center">
-            <input 
-              type="checkbox" 
-              id="pref-certification"
-              [(ngModel)]="userPreferences.certificationImportant"
-              name="certificationImportant"
-              class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-            <label for="pref-certification" class="ml-2 text-sm text-gray-700">
-              Les certificats sont importants pour moi
-            </label>
-          </div>
-
-          <!-- Bouton de sauvegarde -->
-          <div class="pt-4">
-            <button 
-              type="submit"
-              [disabled]="preferencesSaving"
-              class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
-              <i data-feather="save" class="w-4 h-4 mr-2"></i>
-              {{ preferencesSaving ? 'Sauvegarde...' : 'Sauvegarder les Préférences' }}
-            </button>
-          </div>
-
-        </form>
-      </div>
-    </div>
-
-    <!-- Affichage des recommandations -->
-    <div *ngIf="activeTab !== 'preferences'">
-      
-      <!-- Loading -->
-      <div *ngIf="loading" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p class="mt-4 text-gray-600">Génération des recommandations IA...</p>
-      </div>
-
-      <!-- Grille des recommandations -->
-      <div *ngIf="!loading && recommendations.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div *ngFor="let recommendation of recommendations" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-          
-          <!-- Image du parcours -->
-          <div class="relative h-48 bg-gradient-to-br from-indigo-500 to-purple-600">
-            <img 
-              *ngIf="recommendation.thumbnailUrl" 
-              [src]="recommendation.thumbnailUrl" 
-              [alt]="recommendation.titre"
-              class="w-full h-full object-cover">
-            <div *ngIf="!recommendation.thumbnailUrl" class="flex items-center justify-center h-full">
-              <i data-feather="book-open" class="w-12 h-12 text-white"></i>
-            </div>
-            
-            <!-- Badge de correspondance -->
-            <div class="absolute top-3 right-3">
-              <span [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + getMatchBadgeClass(recommendation.niveauCorrespondance)">
-                {{ recommendation.niveauCorrespondance }}
-              </span>
-            </div>
-
-            <!-- Score de recommandation -->
-            <div class="absolute top-3 left-3 bg-white bg-opacity-90 rounded-full px-2 py-1">
-              <span [class]="'text-sm font-bold ' + getScoreColor(recommendation.scoreRecommendation)">
-                {{ recommendation.scoreRecommendation | number:'1.0-0' }}%
-              </span>
-            </div>
-          </div>
-
-          <!-- Contenu -->
-          <div class="p-6">
-            
-            <!-- Titre et catégorie -->
-            <div class="mb-3">
-              <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{{ recommendation.titre }}</h3>
-              <div class="flex items-center text-sm text-gray-500">
-                <span *ngIf="recommendation.categorie" class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs mr-2">
-                  {{ recommendation.categorie }}
-                </span>
-                <span [class]="'font-medium ' + getDifficultyColor(recommendation.niveauDifficulte)">
-                  {{ recommendation.niveauDifficulte }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Description -->
-            <p *ngIf="recommendation.description" class="text-gray-600 text-sm mb-4 line-clamp-3">
-              {{ recommendation.description }}
-            </p>
-
-            <!-- Métadonnées -->
-            <div class="space-y-2 mb-4">
-              <div class="flex items-center text-sm text-gray-500">
-                <i data-feather="user" class="w-4 h-4 mr-2"></i>
-                <span>{{ recommendation.formateurNom }}</span>
-              </div>
-              <div class="flex items-center text-sm text-gray-500">
-                <i data-feather="clock" class="w-4 h-4 mr-2"></i>
-                <span>{{ recommendation.dureeEstimeeHeures }}h</span>
-                <i data-feather="layers" class="w-4 h-4 ml-4 mr-2"></i>
-                <span>{{ recommendation.nombreEtapes }} étapes</span>
-              </div>
-              <div class="flex items-center text-sm text-gray-500">
-                <i data-feather="users" class="w-4 h-4 mr-2"></i>
-                <span>{{ recommendation.nombreInscriptions }} inscrits</span>
-                <i data-feather="award" class="w-4 h-4 ml-4 mr-2"></i>
-                <span>{{ recommendation.pointsBonus }} XP</span>
-              </div>
-            </div>
-
-            <!-- Raisons de recommandation -->
-            <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-900 mb-2">Pourquoi ce parcours ?</h4>
-              <ul class="space-y-1">
-                <li *ngFor="let raison of recommendation.raisonsRecommandation.slice(0, 3)" class="flex items-start text-xs text-gray-600">
-                  <i data-feather="check" class="w-3 h-3 mr-2 mt-0.5 text-green-500 flex-shrink-0"></i>
-                  <span>{{ raison }}</span>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Certificat -->
-            <div *ngIf="recommendation.certificatEnabled" class="mb-4">
-              <div class="flex items-center text-sm text-green-600">
-                <i data-feather="award" class="w-4 h-4 mr-2"></i>
-                <span>Certificat disponible</span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="space-y-2">
-              <button 
-                (click)="voirParcours(recommendation.id)"
-                class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <i data-feather="eye" class="w-4 h-4 mr-2"></i>
-                Voir le Parcours
-              </button>
-              
-              <button 
-                *ngIf="!recommendation.isInscrit"
-                (click)="sInscrireAuParcours(recommendation.id)"
-                class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <i data-feather="plus" class="w-4 h-4 mr-2"></i>
-                S'inscrire
-              </button>
-
-              <div *ngIf="recommendation.isInscrit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-50 border border-green-200 rounded-md text-sm font-medium text-green-700">
-                <i data-feather="check-circle" class="w-4 h-4 mr-2"></i>
-                Déjà inscrit
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- Aucune recommandation -->
-      <div *ngIf="!loading && recommendations.length === 0 && !error" class="text-center py-12">
-        <i data-feather="search" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune recommandation trouvée</h3>
-        <p class="text-gray-600 mb-6">
-          Essayez de modifier vos critères de recherche ou configurez vos préférences pour de meilleures suggestions.
-        </p>
-        <button 
-          (click)="switchTab('preferences')"
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          <i data-feather="settings" class="w-4 h-4 mr-2"></i>
-          Configurer mes Préférences
-        </button>
-      </div>
-
     </div>
 
   </div>

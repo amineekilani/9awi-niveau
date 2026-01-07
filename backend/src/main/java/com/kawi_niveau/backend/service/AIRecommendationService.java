@@ -137,30 +137,23 @@ public class AIRecommendationService {
     }
 
     /**
-     * Construit le profil utilisateur pour l'analyse
+     * Construit le profil utilisateur pour l'analyse basé sur l'historique
      */
     private UserProfile buildUserProfile(User user) {
         UserProfile profile = new UserProfile();
         profile.setUser(user);
         
         try {
-            // Récupérer les préférences utilisateur
-            Optional<UserPreferences> preferencesOpt = userPreferencesRepository.findByUser(user);
-            if (preferencesOpt.isPresent()) {
-                UserPreferences prefs = preferencesOpt.get();
-                profile.setPreferences(prefs);
-                profile.setPreferredCategories(parseJsonArray(prefs.getPreferredCategories()));
-                profile.setLearningGoals(parseJsonArray(prefs.getLearningGoals()));
-                profile.setInterests(parseJsonArray(prefs.getInterests()));
-            } else {
-                // Créer des préférences par défaut
-                profile.setPreferredCategories(new ArrayList<>());
-                profile.setLearningGoals(new ArrayList<>());
-                profile.setInterests(new ArrayList<>());
-            }
+            // Initialiser les listes vides (pas de préférences explicites)
+            profile.setPreferredCategories(new ArrayList<>());
+            profile.setLearningGoals(new ArrayList<>());
+            profile.setInterests(new ArrayList<>());
             
-            // Analyser l'historique d'apprentissage
+            // Analyser l'historique d'apprentissage (source principale des recommandations)
             analyzeUserLearningHistory(profile);
+            
+            // Analyser l'historique des cours suivis
+            analyzeUserCoursHistory(profile);
             
             // Récupérer les stats de gamification
             analyzeUserGamificationData(profile);
@@ -180,9 +173,87 @@ public class AIRecommendationService {
             profile.setTotalXP(0);
             profile.setAverageQuizScore(0.0);
             profile.setTotalQuizzesTaken(0);
+            profile.setCompletedCoursCount(0);
+            profile.setPreferredCategoriesFromCours(new ArrayList<>());
         }
         
         return profile;
+    }
+
+    /**
+     * Analyse l'historique des cours suivis par l'utilisateur
+     */
+    private void analyzeUserCoursHistory(UserProfile profile) {
+        User user = profile.getUser();
+        
+        try {
+            // Récupérer tous les enrollments de l'utilisateur
+            List<Enrollment> enrollments = enrollmentRepository.findByUser(user);
+            
+            if (enrollments == null || enrollments.isEmpty()) {
+                profile.setCompletedCoursCount(0);
+                profile.setPreferredCategoriesFromCours(new ArrayList<>());
+                return;
+            }
+            
+            // Compter les cours avec progression significative (>50%)
+            long completedCours = enrollments.stream()
+                .filter(e -> e.getProgress() != null && e.getProgress() >= 50)
+                .count();
+            profile.setCompletedCoursCount((int) completedCours);
+            
+            // Analyser les catégories des cours suivis
+            Map<String, Integer> categoryFrequency = new HashMap<>();
+            Map<String, Double> categoryProgress = new HashMap<>();
+            
+            for (Enrollment enrollment : enrollments) {
+                if (enrollment.getCours() != null) {
+                    String category = enrollment.getCours().getCategorie();
+                    if (category != null && !category.trim().isEmpty()) {
+                        categoryFrequency.put(category, categoryFrequency.getOrDefault(category, 0) + 1);
+                        
+                        // Pondérer par la progression
+                        double progress = enrollment.getProgress() != null ? enrollment.getProgress() : 0;
+                        categoryProgress.put(category, 
+                            categoryProgress.getOrDefault(category, 0.0) + progress);
+                    }
+                }
+            }
+            
+            // Trier par fréquence et progression combinées
+            List<String> topCategories = categoryFrequency.entrySet().stream()
+                .sorted((a, b) -> {
+                    double scoreA = a.getValue() * (categoryProgress.getOrDefault(a.getKey(), 0.0) / 100.0 + 1);
+                    double scoreB = b.getValue() * (categoryProgress.getOrDefault(b.getKey(), 0.0) / 100.0 + 1);
+                    return Double.compare(scoreB, scoreA);
+                })
+                .limit(5)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+            
+            profile.setPreferredCategoriesFromCours(topCategories);
+            
+            // Analyser le niveau de difficulté moyen des cours suivis
+            double avgDifficulty = enrollments.stream()
+                .filter(e -> e.getCours() != null && e.getCours().getNiveauDifficulte() != null)
+                .mapToInt(e -> getDifficultyLevel(e.getCours().getNiveauDifficulte()))
+                .average()
+                .orElse(1.0);
+            
+            // Combiner avec le niveau des parcours si disponible
+            if (profile.getAverageDifficultyLevel() != null && profile.getAverageDifficultyLevel() > 0) {
+                profile.setAverageDifficultyLevel((profile.getAverageDifficultyLevel() + avgDifficulty) / 2);
+            } else {
+                profile.setAverageDifficultyLevel(avgDifficulty);
+            }
+            
+            System.out.println("📊 Historique cours analysé: " + completedCours + " cours, catégories: " + topCategories);
+            
+        } catch (Exception e) {
+            System.err.println("⚠️ Erreur lors de l'analyse de l'historique des cours: " + e.getMessage());
+            profile.setCompletedCoursCount(0);
+            profile.setPreferredCategoriesFromCours(new ArrayList<>());
+        }
     }
 
     /**
@@ -358,109 +429,78 @@ public class AIRecommendationService {
     }
 
     /**
-     * Calcule le score basé sur la catégorie et les intérêts
+     * Calcule le score basé sur la catégorie et les intérêts (basé sur l'historique)
      */
     private double calculateCategoryScore(ParcoursApprentissage parcours, UserProfile profile) {
-        double score = 0.0;
+        double score = 10.0; // Score de base
         
         String parcoursCategory = parcours.getCategorie();
-        if (parcoursCategory == null) return 0.0;
+        if (parcoursCategory == null) return score;
         
-        // Score basé sur les préférences explicites
-        if (profile.getPreferredCategories() != null && 
-            profile.getPreferredCategories().contains(parcoursCategory)) {
+        // Score basé sur l'historique des parcours
+        if (profile.getPreferredCategoriesFromHistory() != null && 
+            profile.getPreferredCategoriesFromHistory().contains(parcoursCategory)) {
+            score += 35.0;
+        }
+        
+        // Score basé sur l'historique des cours
+        if (profile.getPreferredCategoriesFromCours() != null && 
+            profile.getPreferredCategoriesFromCours().contains(parcoursCategory)) {
             score += 30.0;
         }
         
-        // Score basé sur l'historique
-        if (profile.getPreferredCategoriesFromHistory() != null && 
-            profile.getPreferredCategoriesFromHistory().contains(parcoursCategory)) {
-            score += 20.0;
-        }
-        
-        // Score basé sur les intérêts
-        if (profile.getInterests() != null) {
-            for (String interest : profile.getInterests()) {
-                if (parcoursCategory.toLowerCase().contains(interest.toLowerCase()) ||
-                    interest.toLowerCase().contains(parcoursCategory.toLowerCase())) {
-                    score += 15.0;
-                    break;
-                }
-            }
-        }
-        
         return Math.min(50.0, score);
     }
 
     /**
-     * Calcule le score basé sur le niveau de difficulté
+     * Calcule le score basé sur le niveau de difficulté (basé sur l'historique)
      */
     private double calculateDifficultyScore(ParcoursApprentissage parcours, UserProfile profile) {
-        if (parcours.getNiveauDifficulte() == null) return 25.0; // Score neutre
+        if (parcours.getNiveauDifficulte() == null) return 25.0;
         
         int parcoursLevel = getDifficultyLevel(parcours.getNiveauDifficulte());
+        double score = 25.0;
         
-        // Score basé sur les préférences
-        double score = 25.0; // Score de base
-        
-        if (profile.getPreferences() != null && profile.getPreferences().getPreferredDifficulty() != null) {
-            int preferredLevel = getDifficultyLevel(profile.getPreferences().getPreferredDifficulty());
-            int difference = Math.abs(parcoursLevel - preferredLevel);
-            
-            if (difference == 0) score = 50.0;      // Parfait match
-            else if (difference == 1) score = 35.0; // Bon match
-            else if (difference == 2) score = 20.0; // Acceptable
-            else score = 10.0;                      // Pas idéal
-        }
-        
-        // Ajustement basé sur l'historique
-        if (profile.getAverageDifficultyLevel() != null) {
+        // Ajustement basé sur l'historique d'apprentissage
+        if (profile.getAverageDifficultyLevel() != null && profile.getAverageDifficultyLevel() > 0) {
             double historyLevel = profile.getAverageDifficultyLevel();
             double difference = Math.abs(parcoursLevel - historyLevel);
             
-            if (difference <= 0.5) score += 10.0;      // Très proche de l'historique
-            else if (difference <= 1.0) score += 5.0;  // Proche de l'historique
+            // Recommander un niveau légèrement supérieur pour la progression
+            if (parcoursLevel == Math.ceil(historyLevel) || parcoursLevel == Math.floor(historyLevel)) {
+                score = 45.0; // Niveau actuel ou juste au-dessus
+            } else if (difference <= 0.5) {
+                score = 50.0; // Très proche
+            } else if (difference <= 1.0) {
+                score = 40.0; // Proche
+            } else if (difference <= 1.5) {
+                score = 30.0; // Acceptable
+            } else {
+                score = 15.0; // Trop éloigné
+            }
         }
         
         return Math.min(50.0, score);
     }
 
     /**
-     * Calcule le score basé sur la durée
+     * Calcule le score basé sur la durée (basé sur des critères généraux)
      */
     private double calculateDurationScore(ParcoursApprentissage parcours, UserProfile profile) {
-        if (parcours.getDureeEstimeeHeures() == null) return 25.0;
+        if (parcours.getDureeEstimeeHeures() == null) return 30.0;
         
         int parcoursDuration = parcours.getDureeEstimeeHeures();
-        double score = 25.0;
+        double score = 30.0;
         
-        if (profile.getPreferences() != null) {
-            Integer minDuration = profile.getPreferences().getPreferredDurationMin();
-            Integer maxDuration = profile.getPreferences().getPreferredDurationMax();
-            
-            if (minDuration != null && maxDuration != null) {
-                if (parcoursDuration >= minDuration && parcoursDuration <= maxDuration) {
-                    score = 50.0; // Parfait dans la fourchette
-                } else if (parcoursDuration < minDuration) {
-                    // Trop court
-                    double ratio = (double) parcoursDuration / minDuration;
-                    score = 25.0 * ratio;
-                } else {
-                    // Trop long
-                    double ratio = (double) maxDuration / parcoursDuration;
-                    score = 25.0 * ratio;
-                }
-            }
-            
-            // Ajustement basé sur la disponibilité temps
-            Integer timeAvailability = profile.getPreferences().getTimeAvailabilityHours();
-            if (timeAvailability != null) {
-                // Estimer le temps nécessaire par semaine (parcours étalé sur 4-8 semaines)
-                double weeksNeeded = parcoursDuration / (double) timeAvailability;
-                if (weeksNeeded <= 8) score += 10.0;      // Réalisable
-                else if (weeksNeeded <= 12) score += 5.0; // Difficile mais faisable
-                // Sinon pas de bonus
-            }
+        // Favoriser les parcours de durée raisonnable (5-30h)
+        if (parcoursDuration >= 5 && parcoursDuration <= 30) {
+            score = 45.0;
+        } else if (parcoursDuration < 5) {
+            score = 35.0; // Courts mais acceptables
+        } else if (parcoursDuration <= 50) {
+            score = 30.0; // Longs mais faisables
+        } else {
+            score = 20.0; // Très longs
         }
         
         return Math.min(50.0, score);
@@ -529,22 +569,25 @@ public class AIRecommendationService {
     }
 
     /**
-     * Génère les raisons de recommandation
+     * Génère les raisons de recommandation basées sur l'historique
      */
     private List<String> generateRecommendationReasons(ParcoursApprentissage parcours, UserProfile profile, ParcoursRecommendationResponse response) {
         List<String> reasons = new ArrayList<>();
         
-        // Raisons basées sur les scores
-        if (response.getScoreCategorie() >= 30.0) {
-            reasons.add("Correspond à vos centres d'intérêt");
+        // Raisons basées sur l'historique des parcours
+        if (profile.getPreferredCategoriesFromHistory() != null && 
+            profile.getPreferredCategoriesFromHistory().contains(parcours.getCategorie())) {
+            reasons.add("Similaire à vos parcours précédents");
+        }
+        
+        // Raisons basées sur l'historique des cours
+        if (profile.getPreferredCategoriesFromCours() != null && 
+            profile.getPreferredCategoriesFromCours().contains(parcours.getCategorie())) {
+            reasons.add("Dans la continuité de vos cours suivis");
         }
         
         if (response.getScoreDifficulte() >= 40.0) {
-            reasons.add("Niveau de difficulté adapté à votre profil");
-        }
-        
-        if (response.getScoreDuree() >= 40.0) {
-            reasons.add("Durée compatible avec votre disponibilité");
+            reasons.add("Niveau adapté à votre progression");
         }
         
         if (response.getScorePopularite() >= 35.0) {
@@ -564,13 +607,7 @@ public class AIRecommendationService {
             reasons.add("Récompenses XP importantes (" + parcours.getPointsBonus() + " points)");
         }
         
-        // Raisons basées sur l'historique
-        if (profile.getPreferredCategoriesFromHistory() != null && 
-            profile.getPreferredCategoriesFromHistory().contains(parcours.getCategorie())) {
-            reasons.add("Basé sur vos parcours précédents");
-        }
-        
-        return reasons.isEmpty() ? Arrays.asList("Recommandé pour votre profil") : reasons;
+        return reasons.isEmpty() ? Arrays.asList("Recommandé pour élargir vos compétences") : reasons;
     }
 
     /**
@@ -918,42 +955,31 @@ public class AIRecommendationService {
     }
 
     /**
-     * Calcule le score basé sur la catégorie du cours
+     * Calcule le score basé sur la catégorie du cours (basé sur l'historique)
      */
     private double calculateCoursCategoryScore(Cours cours, UserProfile profile) {
-        double score = 0.0;
+        double score = 10.0; // Score de base
         
         String coursCategory = cours.getCategorie();
-        if (coursCategory == null) return 15.0;
+        if (coursCategory == null) return score;
         
-        // Score basé sur les préférences explicites
-        if (profile.getPreferredCategories() != null && 
-            profile.getPreferredCategories().contains(coursCategory)) {
-            score += 35.0;
-        }
-        
-        // Score basé sur l'historique
+        // Score basé sur l'historique des parcours
         if (profile.getPreferredCategoriesFromHistory() != null && 
             profile.getPreferredCategoriesFromHistory().contains(coursCategory)) {
-            score += 25.0;
+            score += 30.0;
         }
         
-        // Score basé sur les intérêts
-        if (profile.getInterests() != null) {
-            for (String interest : profile.getInterests()) {
-                if (coursCategory.toLowerCase().contains(interest.toLowerCase()) ||
-                    interest.toLowerCase().contains(coursCategory.toLowerCase())) {
-                    score += 15.0;
-                    break;
-                }
-            }
+        // Score basé sur l'historique des cours
+        if (profile.getPreferredCategoriesFromCours() != null && 
+            profile.getPreferredCategoriesFromCours().contains(coursCategory)) {
+            score += 35.0;
         }
         
         return Math.min(50.0, score);
     }
 
     /**
-     * Calcule le score basé sur le niveau de difficulté du cours
+     * Calcule le score basé sur le niveau de difficulté du cours (basé sur l'historique)
      */
     private double calculateCoursDifficultyScore(Cours cours, UserProfile profile) {
         if (cours.getNiveauDifficulte() == null) return 25.0;
@@ -961,23 +987,23 @@ public class AIRecommendationService {
         int coursLevel = getDifficultyLevel(cours.getNiveauDifficulte());
         double score = 25.0;
         
-        if (profile.getPreferences() != null && profile.getPreferences().getPreferredDifficulty() != null) {
-            int preferredLevel = getDifficultyLevel(profile.getPreferences().getPreferredDifficulty());
-            int difference = Math.abs(coursLevel - preferredLevel);
-            
-            if (difference == 0) score = 50.0;
-            else if (difference == 1) score = 35.0;
-            else if (difference == 2) score = 20.0;
-            else score = 10.0;
-        }
-        
-        // Ajustement basé sur l'historique
-        if (profile.getAverageDifficultyLevel() != null) {
+        // Ajustement basé sur l'historique d'apprentissage
+        if (profile.getAverageDifficultyLevel() != null && profile.getAverageDifficultyLevel() > 0) {
             double historyLevel = profile.getAverageDifficultyLevel();
             double difference = Math.abs(coursLevel - historyLevel);
             
-            if (difference <= 0.5) score += 10.0;
-            else if (difference <= 1.0) score += 5.0;
+            // Recommander un niveau légèrement supérieur pour la progression
+            if (coursLevel == Math.ceil(historyLevel) || coursLevel == Math.floor(historyLevel)) {
+                score = 45.0;
+            } else if (difference <= 0.5) {
+                score = 50.0;
+            } else if (difference <= 1.0) {
+                score = 40.0;
+            } else if (difference <= 1.5) {
+                score = 30.0;
+            } else {
+                score = 15.0;
+            }
         }
         
         return Math.min(50.0, score);
@@ -1004,36 +1030,26 @@ public class AIRecommendationService {
     }
 
     /**
-     * Calcule le score basé sur les mots-clés du cours
+     * Calcule le score basé sur les mots-clés du cours (basé sur l'historique)
      */
     private double calculateCoursKeywordsScore(Cours cours, UserProfile profile) {
-        double score = 15.0; // Score de base
+        double score = 20.0; // Score de base
         
         String keywords = cours.getKeywords();
         if (keywords == null || keywords.trim().isEmpty()) return score;
         
+        // Bonus si le cours a des mots-clés (contenu bien documenté)
+        score += 10.0;
+        
+        // Bonus supplémentaire si les mots-clés correspondent aux catégories de l'historique
         String[] keywordArray = keywords.toLowerCase().split(",");
         
-        // Vérifier les correspondances avec les intérêts
-        if (profile.getInterests() != null) {
-            for (String interest : profile.getInterests()) {
+        if (profile.getPreferredCategoriesFromCours() != null) {
+            for (String category : profile.getPreferredCategoriesFromCours()) {
                 for (String keyword : keywordArray) {
-                    if (keyword.trim().contains(interest.toLowerCase()) ||
-                        interest.toLowerCase().contains(keyword.trim())) {
-                        score += 10.0;
-                        break;
-                    }
-                }
-            }
-        }
-        
-        // Vérifier les correspondances avec les objectifs d'apprentissage
-        if (profile.getLearningGoals() != null) {
-            for (String goal : profile.getLearningGoals()) {
-                for (String keyword : keywordArray) {
-                    if (keyword.trim().contains(goal.toLowerCase()) ||
-                        goal.toLowerCase().contains(keyword.trim())) {
-                        score += 8.0;
+                    if (keyword.trim().contains(category.toLowerCase()) ||
+                        category.toLowerCase().contains(keyword.trim())) {
+                        score += 15.0;
                         break;
                     }
                 }
@@ -1044,36 +1060,34 @@ public class AIRecommendationService {
     }
 
     /**
-     * Génère les raisons de recommandation pour un cours
+     * Génère les raisons de recommandation pour un cours (basé sur l'historique)
      */
     private List<String> generateCoursRecommendationReasons(Cours cours, UserProfile profile, CoursRecommendationResponse response) {
         List<String> reasons = new ArrayList<>();
         
-        if (response.getScoreCategorie() >= 30.0) {
-            reasons.add("Correspond à vos centres d'intérêt");
+        // Raisons basées sur l'historique des parcours
+        if (profile.getPreferredCategoriesFromHistory() != null && 
+            profile.getPreferredCategoriesFromHistory().contains(cours.getCategorie())) {
+            reasons.add("Similaire à vos parcours précédents");
+        }
+        
+        // Raisons basées sur l'historique des cours
+        if (profile.getPreferredCategoriesFromCours() != null && 
+            profile.getPreferredCategoriesFromCours().contains(cours.getCategorie())) {
+            reasons.add("Dans la continuité de vos cours suivis");
         }
         
         if (response.getScoreDifficulte() >= 40.0) {
-            reasons.add("Niveau de difficulté adapté à votre profil");
+            reasons.add("Niveau adapté à votre progression");
         }
         
         if (response.getScorePopularite() >= 30.0) {
             reasons.add("Cours populaire auprès des apprenants");
         }
         
-        if (response.getScoreKeywords() >= 25.0) {
-            reasons.add("Contenu aligné avec vos objectifs");
-        }
-        
-        // Raisons basées sur l'historique
-        if (profile.getPreferredCategoriesFromHistory() != null && 
-            profile.getPreferredCategoriesFromHistory().contains(cours.getCategorie())) {
-            reasons.add("Basé sur vos cours précédents");
-        }
-        
         // Raison par défaut
         if (reasons.isEmpty()) {
-            reasons.add("Recommandé pour votre profil");
+            reasons.add("Recommandé pour élargir vos compétences");
         }
         
         return reasons;
@@ -1096,16 +1110,18 @@ public class AIRecommendationService {
     }
 
     /**
-     * Classe interne pour le profil utilisateur
+     * Classe interne pour le profil utilisateur basé sur l'historique
      */
     private static class UserProfile {
         private User user;
         private UserPreferences preferences;
         private List<String> preferredCategories;
         private List<String> preferredCategoriesFromHistory;
+        private List<String> preferredCategoriesFromCours;
         private List<String> learningGoals;
         private List<String> interests;
         private Integer completedParcoursCount;
+        private Integer completedCoursCount;
         private Double averageDifficultyLevel;
         private Double averagePerformance;
         private Integer currentLevel;
@@ -1126,6 +1142,9 @@ public class AIRecommendationService {
         public List<String> getPreferredCategoriesFromHistory() { return preferredCategoriesFromHistory; }
         public void setPreferredCategoriesFromHistory(List<String> preferredCategoriesFromHistory) { this.preferredCategoriesFromHistory = preferredCategoriesFromHistory; }
         
+        public List<String> getPreferredCategoriesFromCours() { return preferredCategoriesFromCours; }
+        public void setPreferredCategoriesFromCours(List<String> preferredCategoriesFromCours) { this.preferredCategoriesFromCours = preferredCategoriesFromCours; }
+        
         public List<String> getLearningGoals() { return learningGoals; }
         public void setLearningGoals(List<String> learningGoals) { this.learningGoals = learningGoals; }
         
@@ -1134,6 +1153,9 @@ public class AIRecommendationService {
         
         public Integer getCompletedParcoursCount() { return completedParcoursCount; }
         public void setCompletedParcoursCount(Integer completedParcoursCount) { this.completedParcoursCount = completedParcoursCount; }
+        
+        public Integer getCompletedCoursCount() { return completedCoursCount; }
+        public void setCompletedCoursCount(Integer completedCoursCount) { this.completedCoursCount = completedCoursCount; }
         
         public Double getAverageDifficultyLevel() { return averageDifficultyLevel; }
         public void setAverageDifficultyLevel(Double averageDifficultyLevel) { this.averageDifficultyLevel = averageDifficultyLevel; }
