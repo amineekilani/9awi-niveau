@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Logo 9awi Niveau](frontend/public/Logo_9awi_Niveau.png)
+<img src="frontend/public/Logo_9awi_Niveau.png" alt="Logo 9awi Niveau" width="300"/>
 
 **Une plateforme d'apprentissage en ligne moderne avec gamification complète, parcours personnalisés et recommandations intelligentes**
 
@@ -506,10 +506,11 @@ Le dossier `backend/` contient de nombreux scripts SQL pour :
 
 Ce projet a été développé par :
 
-| Nom                   | Rôle                   | GitHub / Contact                    |
-| --------------------- | ---------------------- | ----------------------------------- |
-| **Baha Eddine Manai** | Développeur Full Stack | [@BahaManai](https://github.com)    |
-| **Amine Kilani**      | Développeur Full Stack | [@amineekilani](https://github.com) |
+| Nom                   | Rôle                   | GitHub / Contact                                 |
+| --------------------- | ---------------------- | ------------------------------------------------ |
+| **Baha Eddine Manai** | Développeur Full Stack | [@BahaManai](https://github.com/BahaManai)       |
+| **Amine Kilani**      | Développeur Full Stack | [@amineekilani](https://github.com/amineekilani) |
+| **Kamel Anas Farrah** | Développeur Full Stack | [@anas-farrah](https://github.com)               |
 
 **Encadrante** : Madame Lamia Mansouri
 
@@ -540,19 +541,40 @@ Pour toute question ou problème :
 
 ---
 
-## 🔮 Roadmap et Évolutions futures
+## 📱 Application Mobile
+
+Une application mobile Android native a été développée pour étendre l'expérience d'apprentissage sur mobile !
+
+### 🚀 9awi Niveau Mobile App
+
+[![Android](https://img.shields.io/badge/Android-Kotlin-green.svg)](https://github.com/BahaManai/9awi-Niveau-Mobile-app)
+[![Architecture](https://img.shields.io/badge/Architecture-MVVM-blue.svg)](https://github.com/BahaManai/9awi-Niveau-Mobile-app)
+[![DI](https://img.shields.io/badge/DI-Hilt-orange.svg)](https://github.com/BahaManai/9awi-Niveau-Mobile-app)
+
+### Technologies Mobile
+
+- **Langage** : Kotlin
+- **Architecture** : MVVM (Model-View-ViewModel)
+- **Injection de dépendances** : Hilt
+- **Plateforme** : Android natif
+
+Consultez le [repository mobile](https://github.com/BahaManai/9awi-Niveau-Mobile-app) pour plus de détails sur l'installation et l'utilisation.
+
+---
+
+## 🔮 Évolutions futures
 
 ### Fonctionnalités prévues
 
-- 📱 **Application mobile** (React Native / Flutter)
-- 🔔 **Notifications push** (Firebase Cloud Messaging)
+- 🔔 **Notifications push enrichies** avec Firebase Cloud Messaging
 - 💬 **Messagerie interne** entre apprenants et formateurs
 - 🎥 **Visioconférence** intégrée (Zoom/Jitsi)
 - 💳 **Système de paiement** pour cours premium (Stripe/PayPal)
-- 🌍 **Multilingue** (i18n)
+- 🌍 **Multilingue** (i18n) pour le web et mobile
 - 📊 **Analytics avancés** pour formateurs
 - 🔍 **Recherche full-text** (Elasticsearch)
 - 🚀 **Optimisations** (Redis cache, RabbitMQ)
+- 📱 **Version iOS** de l'application mobile
 
 ---
 
