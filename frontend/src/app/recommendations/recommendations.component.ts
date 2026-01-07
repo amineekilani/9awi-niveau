@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AuthService } from '../auth';
-import { RecommendationService, ParcoursRecommendation, RecommendationRequest, UserPreferences } from '../recommendation.service';
+import { RecommendationService, ParcoursRecommendation, CoursRecommendation, RecommendationRequest, UserPreferences } from '../recommendation.service';
 import { ParcoursService } from '../parcours.service';
 import { NiveauDifficulte } from '../parcours.service';
 
@@ -19,12 +19,13 @@ declare const feather: any;
 })
 export class RecommendationsComponent implements OnInit {
   recommendations: ParcoursRecommendation[] = [];
+  coursRecommendations: CoursRecommendation[] = [];
   loading = false;
   error = '';
   success = '';
 
   // Onglets
-  activeTab = 'personalized'; // personalized, criteria, preferences
+  activeTab = 'personalized'; // personalized, cours, criteria, preferences
 
   // Critères de recherche
   searchCriteria: RecommendationRequest = {
@@ -88,6 +89,8 @@ export class RecommendationsComponent implements OnInit {
 
     if (tab === 'personalized') {
       this.loadPersonalizedRecommendations();
+    } else if (tab === 'cours') {
+      this.loadPersonalizedCoursRecommendations();
     }
 
     // Réinitialiser les icônes
@@ -119,6 +122,33 @@ export class RecommendationsComponent implements OnInit {
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des recommandations';
+        this.loading = false;
+        console.error('Erreur:', err);
+      }
+    });
+  }
+
+  loadPersonalizedCoursRecommendations() {
+    this.loading = true;
+    this.error = '';
+
+    this.recommendationService.getPersonalizedCoursRecommendations(8).subscribe({
+      next: (recommendations) => {
+        this.coursRecommendations = recommendations;
+        this.loading = false;
+        
+        if (recommendations.length === 0) {
+          this.error = 'Aucune recommandation de cours disponible. Configurez vos préférences pour de meilleures suggestions.';
+        }
+
+        setTimeout(() => {
+          if (typeof feather !== 'undefined') {
+            feather.replace();
+          }
+        }, 100);
+      },
+      error: (err) => {
+        this.error = 'Erreur lors du chargement des recommandations de cours';
         this.loading = false;
         console.error('Erreur:', err);
       }
@@ -264,6 +294,16 @@ export class RecommendationsComponent implements OnInit {
         console.error('Erreur:', err);
       }
     });
+  }
+
+  // Actions sur les cours
+  voirCours(coursId: number) {
+    this.router.navigate(['/cours', coursId]);
+  }
+
+  sInscrireAuCours(coursId: number) {
+    // Utiliser le service de cours pour l'inscription
+    this.router.navigate(['/cours', coursId]);
   }
 
   // Utilitaires

@@ -2,6 +2,7 @@ package com.kawi_niveau.backend.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kawi_niveau.backend.dto.CoursRecommendationResponse;
 import com.kawi_niveau.backend.dto.ParcoursRecommendationResponse;
 import com.kawi_niveau.backend.dto.RecommendationRequest;
 import com.kawi_niveau.backend.entity.*;
@@ -35,6 +36,9 @@ public class AIRecommendationService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CoursRepository coursRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -744,6 +748,351 @@ public class AIRecommendationService {
             case EXPERT: return 4;
             default: return 1;
         }
+    }
+
+    // ==================== RECOMMANDATIONS DE COURS ====================
+
+    /**
+     * Génère des recommandations de cours personnalisées pour un utilisateur
+     */
+    public List<CoursRecommendationResponse> getPersonalizedCoursRecommendations(User user, Integer maxResults) {
+        try {
+            System.out.println("🤖 Génération de recommandations de cours IA pour: " + user.getEmail());
+            
+            // 1. Récupérer le profil utilisateur
+            UserProfile userProfile = buildUserProfile(user);
+            
+            // 2. Récupérer tous les cours disponibles non inscrits
+            List<Cours> availableCours = getAvailableCours(user);
+            
+            if (availableCours.isEmpty()) {
+                System.out.println("❌ Aucun cours disponible pour recommandation");
+                return new ArrayList<>();
+            }
+            
+            System.out.println("📚 " + availableCours.size() + " cours disponibles pour analyse");
+            
+            // 3. Calculer le score pour chaque cours
+            List<CoursRecommendationResponse> recommendations = new ArrayList<>();
+            
+            for (Cours cours : availableCours) {
+                try {
+                    CoursRecommendationResponse recommendation = calculateCoursRecommendationScore(cours, userProfile);
+                    if (recommendation.getScoreRecommendation() > 15.0) {
+                        recommendations.add(recommendation);
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Erreur lors du calcul du score pour le cours " + cours.getTitre() + ": " + e.getMessage());
+                }
+            }
+            
+            // 4. Trier par score et limiter les résultats
+            recommendations.sort((a, b) -> Double.compare(b.getScoreRecommendation(), a.getScoreRecommendation()));
+            
+            int limit = maxResults != null ? Math.min(maxResults, recommendations.size()) : Math.min(8, recommendations.size());
+            List<CoursRecommendationResponse> topRecommendations = recommendations.subList(0, Math.min(limit, recommendations.size()));
+            
+            System.out.println("✅ " + topRecommendations.size() + " recommandations de cours générées avec succès");
+            
+            return topRecommendations;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erreur critique lors de la génération de recommandations de cours: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Génère des recommandations de cours basées sur des critères spécifiques
+     */
+    public List<CoursRecommendationResponse> getCoursRecommendationsByCriteria(User user, RecommendationRequest request) {
+        try {
+            System.out.println("🎯 Génération de recommandations de cours par critères pour: " + user.getEmail());
+            
+            UserProfile customProfile = buildCustomProfile(user, request);
+            List<Cours> availableCours = getAvailableCours(user);
+            
+            // Filtrer selon les critères
+            availableCours = filterCoursByCriteria(availableCours, request);
+            
+            List<CoursRecommendationResponse> recommendations = new ArrayList<>();
+            
+            for (Cours cours : availableCours) {
+                CoursRecommendationResponse recommendation = calculateCoursRecommendationScore(cours, customProfile);
+                recommendations.add(recommendation);
+            }
+            
+            recommendations.sort((a, b) -> Double.compare(b.getScoreRecommendation(), a.getScoreRecommendation()));
+            
+            int limit = request.getMaxRecommendations() != null ? 
+                       Math.min(request.getMaxRecommendations(), recommendations.size()) : 
+                       Math.min(10, recommendations.size());
+            
+            return recommendations.subList(0, Math.min(limit, recommendations.size()));
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors de la génération de recommandations de cours par critères: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Récupère les cours disponibles pour un utilisateur
+     */
+    private List<Cours> getAvailableCours(User user) {
+        List<Cours> allCours = coursRepository.findByArchivedFalse();
+        
+        // Exclure les cours déjà inscrits
+        Set<Long> enrolledCoursIds = enrollmentRepository.findByUser(user).stream()
+            .map(enrollment -> enrollment.getCours().getId())
+            .collect(Collectors.toSet());
+        
+        return allCours.stream()
+            .filter(cours -> !enrolledCoursIds.contains(cours.getId()))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Filtre les cours selon les critères
+     */
+    private List<Cours> filterCoursByCriteria(List<Cours> cours, RecommendationRequest request) {
+        return cours.stream()
+            .filter(c -> {
+                // Filtrer par catégorie
+                if (request.getPreferredCategories() != null && !request.getPreferredCategories().isEmpty()) {
+                    if (c.getCategorie() == null || !request.getPreferredCategories().contains(c.getCategorie())) {
+                        return false;
+                    }
+                }
+                
+                // Filtrer par difficulté
+                if (request.getPreferredDifficulty() != null) {
+                    if (c.getNiveauDifficulte() != request.getPreferredDifficulty()) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Calcule le score de recommandation pour un cours
+     */
+    private CoursRecommendationResponse calculateCoursRecommendationScore(Cours cours, UserProfile profile) {
+        CoursRecommendationResponse response = new CoursRecommendationResponse();
+        
+        // Mapper les données du cours
+        mapCoursToResponse(cours, response);
+        
+        // Calculer les scores individuels
+        double scoreCategorie = calculateCoursCategoryScore(cours, profile);
+        double scoreDifficulte = calculateCoursDifficultyScore(cours, profile);
+        double scorePopularite = calculateCoursPopularityScore(cours);
+        double scoreKeywords = calculateCoursKeywordsScore(cours, profile);
+        
+        // Pondération des scores
+        double scoreTotal = 
+            scoreCategorie * 0.30 +      // 30% - Catégorie/Intérêts
+            scoreDifficulte * 0.25 +     // 25% - Niveau de difficulté
+            scorePopularite * 0.20 +     // 20% - Popularité
+            scoreKeywords * 0.25;        // 25% - Mots-clés/Intérêts
+        
+        // Sauvegarder les scores détaillés
+        response.setScoreCategorie(scoreCategorie);
+        response.setScoreDifficulte(scoreDifficulte);
+        response.setScorePopularite(scorePopularite);
+        response.setScoreKeywords(scoreKeywords);
+        response.setScoreRecommendation(Math.min(100.0, scoreTotal));
+        
+        // Générer les raisons de recommandation
+        response.setRaisonsRecommandation(generateCoursRecommendationReasons(cours, profile, response));
+        
+        // Déterminer le niveau de correspondance
+        response.setNiveauCorrespondance(determineMatchLevel(scoreTotal));
+        
+        return response;
+    }
+
+    /**
+     * Calcule le score basé sur la catégorie du cours
+     */
+    private double calculateCoursCategoryScore(Cours cours, UserProfile profile) {
+        double score = 0.0;
+        
+        String coursCategory = cours.getCategorie();
+        if (coursCategory == null) return 15.0;
+        
+        // Score basé sur les préférences explicites
+        if (profile.getPreferredCategories() != null && 
+            profile.getPreferredCategories().contains(coursCategory)) {
+            score += 35.0;
+        }
+        
+        // Score basé sur l'historique
+        if (profile.getPreferredCategoriesFromHistory() != null && 
+            profile.getPreferredCategoriesFromHistory().contains(coursCategory)) {
+            score += 25.0;
+        }
+        
+        // Score basé sur les intérêts
+        if (profile.getInterests() != null) {
+            for (String interest : profile.getInterests()) {
+                if (coursCategory.toLowerCase().contains(interest.toLowerCase()) ||
+                    interest.toLowerCase().contains(coursCategory.toLowerCase())) {
+                    score += 15.0;
+                    break;
+                }
+            }
+        }
+        
+        return Math.min(50.0, score);
+    }
+
+    /**
+     * Calcule le score basé sur le niveau de difficulté du cours
+     */
+    private double calculateCoursDifficultyScore(Cours cours, UserProfile profile) {
+        if (cours.getNiveauDifficulte() == null) return 25.0;
+        
+        int coursLevel = getDifficultyLevel(cours.getNiveauDifficulte());
+        double score = 25.0;
+        
+        if (profile.getPreferences() != null && profile.getPreferences().getPreferredDifficulty() != null) {
+            int preferredLevel = getDifficultyLevel(profile.getPreferences().getPreferredDifficulty());
+            int difference = Math.abs(coursLevel - preferredLevel);
+            
+            if (difference == 0) score = 50.0;
+            else if (difference == 1) score = 35.0;
+            else if (difference == 2) score = 20.0;
+            else score = 10.0;
+        }
+        
+        // Ajustement basé sur l'historique
+        if (profile.getAverageDifficultyLevel() != null) {
+            double historyLevel = profile.getAverageDifficultyLevel();
+            double difference = Math.abs(coursLevel - historyLevel);
+            
+            if (difference <= 0.5) score += 10.0;
+            else if (difference <= 1.0) score += 5.0;
+        }
+        
+        return Math.min(50.0, score);
+    }
+
+    /**
+     * Calcule le score de popularité du cours
+     */
+    private double calculateCoursPopularityScore(Cours cours) {
+        long totalEnrollments = enrollmentRepository.countByCours(cours);
+        
+        // Score basé sur le nombre d'inscriptions (logarithmique)
+        double popularityScore = Math.min(30.0, Math.log(totalEnrollments + 1) * 8);
+        
+        // Bonus pour les cours récents avec des inscriptions
+        if (cours.getCreatedAt() != null) {
+            long ageInDays = (System.currentTimeMillis() - cours.getCreatedAt()) / (1000 * 60 * 60 * 24);
+            if (ageInDays < 30 && totalEnrollments > 5) {
+                popularityScore += 15.0; // Bonus pour cours récent populaire
+            }
+        }
+        
+        return Math.min(50.0, popularityScore);
+    }
+
+    /**
+     * Calcule le score basé sur les mots-clés du cours
+     */
+    private double calculateCoursKeywordsScore(Cours cours, UserProfile profile) {
+        double score = 15.0; // Score de base
+        
+        String keywords = cours.getKeywords();
+        if (keywords == null || keywords.trim().isEmpty()) return score;
+        
+        String[] keywordArray = keywords.toLowerCase().split(",");
+        
+        // Vérifier les correspondances avec les intérêts
+        if (profile.getInterests() != null) {
+            for (String interest : profile.getInterests()) {
+                for (String keyword : keywordArray) {
+                    if (keyword.trim().contains(interest.toLowerCase()) ||
+                        interest.toLowerCase().contains(keyword.trim())) {
+                        score += 10.0;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Vérifier les correspondances avec les objectifs d'apprentissage
+        if (profile.getLearningGoals() != null) {
+            for (String goal : profile.getLearningGoals()) {
+                for (String keyword : keywordArray) {
+                    if (keyword.trim().contains(goal.toLowerCase()) ||
+                        goal.toLowerCase().contains(keyword.trim())) {
+                        score += 8.0;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return Math.min(50.0, score);
+    }
+
+    /**
+     * Génère les raisons de recommandation pour un cours
+     */
+    private List<String> generateCoursRecommendationReasons(Cours cours, UserProfile profile, CoursRecommendationResponse response) {
+        List<String> reasons = new ArrayList<>();
+        
+        if (response.getScoreCategorie() >= 30.0) {
+            reasons.add("Correspond à vos centres d'intérêt");
+        }
+        
+        if (response.getScoreDifficulte() >= 40.0) {
+            reasons.add("Niveau de difficulté adapté à votre profil");
+        }
+        
+        if (response.getScorePopularite() >= 30.0) {
+            reasons.add("Cours populaire auprès des apprenants");
+        }
+        
+        if (response.getScoreKeywords() >= 25.0) {
+            reasons.add("Contenu aligné avec vos objectifs");
+        }
+        
+        // Raisons basées sur l'historique
+        if (profile.getPreferredCategoriesFromHistory() != null && 
+            profile.getPreferredCategoriesFromHistory().contains(cours.getCategorie())) {
+            reasons.add("Basé sur vos cours précédents");
+        }
+        
+        // Raison par défaut
+        if (reasons.isEmpty()) {
+            reasons.add("Recommandé pour votre profil");
+        }
+        
+        return reasons;
+    }
+
+    /**
+     * Mappe un cours vers la réponse de recommandation
+     */
+    private void mapCoursToResponse(Cours cours, CoursRecommendationResponse response) {
+        response.setId(cours.getId());
+        response.setTitre(cours.getTitre());
+        response.setDescription(cours.getDescription());
+        response.setThumbnailUrl(cours.getThumbnailUrl());
+        response.setCategorie(cours.getCategorie());
+        response.setNiveauDifficulte(cours.getNiveauDifficulte());
+        response.setKeywords(cours.getKeywords());
+        response.setFormateurNom(cours.getFormateur().getFirstName() + " " + cours.getFormateur().getLastName());
+        response.setIsEnrolled(false);
+        response.setProgressionUtilisateur(0);
     }
 
     /**

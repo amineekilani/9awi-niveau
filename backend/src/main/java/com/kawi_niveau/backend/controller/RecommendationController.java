@@ -1,5 +1,6 @@
 package com.kawi_niveau.backend.controller;
 
+import com.kawi_niveau.backend.dto.CoursRecommendationResponse;
 import com.kawi_niveau.backend.dto.ParcoursRecommendationResponse;
 import com.kawi_niveau.backend.dto.RecommendationRequest;
 import com.kawi_niveau.backend.entity.User;
@@ -166,6 +167,75 @@ public class RecommendationController {
 
         } catch (Exception e) {
             System.err.println("Erreur lors de la récupération des recommandations rapides: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la génération des recommandations: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtenir des recommandations de cours personnalisées
+     */
+    @GetMapping("/cours/personalized")
+    public ResponseEntity<?> getPersonalizedCoursRecommendations(
+            Authentication authentication,
+            @RequestParam(defaultValue = "8") Integer maxResults) {
+        
+        try {
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            List<CoursRecommendationResponse> recommendations = 
+                    aiRecommendationService.getPersonalizedCoursRecommendations(user, maxResults);
+
+            return ResponseEntity.ok(recommendations);
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des recommandations de cours: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la génération des recommandations de cours: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtenir des recommandations de cours basées sur des critères
+     */
+    @PostMapping("/cours/by-criteria")
+    public ResponseEntity<?> getCoursRecommendationsByCriteria(
+            Authentication authentication,
+            @RequestBody RecommendationRequest request) {
+        
+        try {
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            List<CoursRecommendationResponse> recommendations = 
+                    aiRecommendationService.getCoursRecommendationsByCriteria(user, request);
+
+            return ResponseEntity.ok(recommendations);
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des recommandations de cours par critères: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erreur lors de la génération des recommandations: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtenir des recommandations rapides de cours (top 3)
+     */
+    @GetMapping("/cours/quick")
+    public ResponseEntity<?> getQuickCoursRecommendations(Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            List<CoursRecommendationResponse> recommendations = 
+                    aiRecommendationService.getPersonalizedCoursRecommendations(user, 3);
+
+            return ResponseEntity.ok(recommendations);
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des recommandations rapides de cours: " + e.getMessage());
             return ResponseEntity.badRequest().body("Erreur lors de la génération des recommandations: " + e.getMessage());
         }
     }

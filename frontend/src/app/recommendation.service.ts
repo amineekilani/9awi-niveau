@@ -69,6 +69,30 @@ export interface ParcoursRecommendation {
   scorePrerequisMatch?: number;
 }
 
+export interface CoursRecommendation {
+  id: number;
+  titre: string;
+  description?: string;
+  thumbnailUrl?: string;
+  categorie?: string;
+  niveauDifficulte?: NiveauDifficulte;
+  keywords?: string;
+  formateurNom: string;
+  
+  // Données de recommandation
+  scoreRecommendation: number;
+  raisonsRecommandation: string[];
+  niveauCorrespondance: string;
+  isEnrolled?: boolean;
+  progressionUtilisateur?: number;
+  
+  // Scores détaillés
+  scoreCategorie?: number;
+  scoreDifficulte?: number;
+  scorePopularite?: number;
+  scoreKeywords?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -135,6 +159,63 @@ export class RecommendationService {
       }),
       catchError(error => {
         console.error('❌ Erreur lors de la récupération des recommandations rapides:', error);
+        throw error;
+      })
+    );
+  }
+
+  // ==================== RECOMMANDATIONS DE COURS ====================
+
+  /**
+   * Obtenir des recommandations de cours personnalisées
+   */
+  getPersonalizedCoursRecommendations(maxResults: number = 8): Observable<CoursRecommendation[]> {
+    return this.http.get<CoursRecommendation[]>(
+      `${this.apiUrl}/cours/personalized?maxResults=${maxResults}`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(recommendations => {
+        console.log('🤖 Recommandations de cours personnalisées reçues:', recommendations.length);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des recommandations de cours:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Obtenir des recommandations de cours basées sur des critères
+   */
+  getCoursRecommendationsByCriteria(criteria: RecommendationRequest): Observable<CoursRecommendation[]> {
+    return this.http.post<CoursRecommendation[]>(
+      `${this.apiUrl}/cours/by-criteria`,
+      criteria,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(recommendations => {
+        console.log('🎯 Recommandations de cours par critères reçues:', recommendations.length);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des recommandations de cours par critères:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Obtenir des recommandations rapides de cours (top 3)
+   */
+  getQuickCoursRecommendations(): Observable<CoursRecommendation[]> {
+    return this.http.get<CoursRecommendation[]>(
+      `${this.apiUrl}/cours/quick`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(recommendations => {
+        console.log('⚡ Recommandations rapides de cours reçues:', recommendations.length);
+      }),
+      catchError(error => {
+        console.error('❌ Erreur lors de la récupération des recommandations rapides de cours:', error);
         throw error;
       })
     );

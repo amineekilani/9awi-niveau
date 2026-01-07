@@ -24,7 +24,15 @@
             'border-indigo-500 text-indigo-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm' :
             'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'">
           <i data-feather="user" class="w-4 h-4 inline mr-2"></i>
-          Recommandations Personnalisées
+          Parcours Recommandés
+        </button>
+        <button 
+          (click)="switchTab('cours')"
+          [class]="activeTab === 'cours' ? 
+            'border-indigo-500 text-indigo-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm' :
+            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'">
+          <i data-feather="book" class="w-4 h-4 inline mr-2"></i>
+          Cours Recommandés
         </button>
         <button 
           (click)="switchTab('criteria')"
@@ -67,8 +75,8 @@
       <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-xl font-semibold text-gray-900 mb-2">Recommandations pour Vous</h2>
-            <p class="text-gray-600">Basées sur votre profil, vos préférences et votre historique d'apprentissage</p>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Parcours Recommandés pour Vous</h2>
+            <p class="text-gray-600">Basés sur votre profil, vos préférences et votre historique d'apprentissage</p>
           </div>
           <button 
             (click)="loadPersonalizedRecommendations()"
@@ -78,6 +86,147 @@
             Actualiser
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Onglet Recommandations de Cours -->
+    <div *ngIf="activeTab === 'cours'">
+      <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Cours Recommandés pour Vous</h2>
+            <p class="text-gray-600">Découvrez des cours individuels adaptés à vos centres d'intérêt et votre niveau</p>
+          </div>
+          <button 
+            (click)="loadPersonalizedCoursRecommendations()"
+            [disabled]="loading"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+            <i data-feather="refresh-cw" class="w-4 h-4 mr-2"></i>
+            Actualiser
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <p class="mt-4 text-gray-600">Génération des recommandations de cours...</p>
+      </div>
+
+      <!-- Grille des recommandations de cours -->
+      <div *ngIf="!loading && coursRecommendations.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div *ngFor="let cours of coursRecommendations" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+          
+          <!-- Image du cours -->
+          <div class="relative h-48 bg-gradient-to-br from-blue-500 to-cyan-600">
+            <img 
+              *ngIf="cours.thumbnailUrl" 
+              [src]="cours.thumbnailUrl" 
+              [alt]="cours.titre"
+              class="w-full h-full object-cover">
+            <div *ngIf="!cours.thumbnailUrl" class="flex items-center justify-center h-full">
+              <i data-feather="book" class="w-12 h-12 text-white"></i>
+            </div>
+            
+            <!-- Badge de correspondance -->
+            <div class="absolute top-3 right-3">
+              <span [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + getMatchBadgeClass(cours.niveauCorrespondance)">
+                {{ cours.niveauCorrespondance }}
+              </span>
+            </div>
+
+            <!-- Score de recommandation -->
+            <div class="absolute top-3 left-3 bg-white bg-opacity-90 rounded-full px-2 py-1">
+              <span [class]="'text-sm font-bold ' + getScoreColor(cours.scoreRecommendation)">
+                {{ cours.scoreRecommendation | number:'1.0-0' }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- Contenu -->
+          <div class="p-6">
+            
+            <!-- Titre et catégorie -->
+            <div class="mb-3">
+              <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{{ cours.titre }}</h3>
+              <div class="flex items-center text-sm text-gray-500">
+                <span *ngIf="cours.categorie" class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs mr-2">
+                  {{ cours.categorie }}
+                </span>
+                <span [class]="'font-medium ' + getDifficultyColor(cours.niveauDifficulte)">
+                  {{ cours.niveauDifficulte }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p *ngIf="cours.description" class="text-gray-600 text-sm mb-4 line-clamp-3">
+              {{ cours.description }}
+            </p>
+
+            <!-- Métadonnées -->
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center text-sm text-gray-500">
+                <i data-feather="user" class="w-4 h-4 mr-2"></i>
+                <span>{{ cours.formateurNom }}</span>
+              </div>
+              <div *ngIf="cours.keywords" class="flex items-center text-sm text-gray-500">
+                <i data-feather="tag" class="w-4 h-4 mr-2"></i>
+                <span class="truncate">{{ cours.keywords }}</span>
+              </div>
+            </div>
+
+            <!-- Raisons de recommandation -->
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-900 mb-2">Pourquoi ce cours ?</h4>
+              <ul class="space-y-1">
+                <li *ngFor="let raison of cours.raisonsRecommandation.slice(0, 3)" class="flex items-start text-xs text-gray-600">
+                  <i data-feather="check" class="w-3 h-3 mr-2 mt-0.5 text-green-500 flex-shrink-0"></i>
+                  <span>{{ raison }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-2">
+              <button 
+                (click)="voirCours(cours.id)"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i data-feather="eye" class="w-4 h-4 mr-2"></i>
+                Voir le Cours
+              </button>
+              
+              <button 
+                *ngIf="!cours.isEnrolled"
+                (click)="sInscrireAuCours(cours.id)"
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                Commencer
+              </button>
+
+              <div *ngIf="cours.isEnrolled" class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-50 border border-green-200 rounded-md text-sm font-medium text-green-700">
+                <i data-feather="check-circle" class="w-4 h-4 mr-2"></i>
+                Déjà inscrit
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Aucune recommandation de cours -->
+      <div *ngIf="!loading && coursRecommendations.length === 0 && !error" class="text-center py-12">
+        <i data-feather="book" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune recommandation de cours trouvée</h3>
+        <p class="text-gray-600 mb-6">
+          Configurez vos préférences pour obtenir des suggestions de cours personnalisées.
+        </p>
+        <button 
+          (click)="switchTab('preferences')"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <i data-feather="settings" class="w-4 h-4 mr-2"></i>
+          Configurer mes Préférences
+        </button>
       </div>
     </div>
 
