@@ -66,8 +66,17 @@ public class EmailService {
             );
 
             apiInstance.sendTransacEmail(sendSmtpEmail);
+            System.out.println("✅ Email de vérification envoyé à : " + toEmail);
         } catch (ApiException e) {
-            throw new RuntimeException("Erreur lors de l'envoi de l'email de vérification: " + e.getMessage(), e);
+            // Log l'erreur mais ne bloque pas l'inscription
+            System.err.println("⚠️ Erreur lors de l'envoi de l'email de vérification: " + e.getMessage());
+            System.err.println("📧 Lien de vérification (pour développement) : " + frontendUrl + "/verify-email?token=" + token);
+            // Ne pas lancer d'exception pour ne pas bloquer l'inscription
+        } catch (Exception e) {
+            // Gestion des erreurs réseau (UnknownHostException, etc.)
+            System.err.println("⚠️ Impossible de se connecter au serveur email: " + e.getMessage());
+            System.err.println("📧 Lien de vérification (pour développement) : " + frontendUrl + "/verify-email?token=" + token);
+            // Ne pas lancer d'exception pour ne pas bloquer l'inscription
         }
     }
 

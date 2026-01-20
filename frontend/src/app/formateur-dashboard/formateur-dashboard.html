@@ -1,6 +1,122 @@
 <app-navbar></app-navbar>
 
-<div class="min-h-screen bg-gray-50">
+<!-- Fond moderne avec formes géométriques e-learning -->
+<div class="fixed inset-0 z-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+  
+  <!-- Formes géométriques fixes - BIEN RÉPARTIES SUR TOUTE LA HAUTEUR -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    
+    <!-- GAUCHE - 4 éléments répartis verticalement -->
+    
+    <!-- Livre - GAUCHE HAUT -->
+    <div class="absolute top-24 left-20 w-20 h-20">
+      <svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-500 opacity-50">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Carré - GAUCHE HAUT-MILIEU -->
+    <div class="absolute top-[30%] left-24 w-14 h-14 border-3 border-blue-300 opacity-12"></div>
+
+    <!-- Cercle - GAUCHE MILIEU -->
+    <div class="absolute top-[50%] left-16 w-36 h-36 rounded-full bg-blue-300 opacity-5"></div>
+
+    <!-- Graphique - GAUCHE BAS -->
+    <div class="absolute bottom-32 left-24 w-22 h-22">
+      <svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-500 opacity-50">
+        <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Carré - GAUCHE BAS-MILIEU -->
+    <div class="absolute bottom-[48%] left-28 w-18 h-18 border-3 border-blue-500 opacity-15"></div>
+
+    <!-- Cercle - GAUCHE BAS -->
+    <div class="absolute bottom-20 left-20 w-48 h-48 rounded-full bg-blue-500 opacity-5"></div>
+
+    <!-- DROITE - 4 éléments répartis verticalement -->
+    
+    <!-- Cible - DROITE HAUT -->
+    <div class="absolute top-28 right-20 w-22 h-22">
+      <svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-600 opacity-50">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+      </svg>
+    </div>
+
+    <!-- Cercle - DROITE HAUT-MILIEU -->
+    <div class="absolute top-[35%] right-16 w-44 h-44 rounded-full bg-blue-400 opacity-5"></div>
+
+    <!-- Carré - DROITE MILIEU -->
+    <div class="absolute top-[52%] right-20 w-16 h-16 border-3 border-blue-400 opacity-15"></div>
+
+    <!-- Diplôme - DROITE BAS -->
+    <div class="absolute bottom-40 right-24 w-24 h-24">
+      <svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-600 opacity-50">
+        <path d="M12 15l-8-5 8-5 8 5-8 5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 15v7M16 13v4.5c0 1.5-1.79 2.5-4 2.5s-4-1-4-2.5V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Carré - DROITE BAS-MILIEU -->
+    <div class="absolute bottom-[35%] right-24 w-16 h-16 border-3 border-blue-600 opacity-15"></div>
+
+    <!-- Cercle - DROITE BAS -->
+    <div class="absolute bottom-24 right-28 w-40 h-40 rounded-full bg-blue-400 opacity-5"></div>
+  </div>
+</div>
+
+<!-- Styles pour les animations -->
+<style>
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-30px) translateX(10px); }
+  }
+
+  @keyframes float-medium {
+    0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) translateX(-10px) rotate(5deg); }
+  }
+
+  @keyframes float-fast {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-25px) scale(1.1); }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.15; transform: scale(1); }
+    50% { opacity: 0.25; transform: scale(1.1); }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .animate-float-slow {
+    animation: float-slow 8s ease-in-out infinite;
+  }
+
+  .animate-float-medium {
+    animation: float-medium 6s ease-in-out infinite;
+  }
+
+  .animate-float-fast {
+    animation: float-fast 5s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 20s linear infinite;
+  }
+</style>
+
+<div class="relative z-10 min-h-screen">
   <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
     <div class="mb-8 flex justify-between items-center">
       <div>
@@ -9,7 +125,7 @@
       </div>
     </div>
     <!-- Stats & Actions Bar -->
-    <div class="mb-8 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+    <div class="mb-8 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex items-center gap-6">
           <div class="text-center">
@@ -42,7 +158,7 @@
     </div>
 
     <!-- Statistiques par niveau -->
-    <div *ngIf="!loading && niveauxStats.length > 0" class="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div *ngIf="!loading && niveauxStats.length > 0" class="mb-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
         <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -51,7 +167,7 @@
       </h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div *ngFor="let stat of niveauxStats" 
-             class="text-center p-4 rounded-lg border border-gray-200 hover:shadow-md transition-all">
+             class="text-center p-4 rounded-lg border border-gray-200 bg-white/60 backdrop-blur-sm hover:shadow-md transition-all">
           <app-niveau-badge [niveau]="stat.niveau" class="mb-3"></app-niveau-badge>
           <div class="text-2xl font-bold text-gray-900">{{ stat.count }}</div>
           <div class="text-sm text-gray-600">cours ({{ stat.percentage }}%)</div>
@@ -59,7 +175,7 @@
       </div>
       
       <!-- Recommandations -->
-      <div *ngIf="niveauxStats.length > 0" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div *ngIf="niveauxStats.length > 0" class="mt-6 p-4 bg-blue-50/80 backdrop-blur-sm rounded-lg border border-blue-200">
         <h4 class="text-sm font-semibold text-blue-900 mb-2 flex items-center">
           <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -78,7 +194,7 @@
     </div>
 
     <!-- Tabs -->
-    <div class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-2">
+    <div class="mb-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 p-2">
       <div class="flex gap-2">
         <button (click)="switchTab('actifs')"
           [class]="activeTab === 'actifs' 

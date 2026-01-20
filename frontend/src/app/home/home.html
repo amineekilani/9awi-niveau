@@ -492,9 +492,10 @@
           <div class="relative h-32 bg-gradient-to-br from-indigo-500 to-purple-600">
             <img 
               *ngIf="recommendation.thumbnailUrl" 
-              [src]="recommendation.thumbnailUrl" 
+              [src]="'http://localhost:8080/images/parcours/' + recommendation.thumbnailUrl" 
               [alt]="recommendation.titre"
-              class="w-full h-full object-cover">
+              class="w-full h-full object-cover"
+              (error)="$any($event.target).style.display='none'">
             <div *ngIf="!recommendation.thumbnailUrl" class="flex items-center justify-center h-full">
               <i data-feather="book-open" class="w-8 h-8 text-white"></i>
             </div>

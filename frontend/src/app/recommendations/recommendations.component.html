@@ -84,9 +84,10 @@
           <div class="relative h-48 bg-gradient-to-br from-indigo-500 to-purple-600">
             <img 
               *ngIf="recommendation.thumbnailUrl" 
-              [src]="recommendation.thumbnailUrl" 
+              [src]="'http://localhost:8080/images/parcours/' + recommendation.thumbnailUrl" 
               [alt]="recommendation.titre"
-              class="w-full h-full object-cover">
+              class="w-full h-full object-cover"
+              (error)="$any($event.target).style.display='none'">
             <div *ngIf="!recommendation.thumbnailUrl" class="flex items-center justify-center h-full">
               <i data-feather="map" class="w-12 h-12 text-white"></i>
             </div>
@@ -234,9 +235,10 @@
           <div class="relative h-48 bg-gradient-to-br from-blue-500 to-cyan-600">
             <img 
               *ngIf="cours.thumbnailUrl" 
-              [src]="cours.thumbnailUrl" 
+              [src]="'http://localhost:8080/images/cours/' + cours.thumbnailUrl" 
               [alt]="cours.titre"
-              class="w-full h-full object-cover">
+              class="w-full h-full object-cover"
+              (error)="$any($event.target).style.display='none'">
             <div *ngIf="!cours.thumbnailUrl" class="flex items-center justify-center h-full">
               <i data-feather="book" class="w-12 h-12 text-white"></i>
             </div>

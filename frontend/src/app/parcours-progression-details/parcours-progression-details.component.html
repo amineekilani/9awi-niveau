@@ -1,6 +1,24 @@
 <app-navbar></app-navbar>
 
-<div class="min-h-screen bg-gray-50">
+<!-- Fond moderne formateur -->
+<div class="fixed inset-0 z-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-24 left-20 w-20 h-20"><svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-500 opacity-50"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="absolute top-[30%] left-24 w-14 h-14 border-3 border-blue-300 opacity-12"></div>
+    <div class="absolute top-[50%] left-16 w-36 h-36 rounded-full bg-blue-300 opacity-5"></div>
+    <div class="absolute bottom-32 left-24 w-22 h-22"><svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-500 opacity-50"><path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="absolute bottom-[48%] left-28 w-18 h-18 border-3 border-blue-500 opacity-15"></div>
+    <div class="absolute bottom-20 left-20 w-48 h-48 rounded-full bg-blue-500 opacity-5"></div>
+    <div class="absolute top-28 right-20 w-22 h-22"><svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-600 opacity-50"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></div>
+    <div class="absolute top-[35%] right-16 w-44 h-44 rounded-full bg-blue-400 opacity-5"></div>
+    <div class="absolute top-[52%] right-20 w-16 h-16 border-3 border-blue-400 opacity-15"></div>
+    <div class="absolute bottom-40 right-24 w-24 h-24"><svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-blue-600 opacity-50"><path d="M12 15l-8-5 8-5 8 5-8 5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15v7M16 13v4.5c0 1.5-1.79 2.5-4 2.5s-4-1-4-2.5V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="absolute bottom-[35%] right-24 w-16 h-16 border-3 border-blue-600 opacity-15"></div>
+    <div class="absolute bottom-24 right-28 w-40 h-40 rounded-full bg-blue-400 opacity-5"></div>
+  </div>
+</div>
+
+<div class="relative z-10 min-h-screen">
   <!-- Loading state -->
   <div *ngIf="loading" class="flex items-center justify-center min-h-screen">
     <div class="text-center">
